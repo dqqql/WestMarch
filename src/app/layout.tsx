@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { AppProvider } from "@/contexts/AppContext";
 
 export const metadata: Metadata = {
   title: "WestMarch - D&D Campaign Portal",
@@ -23,7 +24,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            {children}
+            <AppProvider>
+              {children}
+            </AppProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

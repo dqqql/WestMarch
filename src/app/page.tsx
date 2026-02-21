@@ -9,12 +9,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { BookOpen, Map, MessageSquare, Users, Sword, X, CheckCircle2, User, LogOut, Lock } from "lucide-react";
+import { BookOpen, Map, MessageSquare, Users, Sword, X, CheckCircle2, User, LogOut, Lock, Image, Eye, FolderOpen } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import { useApp } from "@/contexts/AppContext";
 
 export default function Home() {
   const { user, login, register, logout, isFirstTime } = useAuth();
+  const { resources, settings, updateSettings, verifyPassword } = useApp();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [loginUsername, setLoginUsername] = useState("");
@@ -23,6 +25,10 @@ export default function Home() {
   const [registerPassword, setRegisterPassword] = useState("");
   const [registerConfirmPassword, setRegisterConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showResourceSelector, setShowResourceSelector] = useState(false);
+  const [password, setPassword] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     if (isFirstTime) {
@@ -63,8 +69,106 @@ export default function Home() {
     }
   };
 
+  const handleVerifyPassword = () => {
+    if (verifyPassword(password)) {
+      setIsAuthenticated(true);
+      setShowPasswordModal(false);
+      setPassword("");
+      setShowResourceSelector(true);
+    } else {
+      alert("密码错误");
+    }
+  };
+
+  const selectHomeBg = (url: string | null) => {
+    updateSettings({ homeBg: url });
+    setShowResourceSelector(false);
+  };
+
+  const homeResources = resources.filter((r) => r.category === "homeBg" || r.category === "general");
+
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 relative overflow-hidden">
+      {settings.homeBg && (
+        <div className="absolute inset-0 z-0">
+          <img src={settings.homeBg} alt="首页背景" className="w-full h-full object-cover opacity-20" />
+        </div>
+      )}
+
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold flex items-center gap-2">
+                <Lock className="h-5 w-5" />
+                输入密码
+              </h3>
+              <button onClick={() => setShowPasswordModal(false)} className="text-zinc-400 hover:text-white">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-zinc-400 mb-1">密码</label>
+                <input
+                  type="password"
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleVerifyPassword()}
+                />
+              </div>
+              <Button className="w-full bg-amber-600 hover:bg-amber-700" onClick={handleVerifyPassword}>
+                确认
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showResourceSelector && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-4xl max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold flex items-center gap-2">
+                <Image className="h-5 w-5" />
+                选择首页背景
+              </h3>
+              <button onClick={() => setShowResourceSelector(false)} className="text-zinc-400 hover:text-white">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <Button
+                variant="ghost"
+                className="w-full justify-start border border-zinc-700 bg-zinc-800"
+                onClick={() => selectHomeBg(null)}
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                使用默认背景
+              </Button>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {homeResources.map((img) => (
+                  <div
+                    key={img.id}
+                    className="relative group cursor-pointer"
+                    onClick={() => selectHomeBg(img.url)}
+                  >
+                    <div className="aspect-video bg-zinc-800 rounded-lg overflow-hidden border border-zinc-700">
+                      <img src={img.url} alt={img.name} className="w-full h-full object-cover" />
+                    </div>
+                    <p className="text-sm text-zinc-400 mt-1 truncate">{img.name}</p>
+                  </div>
+                ))}
+              </div>
+              {homeResources.length === 0 && (
+                <p className="text-zinc-500 text-center py-8">暂无图片资源，请先去资源库上传</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {showLoginModal && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50" onClick={() => setShowLoginModal(false)}>
           <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
@@ -164,6 +268,26 @@ export default function Home() {
             <h1 className="text-2xl font-bold tracking-tight">WestMarch</h1>
           </div>
           <div className="flex items-center gap-4">
+            <Link href="/resources">
+              <Button variant="ghost" size="sm">
+                <FolderOpen className="h-4 w-4 mr-2" />
+                资源库
+              </Button>
+            </Link>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                if (isAuthenticated) {
+                  setShowResourceSelector(true);
+                } else {
+                  setShowPasswordModal(true);
+                }
+              }}
+            >
+              <Image className="h-4 w-4 mr-2" />
+              背景设置
+            </Button>
             {user ? (
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 text-amber-400">
@@ -182,7 +306,7 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-12">
+      <main className="container mx-auto px-4 py-12 relative z-10">
         <section className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
             西征冒险公会
@@ -262,7 +386,7 @@ export default function Home() {
         </div>
       </main>
 
-      <footer className="border-t border-zinc-800 bg-zinc-900 py-8">
+      <footer className="border-t border-zinc-800 bg-zinc-900 py-8 relative z-10">
         <div className="container mx-auto px-4 text-center text-zinc-500">
           <p>WestMarch Portal &copy; 2025</p>
         </div>

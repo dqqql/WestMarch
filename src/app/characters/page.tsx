@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, Upload, ArrowLeft, User, Sword, Shield, Zap, Heart, Lock, LogIn, Edit2, Trash2, X, Plus } from "lucide-react";
+import { Users, Upload, ArrowLeft, User, Sword, Shield, Zap, Heart, Lock, LogIn, Edit2, Trash2, X, Plus, Image, FolderOpen, Eye } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import { useApp } from "@/contexts/AppContext";
 
 interface Character {
   id: string;
@@ -99,10 +100,12 @@ const abilityNames = {
 
 export default function CharactersPage() {
   const { user } = useAuth();
+  const { resources } = useApp();
   const [characters, setCharacters] = useState<Character[]>(initialCharacters);
   const [isUploading, setIsUploading] = useState(false);
   const [editingCharacter, setEditingCharacter] = useState<Character | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showAvatarSelector, setShowAvatarSelector] = useState(false);
   const [formData, setFormData] = useState<Partial<Character>>({
     name: "",
     race: "",
@@ -111,6 +114,8 @@ export default function CharactersPage() {
     fullBio: "",
     abilities: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
   });
+
+  const avatarResources = resources.filter((r) => r.category === "characterAvatar" || r.category === "general");
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -167,6 +172,11 @@ export default function CharactersPage() {
     }
   };
 
+  const selectAvatar = (url: string | null) => {
+    setFormData({ ...formData, img: url });
+    setShowAvatarSelector(false);
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center">
@@ -187,6 +197,49 @@ export default function CharactersPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
+      {showAvatarSelector && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-4xl max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold flex items-center gap-2">
+                <User className="h-5 w-5" />
+                选择角色头像
+              </h3>
+              <button onClick={() => setShowAvatarSelector(false)} className="text-zinc-400 hover:text-white">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <Button
+                variant="ghost"
+                className="w-full justify-start border border-zinc-700 bg-zinc-800"
+                onClick={() => selectAvatar(null)}
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                使用默认头像
+              </Button>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {avatarResources.map((img) => (
+                  <div
+                    key={img.id}
+                    className="relative group cursor-pointer"
+                    onClick={() => selectAvatar(img.url)}
+                  >
+                    <div className="aspect-square bg-zinc-800 rounded-lg overflow-hidden border border-zinc-700">
+                      <img src={img.url} alt={img.name} className="w-full h-full object-cover" />
+                    </div>
+                    <p className="text-sm text-zinc-400 mt-1 truncate">{img.name}</p>
+                  </div>
+                ))}
+              </div>
+              {avatarResources.length === 0 && (
+                <p className="text-zinc-500 text-center py-8">暂无头像资源，请先去资源库上传</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {(editingCharacter || showCreateModal) && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 overflow-y-auto py-8">
           <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-2xl mx-4" onClick={(e) => e.stopPropagation()}>
@@ -211,33 +264,52 @@ export default function CharactersPage() {
               </button>
             </div>
             <div className="space-y-4 max-h-[80vh] overflow-y-auto">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm text-zinc-400 mb-1">角色名</label>
-                  <input 
-                    type="text" 
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white" 
-                    value={formData.name || ""}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  />
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <div className="w-24 h-24 bg-zinc-800 rounded-lg flex items-center justify-center overflow-hidden border border-zinc-700">
+                    {formData.img ? (
+                      <img src={formData.img} alt="头像" className="w-full h-full object-cover" />
+                    ) : (
+                      <User className="h-10 w-10 text-zinc-600" />
+                    )}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute -bottom-2 -right-2 h-8 w-8 bg-zinc-700 hover:bg-zinc-600"
+                    onClick={() => setShowAvatarSelector(true)}
+                  >
+                    <Image className="h-4 w-4" />
+                  </Button>
                 </div>
-                <div>
-                  <label className="block text-sm text-zinc-400 mb-1">种族</label>
-                  <input 
-                    type="text" 
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white" 
-                    value={formData.race || ""}
-                    onChange={(e) => setFormData({ ...formData, race: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-zinc-400 mb-1">职业</label>
-                  <input 
-                    type="text" 
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white" 
-                    value={formData.class || ""}
-                    onChange={(e) => setFormData({ ...formData, class: e.target.value })}
-                  />
+                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-zinc-400 mb-1">角色名</label>
+                    <input 
+                      type="text" 
+                      className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white" 
+                      value={formData.name || ""}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-zinc-400 mb-1">种族</label>
+                    <input 
+                      type="text" 
+                      className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white" 
+                      value={formData.race || ""}
+                      onChange={(e) => setFormData({ ...formData, race: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-zinc-400 mb-1">职业</label>
+                    <input 
+                      type="text" 
+                      className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white" 
+                      value={formData.class || ""}
+                      onChange={(e) => setFormData({ ...formData, class: e.target.value })}
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -321,6 +393,12 @@ export default function CharactersPage() {
             </div>
           </div>
           <div className="flex gap-3">
+            <Link href="/resources">
+              <Button variant="ghost" size="sm">
+                <FolderOpen className="h-4 w-4 mr-2" />
+                资源库
+              </Button>
+            </Link>
             <div className="relative">
               <input
                 type="file"
@@ -355,7 +433,11 @@ export default function CharactersPage() {
               className="bg-zinc-900 border-zinc-800 hover:border-amber-500/50 transition-colors overflow-hidden"
             >
               <div className="h-32 bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center relative">
-                <User className="h-16 w-16 text-zinc-600" />
+                {char.img ? (
+                  <img src={char.img} alt={char.name} className="w-full h-full object-cover" />
+                ) : (
+                  <User className="h-16 w-16 text-zinc-600" />
+                )}
                 <div className="absolute top-2 right-2 flex gap-1">
                   <Button 
                     variant="ghost" 
