@@ -10,6 +10,9 @@ import { useApp, type ImageCategory } from "@/contexts/AppContext";
 const categoryLabels: Record<ImageCategory, string> = {
   homeBg: "首页背景",
   mapBg: "地图背景",
+  docsBg: "档案室背景",
+  boardBg: "布告栏背景",
+  partyBg: "组队界面背景",
   characterAvatar: "角色头像",
   general: "通用",
 };
@@ -17,6 +20,9 @@ const categoryLabels: Record<ImageCategory, string> = {
 const categoryIcons: Record<ImageCategory, React.ReactNode> = {
   homeBg: <Home className="h-4 w-4" />,
   mapBg: <MapPin className="h-4 w-4" />,
+  docsBg: <FileImage className="h-4 w-4" />,
+  boardBg: <FileImage className="h-4 w-4" />,
+  partyBg: <FileImage className="h-4 w-4" />,
   characterAvatar: <User className="h-4 w-4" />,
   general: <FileImage className="h-4 w-4" />,
 };

@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { initDB, getAllResources, addResource as addResourceDB, deleteResource as deleteResourceDB } from "@/lib/indexedDB";
 
-export type ImageCategory = "homeBg" | "mapBg" | "characterAvatar" | "general";
+export type ImageCategory = "homeBg" | "mapBg" | "docsBg" | "boardBg" | "partyBg" | "characterAvatar" | "general";
 
 export interface ResourceImage {
   id: string;
@@ -16,6 +16,9 @@ export interface ResourceImage {
 export interface AppSettings {
   homeBg: string | null;
   mapBg: string | null;
+  docsBg: string | null;
+  boardBg: string | null;
+  partyBg: string | null;
   userNickname: string | null;
   userAvatar: string | null;
   sessionHistory: string[];
@@ -37,6 +40,9 @@ const PASSWORD = "WM2006";
 const defaultSettings: AppSettings = {
   homeBg: null,
   mapBg: null,
+  docsBg: null,
+  boardBg: null,
+  partyBg: null,
   userNickname: null,
   userAvatar: null,
   sessionHistory: [],
@@ -87,6 +93,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const minimalSettings: AppSettings = {
         homeBg: null,
         mapBg: null,
+        docsBg: null,
+        boardBg: null,
+        partyBg: null,
         userNickname: settingsToSave.userNickname,
         userAvatar: null,
         sessionHistory: settingsToSave.sessionHistory || [],

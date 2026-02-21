@@ -175,6 +175,11 @@ function MapContent() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col">
+      {settings.mapBg && (
+        <div className="fixed inset-0 z-0 pointer-events-none">
+          <img src={settings.mapBg} alt="地图背景" className="w-full h-full object-cover opacity-30 blur-[2px]" />
+        </div>
+      )}
       {showPasswordModal && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
           <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-md">
@@ -299,11 +304,6 @@ function MapContent() {
         </div>
       </header>
       <div className="flex-1 flex relative">
-        {settings.mapBg && (
-          <div className="absolute inset-0 z-0">
-            <img src={settings.mapBg} alt="地图背景" className="w-full h-full object-cover opacity-30" />
-          </div>
-        )}
         <div ref={reactFlowWrapper} className="flex-1 relative z-10">
           <ReactFlow
             nodes={nodes}

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Users, User, Calendar, X, Plus, Edit2, Trash2, Send, MessageCircle, Tag } from "lucide-react";
+import { ArrowLeft, Users, User, Calendar, X, Plus, Edit2, Trash2, Send, MessageCircle, Tag, Image, Lock, Eye } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useApp } from "@/contexts/AppContext";
@@ -71,7 +71,7 @@ const initialParties: Party[] = [
 
 export default function PartyPage() {
   const { user } = useAuth();
-  const { settings } = useApp();
+  const { resources, settings, updateSettings, verifyPassword } = useApp();
   const searchParams = useSearchParams();
   const [characters] = useState<Character[]>(initialCharacters);
   const [parties, setParties] = useState<Party[]>(() => {
@@ -108,6 +108,10 @@ export default function PartyPage() {
     maxCount: 4,
     nextSessionTime: "",
   });
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showResourceSelector, setShowResourceSelector] = useState(false);
+  const [password, setPassword] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const selectCharacter = (char: Character) => {
     setFormData({ ...formData, character: char });
@@ -198,18 +202,132 @@ export default function PartyPage() {
     setShowJoinCharacterSelector(true);
   };
 
+  const handleVerifyPassword = () => {
+    if (verifyPassword(password)) {
+      setIsAuthenticated(true);
+      setShowPasswordModal(false);
+      setPassword("");
+      setShowResourceSelector(true);
+    } else {
+      alert("密码错误");
+    }
+  };
+
+  const selectPartyBg = (url: string | null) => {
+    updateSettings({ partyBg: url });
+    setShowResourceSelector(false);
+  };
+
+  const partyResources = resources.filter((r) => r.category === "partyBg" || r.category === "general");
+
   if (!user) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center">
-        <div className="text-center">
+      <div className="min-h-screen bg-zinc-950 text-zinc-100">
+        {settings.partyBg && (
+          <div className="fixed inset-0 z-0 pointer-events-none" suppressHydrationWarning={true}>
+            <img src={settings.partyBg} alt="组队界面背景" className="w-full h-full object-cover opacity-30 blur-[2px]" />
+          </div>
+        )}
+
+        {showPasswordModal && (
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+            <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-md">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold flex items-center gap-2">
+                  <Lock className="h-5 w-5" />
+                  输入密码
+                </h3>
+                <button onClick={() => setShowPasswordModal(false)} className="text-zinc-400 hover:text-white">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm text-zinc-400 mb-1">密码</label>
+                  <input
+                    type="password"
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleVerifyPassword()}
+                  />
+                </div>
+                <Button className="w-full bg-amber-600 hover:bg-amber-700" onClick={handleVerifyPassword}>
+                  确认
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showResourceSelector && (
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+            <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-4xl max-h-[80vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold flex items-center gap-2">
+                  <Image className="h-5 w-5" />
+                  选择组队界面背景
+                </h3>
+                <button onClick={() => setShowResourceSelector(false)} className="text-zinc-400 hover:text-white">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start border border-zinc-700 bg-zinc-800"
+                  onClick={() => selectPartyBg(null)}
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  使用默认背景
+                </Button>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {partyResources.map((img) => (
+                    <div
+                      key={img.id}
+                      className="relative group cursor-pointer"
+                      onClick={() => selectPartyBg(img.url)}
+                    >
+                      <div className="aspect-video bg-zinc-800 rounded-lg overflow-hidden border border-zinc-700">
+                        <img src={img.url} alt={img.name} className="w-full h-full object-cover" />
+                      </div>
+                      <p className="text-sm text-zinc-400 mt-1 truncate">{img.name}</p>
+                    </div>
+                  ))}
+                </div>
+                {partyResources.length === 0 && (
+                  <p className="text-zinc-500 text-center py-8">暂无图片资源，请先去资源库上传</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="text-center relative z-10">
           <Users className="h-16 w-16 text-zinc-600 mx-auto mb-4" />
           <h2 className="text-2xl font-bold mb-2">需要登录</h2>
           <p className="text-zinc-400 mb-6">请先登录才能查看组队信息</p>
-          <Link href="/">
-            <Button className="bg-amber-600 hover:bg-amber-700">
-              返回首页登录
+          <div className="flex flex-col sm:flex-row gap-2 justify-center">
+            <Link href="/">
+              <Button className="bg-amber-600 hover:bg-amber-700">
+                返回首页登录
+              </Button>
+            </Link>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                if (isAuthenticated) {
+                  setShowResourceSelector(true);
+                } else {
+                  setShowPasswordModal(true);
+                }
+              }}
+              className="bg-zinc-800 hover:bg-zinc-700"
+            >
+              <Image className="h-4 w-4 mr-2" />
+              背景设置
             </Button>
-          </Link>
+          </div>
         </div>
       </div>
     );
@@ -217,6 +335,86 @@ export default function PartyPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
+      {settings.partyBg && (
+        <div className="fixed inset-0 z-0 pointer-events-none" suppressHydrationWarning={true}>
+          <img src={settings.partyBg} alt="组队界面背景" className="w-full h-full object-cover opacity-30 blur-[2px]" />
+        </div>
+      )}
+
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold flex items-center gap-2">
+                <Lock className="h-5 w-5" />
+                输入密码
+              </h3>
+              <button onClick={() => setShowPasswordModal(false)} className="text-zinc-400 hover:text-white">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-zinc-400 mb-1">密码</label>
+                <input
+                  type="password"
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleVerifyPassword()}
+                />
+              </div>
+              <Button className="w-full bg-amber-600 hover:bg-amber-700" onClick={handleVerifyPassword}>
+                确认
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showResourceSelector && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-4xl max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold flex items-center gap-2">
+                <Image className="h-5 w-5" />
+                选择组队界面背景
+              </h3>
+              <button onClick={() => setShowResourceSelector(false)} className="text-zinc-400 hover:text-white">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <Button
+                variant="ghost"
+                className="w-full justify-start border border-zinc-700 bg-zinc-800"
+                onClick={() => selectPartyBg(null)}
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                使用默认背景
+              </Button>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {partyResources.map((img) => (
+                  <div
+                    key={img.id}
+                    className="relative group cursor-pointer"
+                    onClick={() => selectPartyBg(img.url)}
+                  >
+                    <div className="aspect-video bg-zinc-800 rounded-lg overflow-hidden border border-zinc-700">
+                      <img src={img.url} alt={img.name} className="w-full h-full object-cover" />
+                    </div>
+                    <p className="text-sm text-zinc-400 mt-1 truncate">{img.name}</p>
+                  </div>
+                ))}
+              </div>
+              {partyResources.length === 0 && (
+                <p className="text-zinc-500 text-center py-8">暂无图片资源，请先去资源库上传</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {showCharacterSelector && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
           <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-2xl">
@@ -422,19 +620,36 @@ export default function PartyPage() {
               <h1 className="text-xl font-bold">组队大厅</h1>
             </div>
           </div>
-          {user && (
-            <Button 
-              className="bg-amber-600 hover:bg-amber-700" 
-              onClick={() => setShowCreateModal(true)}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                if (isAuthenticated) {
+                  setShowResourceSelector(true);
+                } else {
+                  setShowPasswordModal(true);
+                }
+              }}
+              className="bg-zinc-800 hover:bg-zinc-700"
             >
-              <Plus className="h-4 w-4 mr-2" />
-              发布组队
+              <Image className="h-4 w-4 mr-2" />
+              背景设置
             </Button>
-          )}
+            {user && (
+              <Button 
+                className="bg-amber-600 hover:bg-amber-700" 
+                onClick={() => setShowCreateModal(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                发布组队
+              </Button>
+            )}
+          </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 relative z-10">
         <div className="max-w-3xl mx-auto space-y-6">
           {parties.map((party) => (
             <Card

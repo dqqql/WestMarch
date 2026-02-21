@@ -88,9 +88,9 @@ export default function Home() {
   const homeResources = resources.filter((r) => r.category === "homeBg" || r.category === "general");
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 relative overflow-hidden">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100">
       {settings.homeBg && (
-        <div className="absolute inset-0 z-0" suppressHydrationWarning={true}>
+        <div className="fixed inset-0 z-0 pointer-events-none" suppressHydrationWarning={true}>
           <img src={settings.homeBg} alt="首页背景" className="w-full h-full object-cover opacity-45" />
         </div>
       )}
