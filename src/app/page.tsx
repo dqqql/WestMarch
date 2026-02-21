@@ -90,8 +90,8 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 relative overflow-hidden">
       {settings.homeBg && (
-        <div className="absolute inset-0 z-0">
-          <img src={settings.homeBg} alt="首页背景" className="w-full h-full object-cover opacity-20" />
+        <div className="absolute inset-0 z-0" suppressHydrationWarning={true}>
+          <img src={settings.homeBg} alt="首页背景" className="w-full h-full object-cover opacity-45" />
         </div>
       )}
 
@@ -288,6 +288,19 @@ export default function Home() {
               <Image className="h-4 w-4 mr-2" />
               背景设置
             </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                if (confirm("确定要清除所有本地设置数据吗？这将重置背景图片等设置。")) {
+                  localStorage.removeItem("wm-settings");
+                  localStorage.removeItem("wm-auth");
+                  location.reload();
+                }
+              }}
+            >
+              清除数据
+            </Button>
             {user ? (
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 text-amber-400">
@@ -306,83 +319,63 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-12 relative z-10">
-        <section className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
-            西征冒险公会
-          </h2>
-          <p className="text-xl text-zinc-400 max-w-2xl mx-auto">
-            探索未知的边境，记录传奇的冒险故事
-          </p>
-        </section>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-          <Card className="bg-zinc-900 border-zinc-800 hover:border-amber-500/50 transition-colors">
-            <CardHeader>
-              <BookOpen className="h-8 w-8 text-amber-500 mb-2" />
-              <CardTitle>公会档案馆</CardTitle>
-              <CardDescription>冒险规则与指南</CardDescription>
-            </CardHeader>
-            <CardContent>
+      <main className="min-h-[calc(100vh-160px)] flex items-center justify-center px-4 py-8 relative z-10">
+        <div className="w-full max-w-5xl">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+            <div className="flex flex-col gap-6">
               <Link href="/docs">
-                <Button className="w-full bg-zinc-800 hover:bg-zinc-700">
-                  查看文档
-                </Button>
+                <Card className="bg-zinc-900/90 border-zinc-800 hover:border-amber-500/50 transition-all duration-300 hover:scale-[1.02] cursor-pointer">
+                  <CardHeader className="p-4">
+                    <BookOpen className="h-6 w-6 text-amber-500 mb-2" />
+                    <CardTitle className="text-lg">公会档案馆</CardTitle>
+                    <CardDescription className="text-sm">冒险规则与指南</CardDescription>
+                  </CardHeader>
+                </Card>
               </Link>
-            </CardContent>
-          </Card>
 
-          <Card className="bg-zinc-900 border-zinc-800 hover:border-amber-500/50 transition-colors">
-            <CardHeader>
-              <Map className="h-8 w-8 text-amber-500 mb-2" />
-              <CardTitle>世界地图</CardTitle>
-              <CardDescription>探索边境世界</CardDescription>
-            </CardHeader>
-            <CardContent>
               <Link href="/map">
-                <Button className="w-full bg-zinc-800 hover:bg-zinc-700">
-                  打开地图
-                </Button>
+                <Card className="bg-zinc-900/90 border-zinc-800 hover:border-amber-500/50 transition-all duration-300 hover:scale-[1.02] cursor-pointer">
+                  <CardHeader className="p-4">
+                    <Map className="h-6 w-6 text-amber-500 mb-2" />
+                    <CardTitle className="text-lg">世界地图</CardTitle>
+                    <CardDescription className="text-sm">探索边境世界</CardDescription>
+                  </CardHeader>
+                </Card>
               </Link>
-            </CardContent>
-          </Card>
+            </div>
 
-          <Card className="bg-zinc-900 border-zinc-800 hover:border-amber-500/50 transition-colors">
-            <CardHeader>
-              <MessageSquare className="h-8 w-8 text-amber-500 mb-2" />
-              <CardTitle>酒馆布告栏</CardTitle>
-              <CardDescription>发布任务与战报</CardDescription>
-            </CardHeader>
-            <CardContent>
+            <div className="flex flex-col gap-6">
               <Link href="/board">
-                <Button className="w-full bg-zinc-800 hover:bg-zinc-700">
-                  查看布告
-                </Button>
+                <Card className="bg-zinc-900/90 border-zinc-800 hover:border-amber-500/50 transition-all duration-300 hover:scale-[1.02] cursor-pointer">
+                  <CardHeader className="p-4">
+                    <MessageSquare className="h-6 w-6 text-amber-500 mb-2" />
+                    <CardTitle className="text-lg">酒馆布告栏</CardTitle>
+                    <CardDescription className="text-sm">发布任务与战报</CardDescription>
+                  </CardHeader>
+                </Card>
               </Link>
-            </CardContent>
-          </Card>
 
-          <Card className={`${!user ? 'opacity-50 cursor-not-allowed' : ''} bg-zinc-900 border-zinc-800 hover:border-amber-500/50 transition-colors`}>
-            <CardHeader>
-              <Users className="h-8 w-8 text-amber-500 mb-2" />
-              <CardTitle>角色卡册</CardTitle>
-              <CardDescription>{user ? '管理你的冒险者' : '需要登录'}</CardDescription>
-            </CardHeader>
-            <CardContent>
               {user ? (
                 <Link href="/characters">
-                  <Button className="w-full bg-zinc-800 hover:bg-zinc-700">
-                    查看角色
-                  </Button>
+                  <Card className="bg-zinc-900/90 border-zinc-800 hover:border-amber-500/50 transition-all duration-300 hover:scale-[1.02] cursor-pointer">
+                    <CardHeader className="p-4">
+                      <Users className="h-6 w-6 text-amber-500 mb-2" />
+                      <CardTitle className="text-lg">角色卡册</CardTitle>
+                      <CardDescription className="text-sm">管理你的冒险者</CardDescription>
+                    </CardHeader>
+                  </Card>
                 </Link>
               ) : (
-                <Button className="w-full bg-zinc-800 hover:bg-zinc-700" disabled>
-                  <Lock className="h-4 w-4 mr-2" />
-                  需要登录
-                </Button>
+                <Card className="opacity-50 cursor-not-allowed bg-zinc-900/90 border-zinc-800">
+                  <CardHeader className="p-4">
+                    <Users className="h-6 w-6 text-amber-500 mb-2" />
+                    <CardTitle className="text-lg">角色卡册</CardTitle>
+                    <CardDescription className="text-sm">需要登录</CardDescription>
+                  </CardHeader>
+                </Card>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </main>
 

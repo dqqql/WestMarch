@@ -41,17 +41,21 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export function AppProvider({ children }: { children: ReactNode }) {
   const [resources, setResources] = useState<ResourceImage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [settings, setSettings] = useState<AppSettings>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const saved = localStorage.getItem("wm-settings");
-        return saved ? JSON.parse(saved) : defaultSettings;
-      } catch {
-        return defaultSettings;
+  const [settings, setSettings] = useState<AppSettings>(defaultSettings);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("wm-settings");
+      if (saved) {
+        try {
+          setSettings(JSON.parse(saved));
+        } catch {
+          localStorage.removeItem("wm-settings");
+        }
       }
+    } catch {
     }
-    return defaultSettings;
-  });
+  }, []);
 
   const loadResources = async () => {
     try {
@@ -72,7 +76,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       const settingsStr = JSON.stringify(settings);
-      localStorage.setItem("wm-settings", settingsStr);
+      try {
+        localStorage.setItem("wm-settings", settingsStr);
+      } catch (storageError) {
+        console.error("LocalStorage quota exceeded, trying to save without large images:", storageError);
+        const minimalSettings: AppSettings = {
+          homeBg: null,
+          mapBg: null,
+        };
+        localStorage.setItem("wm-settings", JSON.stringify(minimalSettings));
+      }
     } catch (error) {
       console.error("Failed to save settings:", error);
     }
