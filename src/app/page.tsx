@@ -1,0 +1,272 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { BookOpen, Map, MessageSquare, Users, Sword, X, CheckCircle2, User, LogOut, Lock } from "lucide-react";
+import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
+
+export default function Home() {
+  const { user, login, register, logout, isFirstTime } = useAuth();
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [loginUsername, setLoginUsername] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [registerUsername, setRegisterUsername] = useState("");
+  const [registerPassword, setRegisterPassword] = useState("");
+  const [registerConfirmPassword, setRegisterConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (isFirstTime) {
+      setShowRegisterModal(true);
+    }
+  }, [isFirstTime]);
+
+  const handleLogin = () => {
+    const success = login(loginUsername, loginPassword);
+    if (success) {
+      setShowLoginModal(false);
+      setError("");
+      setLoginUsername("");
+      setLoginPassword("");
+    } else {
+      setError("用户名或密码错误");
+    }
+  };
+
+  const handleRegister = () => {
+    if (registerPassword !== registerConfirmPassword) {
+      setError("两次输入的密码不一致");
+      return;
+    }
+    if (registerPassword.length < 4) {
+      setError("密码至少需要4位");
+      return;
+    }
+    const success = register(registerUsername, registerPassword);
+    if (success) {
+      setShowRegisterModal(false);
+      setError("");
+      setRegisterUsername("");
+      setRegisterPassword("");
+      setRegisterConfirmPassword("");
+    } else {
+      setError("注册失败");
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+      {showLoginModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50" onClick={() => setShowLoginModal(false)}>
+          <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold">登录</h3>
+              <button onClick={() => setShowLoginModal(false)} className="text-zinc-400 hover:text-white">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              {error && <div className="text-red-400 text-sm bg-red-900/20 p-3 rounded">{error}</div>}
+              <div>
+                <label className="block text-sm text-zinc-400 mb-1">用户名</label>
+                <input 
+                  type="text" 
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white" 
+                  placeholder="输入你的冒险者名称"
+                  value={loginUsername}
+                  onChange={(e) => setLoginUsername(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-zinc-400 mb-1">密码</label>
+                <input 
+                  type="password" 
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white" 
+                  placeholder="输入密码"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                />
+              </div>
+              <Button className="w-full bg-amber-600 hover:bg-amber-700" onClick={handleLogin}>
+                登录
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showRegisterModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold">欢迎加入公会</h3>
+            </div>
+            <div className="space-y-4">
+              {error && <div className="text-red-400 text-sm bg-red-900/20 p-3 rounded">{error}</div>}
+              <div className="flex items-start gap-3 p-4 bg-amber-900/30 border border-amber-700/50 rounded-lg">
+                <CheckCircle2 className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                <div className="text-sm">
+                  <p className="text-white font-medium">欢迎加入西征冒险公会！</p>
+                  <p className="text-zinc-300 mt-1">请设置你的冒险者名称和密码。</p>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm text-zinc-400 mb-1">冒险者名称</label>
+                <input 
+                  type="text" 
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white" 
+                  placeholder="你的角色名"
+                  value={registerUsername}
+                  onChange={(e) => setRegisterUsername(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-zinc-400 mb-1">密码</label>
+                <input 
+                  type="password" 
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white" 
+                  placeholder="设置密码"
+                  value={registerPassword}
+                  onChange={(e) => setRegisterPassword(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-zinc-400 mb-1">确认密码</label>
+                <input 
+                  type="password" 
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white" 
+                  placeholder="再次输入密码"
+                  value={registerConfirmPassword}
+                  onChange={(e) => setRegisterConfirmPassword(e.target.value)}
+                />
+              </div>
+              <Button className="w-full bg-amber-600 hover:bg-amber-700" onClick={handleRegister}>
+                开始冒险
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <header className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sword className="h-8 w-8 text-amber-500" />
+            <h1 className="text-2xl font-bold tracking-tight">WestMarch</h1>
+          </div>
+          <div className="flex items-center gap-4">
+            {user ? (
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 text-amber-400">
+                  <User className="h-5 w-5" />
+                  <span>{user.username}</span>
+                </div>
+                <Button variant="ghost" onClick={logout}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  退出
+                </Button>
+              </div>
+            ) : (
+              <Button variant="ghost" onClick={() => setShowLoginModal(true)}>登录</Button>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <main className="container mx-auto px-4 py-12">
+        <section className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
+            西征冒险公会
+          </h2>
+          <p className="text-xl text-zinc-400 max-w-2xl mx-auto">
+            探索未知的边境，记录传奇的冒险故事
+          </p>
+        </section>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+          <Card className="bg-zinc-900 border-zinc-800 hover:border-amber-500/50 transition-colors">
+            <CardHeader>
+              <BookOpen className="h-8 w-8 text-amber-500 mb-2" />
+              <CardTitle>公会档案馆</CardTitle>
+              <CardDescription>冒险规则与指南</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link href="/docs">
+                <Button className="w-full bg-zinc-800 hover:bg-zinc-700">
+                  查看文档
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-zinc-900 border-zinc-800 hover:border-amber-500/50 transition-colors">
+            <CardHeader>
+              <Map className="h-8 w-8 text-amber-500 mb-2" />
+              <CardTitle>世界地图</CardTitle>
+              <CardDescription>探索边境世界</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link href="/map">
+                <Button className="w-full bg-zinc-800 hover:bg-zinc-700">
+                  打开地图
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-zinc-900 border-zinc-800 hover:border-amber-500/50 transition-colors">
+            <CardHeader>
+              <MessageSquare className="h-8 w-8 text-amber-500 mb-2" />
+              <CardTitle>酒馆布告栏</CardTitle>
+              <CardDescription>发布任务与战报</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link href="/board">
+                <Button className="w-full bg-zinc-800 hover:bg-zinc-700">
+                  查看布告
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card className={`${!user ? 'opacity-50 cursor-not-allowed' : ''} bg-zinc-900 border-zinc-800 hover:border-amber-500/50 transition-colors`}>
+            <CardHeader>
+              <Users className="h-8 w-8 text-amber-500 mb-2" />
+              <CardTitle>角色卡册</CardTitle>
+              <CardDescription>{user ? '管理你的冒险者' : '需要登录'}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {user ? (
+                <Link href="/characters">
+                  <Button className="w-full bg-zinc-800 hover:bg-zinc-700">
+                    查看角色
+                  </Button>
+                </Link>
+              ) : (
+                <Button className="w-full bg-zinc-800 hover:bg-zinc-700" disabled>
+                  <Lock className="h-4 w-4 mr-2" />
+                  需要登录
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </main>
+
+      <footer className="border-t border-zinc-800 bg-zinc-900 py-8">
+        <div className="container mx-auto px-4 text-center text-zinc-500">
+          <p>WestMarch Portal &copy; 2025</p>
+        </div>
+      </footer>
+    </div>
+  );
+}

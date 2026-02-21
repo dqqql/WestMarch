@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum PostTag {
+  DM悬赏
+  寻找队伍
+  跑团战报
+}
+
+enum MapNodeType {
+  城镇
+  地点
+  事件
+}
+
+model User {
+  id        String    @id @default(cuid())
+  username  String    @unique
+  password  String
+  isDM      Boolean   @default(false)
+  characters Character[]
+  posts     Post[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Character {
+  id        String    @id @default(cuid())
+  name      String
+  race      String
+  class     String
+  img       String?
+  str       Int?
+  dex       Int?
+  con       Int?
+  int       Int?
+  wis       Int?
+  cha       Int?
+  bio       String?
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  posts     Post[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Post {
+  id        String    @id @default(cuid())
+  title     String
+  content   String
+  tag       PostTag
+  authorId  String
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  characterId String?
+  character Character?  @relation(fields: [characterId], references: [id])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model MapNode {
+  id          String     @id @default(cuid())
+  label       String
+  type        MapNodeType
+  x           Float
+  y           Float
+  description String?
+  edgesAsSource MapEdge[] @relation("source")
+  edgesAsTarget MapEdge[] @relation("target")
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model MapEdge {
+  id       String   @id @default(cuid())
+  sourceId String
+  source   MapNode  @relation("source", fields: [sourceId], references: [id], onDelete: Cascade)
+  targetId String
+  target   MapNode  @relation("target", fields: [targetId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
