@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Card,
   CardContent,
@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Plus, ArrowLeft, Tag, X, Edit2, Trash2, Send, MessageCircle, Users, Image, Lock, Eye } from "lucide-react";
+import { MessageSquare, Plus, ArrowLeft, Tag, X, Edit2, Trash2, Send, MessageCircle, Users, Image, Lock, Eye, Search, Clock, Trash } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useApp } from "@/contexts/AppContext";
@@ -90,6 +90,15 @@ export default function BoardPage() {
   const [showResourceSelector, setShowResourceSelector] = useState(false);
   const [password, setPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchHistory, setSearchHistory] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem("wm-search-history");
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [];
+  });
 
   const handleCreatePost = () => {
     if (!newPost.title || !newPost.content) return;
@@ -170,6 +179,63 @@ export default function BoardPage() {
   };
 
   const boardResources = resources.filter((r) => r.category === "boardBg" || r.category === "general");
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    if (query.trim() && !searchHistory.includes(query)) {
+      const newHistory = [query, ...searchHistory].slice(0, 10);
+      setSearchHistory(newHistory);
+      try {
+        localStorage.setItem("wm-search-history", JSON.stringify(newHistory));
+      } catch {}
+    }
+  };
+
+  const clearSearchHistory = () => {
+    setSearchHistory([]);
+    try {
+      localStorage.removeItem("wm-search-history");
+    } catch {}
+  };
+
+  const highlightText = (text: string, query: string) => {
+    if (!query.trim()) return text;
+    const parts = text.split(new RegExp(`(${query})`, "gi"));
+    return parts.map((part, i) =>
+      part.toLowerCase() === query.toLowerCase() ? (
+        <mark key={i} className="bg-amber-500/30 text-amber-200 px-1 rounded">
+          {part}
+        </mark>
+      ) : (
+        part
+      )
+    );
+  };
+
+  const sortedPosts = useMemo(() => {
+    return [...posts].sort((a, b) => {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+  }, [posts]);
+
+  const filteredPosts = useMemo(() => {
+    let result = sortedPosts;
+    
+    if (selectedTag) {
+      result = result.filter(post => post.tag === selectedTag);
+    }
+    
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(post =>
+        post.title.toLowerCase().includes(query) ||
+        post.content.toLowerCase().includes(query) ||
+        post.author.toLowerCase().includes(query)
+      );
+    }
+    
+    return result;
+  }, [sortedPosts, selectedTag, searchQuery]);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -388,11 +454,80 @@ export default function BoardPage() {
         </div>
       </header>
       <main className="container mx-auto px-4 py-8 relative z-10">
-        <div className="max-w-3xl mx-auto space-y-6">
-          {posts.map((post) => (
+        <div className="max-w-5xl mx-auto">
+          <div className="relative mb-6">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400" />
+              <input
+                type="text"
+                placeholder="搜索帖子、作者或内容..."
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg pl-10 pr-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500/50"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              )}
+            </div>
+            {searchHistory.length > 0 && !searchQuery && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-800 border border-zinc-700 rounded-lg p-3 z-50">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-zinc-400 flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    搜索历史
+                  </span>
+                  <button
+                    onClick={clearSearchHistory}
+                    className="text-xs text-zinc-500 hover:text-red-400 flex items-center gap-1"
+                  >
+                    <Trash className="h-3 w-3" />
+                    清空
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {searchHistory.map((item, i) => (
+                    <button
+                      key={i}
+                      onClick={() => handleSearch(item)}
+                      className="px-3 py-1 bg-zinc-700 hover:bg-zinc-600 rounded text-sm text-zinc-300 transition-colors"
+                    >
+                      {item}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-wrap gap-2 mb-6">
+            <Button
+              variant={selectedTag === null ? "default" : "ghost"}
+              onClick={() => setSelectedTag(null)}
+              className={selectedTag === null ? "bg-amber-600 hover:bg-amber-700" : ""}
+            >
+              全部
+            </Button>
+            {["DM悬赏", "寻找队伍", "跑团战报"].map((tag) => (
+              <Button
+                key={tag}
+                variant={selectedTag === tag ? "default" : "ghost"}
+                onClick={() => setSelectedTag(tag)}
+                className={selectedTag === tag ? "bg-amber-600 hover:bg-amber-700" : ""}
+              >
+                {tag}
+              </Button>
+            ))}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {filteredPosts.map((post) => (
             <Card
               key={post.id}
-              className="bg-zinc-900 border-zinc-800 hover:border-amber-500/50 transition-colors"
+              className="bg-zinc-900 border-zinc-800 hover:border-amber-500/50 transition-colors flex flex-col"
             >
               <CardHeader>
                 <div className="flex items-start justify-between gap-4">
@@ -405,9 +540,11 @@ export default function BoardPage() {
                         {post.tag}
                       </span>
                     </div>
-                    <CardTitle className="text-xl">{post.title}</CardTitle>
+                    <CardTitle className="text-xl">
+                      {searchQuery ? highlightText(post.title, searchQuery) : post.title}
+                    </CardTitle>
                     <CardDescription className="flex items-center gap-2">
-                      <span>作者: {post.author}</span>
+                      <span>作者: {searchQuery ? highlightText(post.author, searchQuery) : post.author}</span>
                       {post.character && <span>• 角色: {post.character}</span>}
                       <span className="text-zinc-600">
                         • {new Date(post.createdAt).toLocaleString("zh-CN")}
@@ -426,8 +563,10 @@ export default function BoardPage() {
                   )}
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-zinc-300">{post.content}</p>
+              <CardContent className="space-y-4 flex-1">
+                <p className="text-zinc-300">
+                  {searchQuery ? highlightText(post.content, searchQuery) : post.content}
+                </p>
                 
                 {post.tag === "寻找队伍" && user && (
                   <Link
@@ -440,7 +579,7 @@ export default function BoardPage() {
                   </Link>
                 )}
                 
-                <div className="border-t border-zinc-800 pt-4">
+                <div className="border-t border-zinc-800 pt-4 mt-auto">
                   <div className="flex items-center gap-2 mb-3 text-zinc-400">
                     <MessageCircle className="h-4 w-4" />
                     <span className="text-sm">评论 ({post.comments.length})</span>
@@ -477,6 +616,7 @@ export default function BoardPage() {
               </CardContent>
             </Card>
           ))}
+          </div>
         </div>
       </main>
     </div>

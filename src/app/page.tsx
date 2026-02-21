@@ -326,60 +326,76 @@ export default function Home() {
 
       <main className="min-h-[calc(100vh-160px)] flex items-center justify-center px-4 py-8 relative z-10">
         <div className="w-full max-w-5xl">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
-            <div className="flex flex-col gap-6">
-              <Link href="/docs">
-                <Card className="bg-zinc-900/90 border-zinc-800 hover:border-amber-500/50 transition-all duration-300 hover:scale-[1.02] cursor-pointer">
-                  <CardHeader className="p-4">
-                    <BookOpen className="h-6 w-6 text-amber-500 mb-2" />
-                    <CardTitle className="text-lg">公会档案馆</CardTitle>
-                    <CardDescription className="text-sm">冒险规则与指南</CardDescription>
-                  </CardHeader>
-                </Card>
-              </Link>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+            <Link href="/docs">
+              <Card className="bg-zinc-900/90 border-zinc-800 hover:border-amber-500/50 transition-all duration-300 hover:scale-[1.02] cursor-pointer">
+                <CardHeader className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <CardTitle className="text-lg">公会档案馆</CardTitle>
+                      <CardDescription className="text-sm">冒险规则与指南，房规，战报等各种文档的集中处</CardDescription>
+                    </div>
+                    <BookOpen className="h-12 w-12 text-amber-500 flex-shrink-0" />
+                  </div>
+                </CardHeader>
+              </Card>
+            </Link>
 
-              <Link href="/map">
-                <Card className="bg-zinc-900/90 border-zinc-800 hover:border-amber-500/50 transition-all duration-300 hover:scale-[1.02] cursor-pointer">
-                  <CardHeader className="p-4">
-                    <Map className="h-6 w-6 text-amber-500 mb-2" />
-                    <CardTitle className="text-lg">世界地图</CardTitle>
-                    <CardDescription className="text-sm">探索边境世界</CardDescription>
-                  </CardHeader>
-                </Card>
-              </Link>
-            </div>
+            <Link href="/map">
+              <Card className="bg-zinc-900/90 border-zinc-800 hover:border-amber-500/50 transition-all duration-300 hover:scale-[1.02] cursor-pointer">
+                <CardHeader className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <CardTitle className="text-lg">世界地图</CardTitle>
+                      <CardDescription className="text-sm">探索边境世界</CardDescription>
+                    </div>
+                    <Map className="h-12 w-12 text-amber-500 flex-shrink-0" />
+                  </div>
+                </CardHeader>
+              </Card>
+            </Link>
 
-            <div className="flex flex-col gap-6">
-                <Link href="/board">
-                  <Card className="bg-zinc-900/90 border-zinc-800 hover:border-amber-500/50 transition-all duration-300 hover:scale-[1.02] cursor-pointer">
-                    <CardHeader className="p-4">
-                      <MessageSquare className="h-6 w-6 text-amber-500 mb-2" />
+            <Link href="/board">
+              <Card className="bg-zinc-900/90 border-zinc-800 hover:border-amber-500/50 transition-all duration-300 hover:scale-[1.02] cursor-pointer">
+                <CardHeader className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
                       <CardTitle className="text-lg">酒馆布告栏</CardTitle>
                       <CardDescription className="text-sm">发布任务与战报</CardDescription>
-                    </CardHeader>
-                  </Card>
-                </Link>
+                    </div>
+                    <MessageSquare className="h-12 w-12 text-amber-500 flex-shrink-0" />
+                  </div>
+                </CardHeader>
+              </Card>
+            </Link>
 
-                {user ? (
-                  <Link href="/party">
-                    <Card className="bg-zinc-900/90 border-zinc-800 hover:border-amber-500/50 transition-all duration-300 hover:scale-[1.02] cursor-pointer">
-                      <CardHeader className="p-4">
-                        <UsersIcon className="h-6 w-6 text-amber-500 mb-2" />
+            {user ? (
+              <Link href="/party">
+                <Card className="bg-zinc-900/90 border-zinc-800 hover:border-amber-500/50 transition-all duration-300 hover:scale-[1.02] cursor-pointer">
+                  <CardHeader className="p-6">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1">
                         <CardTitle className="text-lg">组队界面</CardTitle>
                         <CardDescription className="text-sm">寻找冒险伙伴</CardDescription>
-                      </CardHeader>
-                    </Card>
-                  </Link>
-                ) : (
-                  <Card className="opacity-50 cursor-not-allowed bg-zinc-900/90 border-zinc-800">
-                    <CardHeader className="p-4">
-                      <UsersIcon className="h-6 w-6 text-amber-500 mb-2" />
+                      </div>
+                      <UsersIcon className="h-12 w-12 text-amber-500 flex-shrink-0" />
+                    </div>
+                  </CardHeader>
+                </Card>
+              </Link>
+            ) : (
+              <Card className="opacity-50 cursor-not-allowed bg-zinc-900/90 border-zinc-800">
+                <CardHeader className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
                       <CardTitle className="text-lg">组队界面</CardTitle>
                       <CardDescription className="text-sm">需要登录</CardDescription>
-                    </CardHeader>
-                  </Card>
-                )}
-              </div>
+                    </div>
+                    <UsersIcon className="h-12 w-12 text-amber-500 flex-shrink-0" />
+                  </div>
+                </CardHeader>
+              </Card>
+            )}
           </div>
         </div>
       </main>

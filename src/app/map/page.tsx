@@ -7,7 +7,6 @@ import {
   addEdge,
   useNodesState,
   useEdgesState,
-  Controls,
   Background,
   MiniMap,
   Handle,
@@ -318,10 +317,11 @@ function MapContent() {
             nodesDraggable={isEditMode}
             nodesConnectable={isEditMode}
             fitView
+            minZoom={0.1}
+            maxZoom={2.0}
             className={settings.mapBg ? "bg-transparent" : "bg-zinc-950"}
           >
             {!settings.mapBg && <Background color="#3f3f46" gap={16} />}
-            <Controls className="bg-zinc-900 border-zinc-800 text-zinc-100" />
             <MiniMap
               className="bg-zinc-900 border-zinc-800"
               nodeColor={(n) => {
