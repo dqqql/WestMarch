@@ -79,29 +79,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
     loadResources();
   }, []);
 
-  useEffect(() => {
+  const saveSettings = (settingsToSave: AppSettings) => {
     try {
-      const settingsStr = JSON.stringify(settings);
+      const settingsStr = JSON.stringify(settingsToSave);
+      localStorage.setItem("wm-settings", settingsStr);
+    } catch {
+      const minimalSettings: AppSettings = {
+        homeBg: null,
+        mapBg: null,
+        userNickname: settingsToSave.userNickname,
+        userAvatar: null,
+        sessionHistory: settingsToSave.sessionHistory || [],
+      };
       try {
-        localStorage.setItem("wm-settings", settingsStr);
-      } catch (storageError) {
-        console.error("LocalStorage quota exceeded, trying to save without large images:", storageError);
-        try {
-          const minimalSettings: AppSettings = {
-            homeBg: null,
-            mapBg: null,
-            userNickname: settings.userNickname,
-            userAvatar: null,
-            sessionHistory: settings.sessionHistory || [],
-          };
-          localStorage.setItem("wm-settings", JSON.stringify(minimalSettings));
-        } catch {
-          console.error("Failed to save minimal settings:", storageError);
-        }
+        localStorage.setItem("wm-settings", JSON.stringify(minimalSettings));
+      } catch {
+        const tinySettings: Partial<AppSettings> = {
+          userNickname: settingsToSave.userNickname,
+          sessionHistory: settingsToSave.sessionHistory || [],
+        };
+        localStorage.setItem("wm-settings", JSON.stringify(tinySettings));
       }
-    } catch (error) {
-      console.error("Failed to save settings:", error);
     }
+  };
+
+  useEffect(() => {
+    saveSettings(settings);
   }, [settings]);
 
   const addResource = async (image: Omit<ResourceImage, "id" | "createdAt">) => {
