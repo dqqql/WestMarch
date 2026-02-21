@@ -18,6 +18,7 @@ export interface AppSettings {
   mapBg: string | null;
   userNickname: string | null;
   userAvatar: string | null;
+  sessionHistory: string[];
 }
 
 interface AppContextType {
@@ -38,6 +39,7 @@ const defaultSettings: AppSettings = {
   mapBg: null,
   userNickname: null,
   userAvatar: null,
+  sessionHistory: [],
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -87,6 +89,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const minimalSettings: AppSettings = {
           homeBg: null,
           mapBg: null,
+          userNickname: null,
+          userAvatar: null,
+          sessionHistory: [],
         };
         localStorage.setItem("wm-settings", JSON.stringify(minimalSettings));
       }
