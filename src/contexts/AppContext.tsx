@@ -86,14 +86,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
         localStorage.setItem("wm-settings", settingsStr);
       } catch (storageError) {
         console.error("LocalStorage quota exceeded, trying to save without large images:", storageError);
-        const minimalSettings: AppSettings = {
-          homeBg: null,
-          mapBg: null,
-          userNickname: null,
-          userAvatar: null,
-          sessionHistory: [],
-        };
-        localStorage.setItem("wm-settings", JSON.stringify(minimalSettings));
+        try {
+          const minimalSettings: AppSettings = {
+            homeBg: null,
+            mapBg: null,
+            userNickname: settings.userNickname,
+            userAvatar: null,
+            sessionHistory: settings.sessionHistory || [],
+          };
+          localStorage.setItem("wm-settings", JSON.stringify(minimalSettings));
+        } catch {
+          console.error("Failed to save minimal settings:", storageError);
+        }
       }
     } catch (error) {
       console.error("Failed to save settings:", error);
