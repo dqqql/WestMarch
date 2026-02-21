@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { BookOpen, Map, MessageSquare, Users, Sword, X, CheckCircle2, User, LogOut, Lock, Image, Eye, FolderOpen } from "lucide-react";
+import { BookOpen, Map, MessageSquare, Users, Sword, X, CheckCircle2, User, LogOut, Lock, Image, Eye, FolderOpen, Users as UsersIcon } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useApp } from "@/contexts/AppContext";
@@ -303,8 +303,13 @@ export default function Home() {
             </Button>
             {user ? (
               <div className="flex items-center gap-4">
+                <Link href="/profile">
+                  <Button variant="ghost" size="sm">
+                    <User className="h-4 w-4 mr-2" />
+                    个人中心
+                  </Button>
+                </Link>
                 <div className="flex items-center gap-2 text-amber-400">
-                  <User className="h-5 w-5" />
                   <span>{user.username}</span>
                 </div>
                 <Button variant="ghost" onClick={logout}>
@@ -345,36 +350,36 @@ export default function Home() {
             </div>
 
             <div className="flex flex-col gap-6">
-              <Link href="/board">
-                <Card className="bg-zinc-900/90 border-zinc-800 hover:border-amber-500/50 transition-all duration-300 hover:scale-[1.02] cursor-pointer">
-                  <CardHeader className="p-4">
-                    <MessageSquare className="h-6 w-6 text-amber-500 mb-2" />
-                    <CardTitle className="text-lg">酒馆布告栏</CardTitle>
-                    <CardDescription className="text-sm">发布任务与战报</CardDescription>
-                  </CardHeader>
-                </Card>
-              </Link>
-
-              {user ? (
-                <Link href="/characters">
+                <Link href="/board">
                   <Card className="bg-zinc-900/90 border-zinc-800 hover:border-amber-500/50 transition-all duration-300 hover:scale-[1.02] cursor-pointer">
                     <CardHeader className="p-4">
-                      <Users className="h-6 w-6 text-amber-500 mb-2" />
-                      <CardTitle className="text-lg">角色卡册</CardTitle>
-                      <CardDescription className="text-sm">管理你的冒险者</CardDescription>
+                      <MessageSquare className="h-6 w-6 text-amber-500 mb-2" />
+                      <CardTitle className="text-lg">酒馆布告栏</CardTitle>
+                      <CardDescription className="text-sm">发布任务与战报</CardDescription>
                     </CardHeader>
                   </Card>
                 </Link>
-              ) : (
-                <Card className="opacity-50 cursor-not-allowed bg-zinc-900/90 border-zinc-800">
-                  <CardHeader className="p-4">
-                    <Users className="h-6 w-6 text-amber-500 mb-2" />
-                    <CardTitle className="text-lg">角色卡册</CardTitle>
-                    <CardDescription className="text-sm">需要登录</CardDescription>
-                  </CardHeader>
-                </Card>
-              )}
-            </div>
+
+                {user ? (
+                  <Link href="/party">
+                    <Card className="bg-zinc-900/90 border-zinc-800 hover:border-amber-500/50 transition-all duration-300 hover:scale-[1.02] cursor-pointer">
+                      <CardHeader className="p-4">
+                        <UsersIcon className="h-6 w-6 text-amber-500 mb-2" />
+                        <CardTitle className="text-lg">组队界面</CardTitle>
+                        <CardDescription className="text-sm">寻找冒险伙伴</CardDescription>
+                      </CardHeader>
+                    </Card>
+                  </Link>
+                ) : (
+                  <Card className="opacity-50 cursor-not-allowed bg-zinc-900/90 border-zinc-800">
+                    <CardHeader className="p-4">
+                      <UsersIcon className="h-6 w-6 text-amber-500 mb-2" />
+                      <CardTitle className="text-lg">组队界面</CardTitle>
+                      <CardDescription className="text-sm">需要登录</CardDescription>
+                    </CardHeader>
+                  </Card>
+                )}
+              </div>
           </div>
         </div>
       </main>

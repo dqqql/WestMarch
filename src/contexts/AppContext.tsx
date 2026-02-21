@@ -16,6 +16,8 @@ export interface ResourceImage {
 export interface AppSettings {
   homeBg: string | null;
   mapBg: string | null;
+  userNickname: string | null;
+  userAvatar: string | null;
 }
 
 interface AppContextType {
@@ -34,6 +36,8 @@ const PASSWORD = "WM2006";
 const defaultSettings: AppSettings = {
   homeBg: null,
   mapBg: null,
+  userNickname: null,
+  userAvatar: null,
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);

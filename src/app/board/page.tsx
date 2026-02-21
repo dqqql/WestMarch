@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Plus, ArrowLeft, Tag, X, Edit2, Trash2, Send, MessageCircle } from "lucide-react";
+import { MessageSquare, Plus, ArrowLeft, Tag, X, Edit2, Trash2, Send, MessageCircle, Users } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -307,6 +307,17 @@ export default function BoardPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-zinc-300">{post.content}</p>
+                
+                {post.tag === "寻找队伍" && user && (
+                  <Link
+                    href={`/party?title=${encodeURIComponent(post.title)}&content=${encodeURIComponent(post.content)}`}
+                  >
+                    <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                      <Users className="h-4 w-4 mr-2" />
+                      一键发起组队
+                    </Button>
+                  </Link>
+                )}
                 
                 <div className="border-t border-zinc-800 pt-4">
                   <div className="flex items-center gap-2 mb-3 text-zinc-400">
