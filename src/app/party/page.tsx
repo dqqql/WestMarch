@@ -46,6 +46,7 @@ interface Party {
   title: string;
   content: string;
   character: Character | null;
+  members: Character[];
   currentCount: number;
   maxCount: number;
   nextSessionTime: string | null;
@@ -59,6 +60,7 @@ const initialParties: Party[] = [
     title: "探索废弃矿山",
     content: "我们需要一名战士和一名治疗者来探索西部边境的废弃矿山，据说那里藏有丰富的矿石和古老的宝藏。",
     character: initialCharacters[0],
+    members: [initialCharacters[0]],
     currentCount: 1,
     maxCount: 4,
     nextSessionTime: new Date(Date.now() + 86400000).toISOString().slice(0, 16),
@@ -83,6 +85,7 @@ export default function PartyPage() {
           title,
           content,
           character: null,
+          members: [],
           currentCount: 1,
           maxCount: 4,
           nextSessionTime: null,
@@ -96,6 +99,8 @@ export default function PartyPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingParty, setEditingParty] = useState<Party | null>(null);
   const [showCharacterSelector, setShowCharacterSelector] = useState(false);
+  const [showJoinCharacterSelector, setShowJoinCharacterSelector] = useState(false);
+  const [joiningPartyId, setJoiningPartyId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     content: "",
@@ -116,7 +121,8 @@ export default function PartyPage() {
       title: formData.title,
       content: formData.content,
       character: formData.character,
-      currentCount: 1,
+      members: formData.character ? [formData.character] : [],
+      currentCount: formData.character ? 1 : 0,
       maxCount: formData.maxCount,
       nextSessionTime: formData.nextSessionTime || null,
       author: user?.username || "匿名",
@@ -176,12 +182,20 @@ export default function PartyPage() {
     return user && party.author === user.username;
   };
 
-  const joinParty = (id: string) => {
+  const selectJoinCharacter = (char: Character) => {
+    if (!joiningPartyId) return;
     setParties(parties.map(p => 
-      p.id === id && p.currentCount < p.maxCount 
-        ? { ...p, currentCount: p.currentCount + 1 } 
+      p.id === joiningPartyId && p.currentCount < p.maxCount && !p.members.some(m => m.id === char.id)
+        ? { ...p, currentCount: p.currentCount + 1, members: [...p.members, char] } 
         : p
     ));
+    setShowJoinCharacterSelector(false);
+    setJoiningPartyId(null);
+  };
+
+  const startJoinParty = (id: string) => {
+    setJoiningPartyId(id);
+    setShowJoinCharacterSelector(true);
   };
 
   if (!user) {
@@ -238,6 +252,52 @@ export default function PartyPage() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showJoinCharacterSelector && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold flex items-center gap-2">
+                <User className="h-5 w-5" />
+                选择加入队伍的角色
+              </h3>
+              <button onClick={() => { setShowJoinCharacterSelector(false); setJoiningPartyId(null); }} className="text-zinc-400 hover:text-white">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {characters.map((char) => {
+                  const party = parties.find(p => p.id === joiningPartyId);
+                  const alreadyJoined = party?.members.some(m => m.id === char.id) || false;
+                  return (
+                    <div
+                      key={char.id}
+                      className={`bg-zinc-800 border border-zinc-700 rounded-lg p-4 cursor-pointer transition-colors ${alreadyJoined ? 'opacity-50 cursor-not-allowed' : 'hover:border-amber-500/50'}`}
+                      onClick={() => !alreadyJoined && selectJoinCharacter(char)}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 bg-zinc-900 rounded-lg flex items-center justify-center overflow-hidden">
+                          {char.img ? (
+                            <img src={char.img} alt={char.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <User className="h-8 w-8 text-zinc-600" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-medium">{char.name}</p>
+                          <p className="text-sm text-zinc-400">{char.race} · {char.class}</p>
+                          {alreadyJoined && <p className="text-xs text-amber-400 mt-1">已加入</p>}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -419,10 +479,30 @@ export default function PartyPage() {
               <CardContent className="space-y-4">
                 <p className="text-zinc-300">{party.content}</p>
                 
+                {party.members.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-zinc-400">参与角色:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {party.members.map((member) => (
+                        <div key={member.id} className="flex items-center gap-2 bg-zinc-800 px-3 py-1 rounded-full border border-zinc-700">
+                          <div className="w-6 h-6 bg-zinc-900 rounded-full flex items-center justify-center overflow-hidden">
+                            {member.img ? (
+                              <img src={member.img} alt={member.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <User className="h-3 w-3 text-zinc-600" />
+                            )}
+                          </div>
+                          <span className="text-sm">{member.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
                 {party.currentCount < party.maxCount && (
                   <Button 
                     className="w-full bg-blue-600 hover:bg-blue-700"
-                    onClick={() => joinParty(party.id)}
+                    onClick={() => startJoinParty(party.id)}
                   >
                     <Users className="h-4 w-4 mr-2" />
                     加入队伍
