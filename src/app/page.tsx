@@ -265,7 +265,7 @@ export default function Home() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sword className="h-8 w-8 text-amber-500" />
-            <h1 className="text-2xl font-bold tracking-tight">WestMarch</h1>
+            <h1 className="text-2xl font-bold tracking-tight">不冻港的西征世界</h1>
           </div>
           <div className="flex items-center gap-4">
             <Link href="/resources">
@@ -386,7 +386,7 @@ export default function Home() {
 
       <footer className="border-t border-zinc-800 bg-zinc-900 py-8 relative z-10">
         <div className="container mx-auto px-4 text-center text-zinc-500">
-          <p>WestMarch Portal &copy; 2025</p>
+          <p>不冻港的西征世界 &copy; 2025</p>
         </div>
       </footer>
     </div>

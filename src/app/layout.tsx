@@ -5,7 +5,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { AppProvider } from "@/contexts/AppContext";
 
 export const metadata: Metadata = {
-  title: "WestMarch - D&D Campaign Portal",
+  title: "不冻港的西征世界 - D&D Campaign Portal",
   description: "A lightweight Dockerized D&D campaign portal",
 };
 
