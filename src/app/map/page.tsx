@@ -95,6 +95,7 @@ function MapContent() {
   const [showResourceSelector, setShowResourceSelector] = useState(false);
   const [password, setPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [mapBgError, setMapBgError] = useState(false);
   const { resources, settings, updateSettings, verifyPassword } = useApp();
 
   const onConnect = useCallback(
@@ -125,9 +126,9 @@ function MapContent() {
   const startEditNode = () => {
     if (!selectedNode) return;
     setEditForm({
-      label: selectedNode.data.label,
-      type: selectedNode.data.type || "地点",
-      description: selectedNode.data.description || "",
+      label: selectedNode.data.label as string,
+      type: (selectedNode.data.type as "城镇" | "地点" | "事件") || "地点",
+      description: (selectedNode.data.description as string) || "",
     });
     setIsEditingNode(true);
   };
@@ -147,7 +148,7 @@ function MapContent() {
 
   const deleteNode = () => {
     if (!selectedNode) return;
-    if (confirm(`确定要删除节点"${selectedNode.data.label}"吗？`)) {
+    if (confirm(`确定要删除节点"${selectedNode.data.label as string}"吗？`)) {
       setNodes((nds) => nds.filter((n) => n.id !== selectedNode.id));
       setEdges((eds) => eds.filter((e) => e.source !== selectedNode.id && e.target !== selectedNode.id));
       setSelectedNode(null);
@@ -172,11 +173,21 @@ function MapContent() {
 
   const mapResources = resources.filter((r) => r.category === "mapBg" || r.category === "general");
 
+  const handleMapBgError = () => {
+    setMapBgError(true);
+    updateSettings({ mapBg: null });
+  };
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col">
-      {settings.mapBg && (
+      {settings.mapBg && !mapBgError && (
         <div className="fixed inset-0 z-0 pointer-events-none">
-          <img src={settings.mapBg} alt="地图背景" className="w-full h-full object-cover opacity-30 blur-[2px]" />
+          <img 
+            src={settings.mapBg} 
+            alt="地图背景" 
+            className="w-full h-full object-cover opacity-30 blur-[2px]" 
+            onError={handleMapBgError}
+          />
         </div>
       )}
       {showPasswordModal && (
@@ -325,7 +336,7 @@ function MapContent() {
             <MiniMap
               className="bg-zinc-900 border-zinc-800"
               nodeColor={(n) => {
-                const type = n.data.type;
+                const type = n.data.type as string;
                 if (type === "城镇") return "#3b82f6";
                 if (type === "地点") return "#22c55e";
                 return "#f59e0b";
@@ -339,7 +350,7 @@ function MapContent() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Info className="h-5 w-5 text-amber-500" />
-                  {selectedNode.data.label}
+                  {selectedNode.data.label as string}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -386,7 +397,7 @@ function MapContent() {
                   <div className="space-y-4">
                     <div>
                       <span className="text-zinc-400 text-sm">类型:</span>
-                      <span className="ml-2 text-white">{selectedNode.data.type}</span>
+                      <span className="ml-2 text-white">{selectedNode.data.type as string}</span>
                     </div>
                     <div>
                       <span className="text-zinc-400 text-sm">坐标:</span>
@@ -396,7 +407,7 @@ function MapContent() {
                     </div>
                     <div className="pt-4 border-t border-zinc-700">
                       <p className="text-zinc-400 text-sm mb-2">描述:</p>
-                      <p className="text-zinc-300">{selectedNode.data.description || "暂无描述"}</p>
+                      <p className="text-zinc-300">{(selectedNode.data.description as string) || "暂无描述"}</p>
                     </div>
                     {isEditMode && (
                       <div className="flex gap-2 pt-4 border-t border-zinc-700">

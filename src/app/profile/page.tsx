@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { User, Upload, ArrowLeft, Sword, Shield, Zap, Heart, Lock, LogIn, Edit2, Trash2, X, Plus, Image, FolderOpen, Eye, Settings, MoreHorizontal } from "lucide-react";
@@ -101,7 +101,24 @@ const abilityNames = {
 export default function ProfilePage() {
   const { user } = useAuth();
   const { resources, settings, updateSettings } = useApp();
-  const [characters, setCharacters] = useState<Character[]>(initialCharacters);
+  
+  const [characters, setCharacters] = useState<Character[]>(() => {
+    try {
+      const saved = localStorage.getItem("wm-characters");
+      if (saved) {
+        const loadedChars = JSON.parse(saved);
+        const initialIds = initialCharacters.map(c => c.id);
+        const hasInitialChars = loadedChars.some((c: Character) => initialIds.includes(c.id));
+        if (!hasInitialChars) {
+          return [...initialCharacters, ...loadedChars];
+        }
+        return loadedChars;
+      }
+    } catch {
+    }
+    return initialCharacters;
+  });
+  
   const [isUploading, setIsUploading] = useState(false);
   const [editingCharacter, setEditingCharacter] = useState<Character | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -121,6 +138,13 @@ export default function ProfilePage() {
   });
 
   const avatarResources = resources.filter((r) => r.category === "characterAvatar" || r.category === "general");
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("wm-characters", JSON.stringify(characters));
+    } catch {
+    }
+  }, [characters]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

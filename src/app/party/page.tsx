@@ -7,7 +7,6 @@ import { ArrowLeft, Users, User, Calendar, X, Plus, Edit2, Trash2, Send, Message
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useApp } from "@/contexts/AppContext";
-import { useSearchParams } from "next/navigation";
 
 interface Character {
   id: string;
@@ -72,30 +71,8 @@ const initialParties: Party[] = [
 export default function PartyPage() {
   const { user } = useAuth();
   const { resources, settings, updateSettings, verifyPassword } = useApp();
-  const searchParams = useSearchParams();
   const [characters] = useState<Character[]>(initialCharacters);
-  const [parties, setParties] = useState<Party[]>(() => {
-    const title = searchParams.get("title");
-    const content = searchParams.get("content");
-    if (title && content) {
-      return [
-        ...initialParties,
-        {
-          id: Date.now().toString(),
-          title,
-          content,
-          character: null,
-          members: [],
-          currentCount: 1,
-          maxCount: 4,
-          nextSessionTime: null,
-          author: user?.username || "匿名",
-          createdAt: new Date().toISOString(),
-        },
-      ];
-    }
-    return initialParties;
-  });
+  const [parties, setParties] = useState<Party[]>(initialParties);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingParty, setEditingParty] = useState<Party | null>(null);
   const [showCharacterSelector, setShowCharacterSelector] = useState(false);
@@ -112,6 +89,7 @@ export default function PartyPage() {
   const [showResourceSelector, setShowResourceSelector] = useState(false);
   const [password, setPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [partyBgError, setPartyBgError] = useState(false);
 
   const selectCharacter = (char: Character) => {
     setFormData({ ...formData, character: char });
@@ -220,12 +198,22 @@ export default function PartyPage() {
 
   const partyResources = resources.filter((r) => r.category === "partyBg" || r.category === "general");
 
+  const handlePartyBgError = () => {
+    setPartyBgError(true);
+    updateSettings({ partyBg: null });
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen bg-zinc-950 text-zinc-100">
-        {settings.partyBg && (
+        {settings.partyBg && !partyBgError && (
           <div className="fixed inset-0 z-0 pointer-events-none" suppressHydrationWarning={true}>
-            <img src={settings.partyBg} alt="组队界面背景" className="w-full h-full object-cover opacity-30 blur-[2px]" />
+            <img 
+              src={settings.partyBg} 
+              alt="组队界面背景" 
+              className="w-full h-full object-cover opacity-30 blur-[2px]" 
+              onError={handlePartyBgError}
+            />
           </div>
         )}
 
@@ -335,9 +323,14 @@ export default function PartyPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      {settings.partyBg && (
+      {settings.partyBg && !partyBgError && (
         <div className="fixed inset-0 z-0 pointer-events-none" suppressHydrationWarning={true}>
-          <img src={settings.partyBg} alt="组队界面背景" className="w-full h-full object-cover opacity-30 blur-[2px]" />
+          <img 
+            src={settings.partyBg} 
+            alt="组队界面背景" 
+            className="w-full h-full object-cover opacity-30 blur-[2px]" 
+            onError={handlePartyBgError}
+          />
         </div>
       )}
 

@@ -29,6 +29,7 @@ export default function Home() {
   const [showResourceSelector, setShowResourceSelector] = useState(false);
   const [password, setPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [homeBgError, setHomeBgError] = useState(false);
 
   useEffect(() => {
     if (isFirstTime) {
@@ -87,11 +88,21 @@ export default function Home() {
 
   const homeResources = resources.filter((r) => r.category === "homeBg" || r.category === "general");
 
+  const handleHomeBgError = () => {
+    setHomeBgError(true);
+    updateSettings({ homeBg: null });
+  };
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      {settings.homeBg && (
+      {settings.homeBg && !homeBgError && (
         <div className="fixed inset-0 z-0 pointer-events-none" suppressHydrationWarning={true}>
-          <img src={settings.homeBg} alt="首页背景" className="w-full h-full object-cover opacity-45" />
+          <img 
+            src={settings.homeBg} 
+            alt="首页背景" 
+            className="w-full h-full object-cover opacity-45" 
+            onError={handleHomeBgError}
+          />
         </div>
       )}
 

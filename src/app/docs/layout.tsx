@@ -58,6 +58,7 @@ export default function DocsLayout({
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [isMounted, setIsMounted] = useState(false);
+  const [docsBgError, setDocsBgError] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -90,6 +91,11 @@ export default function DocsLayout({
   const docsResources = resources.filter(
     (r) => r.category === "docsBg" || r.category === "general"
   );
+
+  const handleDocsBgError = () => {
+    setDocsBgError(true);
+    updateSettings({ docsBg: null });
+  };
 
   const handleCreateDoc = () => {
     if (!newDoc.title || !newDoc.content) return;
@@ -155,12 +161,13 @@ export default function DocsLayout({
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex h-screen overflow-hidden">
-      {settings.docsBg && (
+      {settings.docsBg && !docsBgError && (
         <div className="fixed inset-0 z-0 pointer-events-none" suppressHydrationWarning={true}>
           <img
             src={settings.docsBg}
             alt="档案室背景"
             className="w-full h-full object-cover opacity-20"
+            onError={handleDocsBgError}
           />
         </div>
       )}

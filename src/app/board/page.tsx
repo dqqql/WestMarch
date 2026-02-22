@@ -84,7 +84,7 @@ export default function BoardPage() {
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
-  const [newPost, setNewPost] = useState({ title: "", content: "", tag: "寻找队伍" as const });
+  const [newPost, setNewPost] = useState({ title: "", content: "", tag: "寻找队伍" as "DM悬赏" | "寻找队伍" | "跑团战报" });
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showResourceSelector, setShowResourceSelector] = useState(false);
@@ -92,6 +92,7 @@ export default function BoardPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [boardBgError, setBoardBgError] = useState(false);
   const [searchHistory, setSearchHistory] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem("wm-search-history");
@@ -180,6 +181,11 @@ export default function BoardPage() {
 
   const boardResources = resources.filter((r) => r.category === "boardBg" || r.category === "general");
 
+  const handleBoardBgError = () => {
+    setBoardBgError(true);
+    updateSettings({ boardBg: null });
+  };
+
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     if (query.trim() && !searchHistory.includes(query)) {
@@ -239,9 +245,14 @@ export default function BoardPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      {settings.boardBg && (
+      {settings.boardBg && !boardBgError && (
         <div className="fixed inset-0 z-0 pointer-events-none" suppressHydrationWarning={true}>
-          <img src={settings.boardBg} alt="布告栏背景" className="w-full h-full object-cover opacity-30 blur-[2px]" />
+          <img 
+            src={settings.boardBg} 
+            alt="布告栏背景" 
+            className="w-full h-full object-cover opacity-30 blur-[2px]" 
+            onError={handleBoardBgError}
+          />
         </div>
       )}
 
