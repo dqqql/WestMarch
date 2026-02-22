@@ -115,7 +115,7 @@ export default function CharactersPage() {
     abilities: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
   });
 
-  const avatarResources = resources.filter((r) => r.category === "characterAvatar" || r.category === "general");
+  const avatarResources = resources.filter((r) => r.category === "characterAvatar");
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

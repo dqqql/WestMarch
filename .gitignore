@@ -35,3 +35,11 @@ next-env.d.ts
 # content
 /content
 westmarch.zip
+
+# IDE
+.trae/
+
+# temporary files
+package.js
+*.png
+!public/**/*.png

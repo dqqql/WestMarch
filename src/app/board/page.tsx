@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Plus, ArrowLeft, Tag, X, Edit2, Trash2, Send, MessageCircle, Users, Image, Lock, Eye, Search, Clock, Trash } from "lucide-react";
+import { MessageSquare, Plus, ArrowLeft, Tag, X, Edit2, Trash2, Send, MessageCircle, Users, Search, Clock, Trash } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useApp } from "@/contexts/AppContext";
@@ -80,19 +80,14 @@ const tagColors = {
 
 export default function BoardPage() {
   const { user } = useAuth();
-  const { resources, settings, updateSettings, verifyPassword } = useApp();
+  const { isClient } = useApp();
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [newPost, setNewPost] = useState({ title: "", content: "", tag: "寻找队伍" as "DM悬赏" | "寻找队伍" | "跑团战报" });
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [showResourceSelector, setShowResourceSelector] = useState(false);
-  const [password, setPassword] = useState("");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [boardBgError, setBoardBgError] = useState(false);
   const [searchHistory, setSearchHistory] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem("wm-search-history");
@@ -163,29 +158,6 @@ export default function BoardPage() {
     return user && post.author === user.username;
   };
 
-  const handleVerifyPassword = () => {
-    if (verifyPassword(password)) {
-      setIsAuthenticated(true);
-      setShowPasswordModal(false);
-      setPassword("");
-      setShowResourceSelector(true);
-    } else {
-      alert("密码错误");
-    }
-  };
-
-  const selectBoardBg = (url: string | null) => {
-    updateSettings({ boardBg: url });
-    setShowResourceSelector(false);
-  };
-
-  const boardResources = resources.filter((r) => r.category === "boardBg" || r.category === "general");
-
-  const handleBoardBgError = () => {
-    setBoardBgError(true);
-    updateSettings({ boardBg: null });
-  };
-
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     if (query.trim() && !searchHistory.includes(query)) {
@@ -245,97 +217,25 @@ export default function BoardPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      {settings.boardBg && !boardBgError && (
-        <div className="fixed inset-0 z-0 pointer-events-none" suppressHydrationWarning={true}>
+      {isClient && (
+        <div className="fixed inset-0 z-0 pointer-events-none">
           <img 
-            src={settings.boardBg} 
+            src="/images/general-bg.png" 
             alt="布告栏背景" 
             className="w-full h-full object-cover opacity-30 blur-[2px]" 
-            onError={handleBoardBgError}
           />
-        </div>
-      )}
-
-      {showPasswordModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-md">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold flex items-center gap-2">
-                <Lock className="h-5 w-5" />
-                输入密码
-              </h3>
-              <button onClick={() => setShowPasswordModal(false)} className="text-zinc-400 hover:text-white">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm text-zinc-400 mb-1">密码</label>
-                <input
-                  type="password"
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleVerifyPassword()}
-                />
-              </div>
-              <Button className="w-full bg-amber-600 hover:bg-amber-700" onClick={handleVerifyPassword}>
-                确认
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showResourceSelector && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-4xl max-h-[80vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold flex items-center gap-2">
-                <Image className="h-5 w-5" />
-                选择布告栏背景
-              </h3>
-              <button onClick={() => setShowResourceSelector(false)} className="text-zinc-400 hover:text-white">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="space-y-4">
-              <Button
-                variant="ghost"
-                className="w-full justify-start border border-zinc-700 bg-zinc-800"
-                onClick={() => selectBoardBg(null)}
-              >
-                <Eye className="h-4 w-4 mr-2" />
-                使用默认背景
-              </Button>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {boardResources.map((img) => (
-                  <div
-                    key={img.id}
-                    className="relative group cursor-pointer"
-                    onClick={() => selectBoardBg(img.url)}
-                  >
-                    <div className="aspect-video bg-zinc-800 rounded-lg overflow-hidden border border-zinc-700">
-                      <img src={img.url} alt={img.name} className="w-full h-full object-cover" />
-                    </div>
-                    <p className="text-sm text-zinc-400 mt-1 truncate">{img.name}</p>
-                  </div>
-                ))}
-              </div>
-              {boardResources.length === 0 && (
-                <p className="text-zinc-500 text-center py-8">暂无图片资源，请先去资源库上传</p>
-              )}
-            </div>
-          </div>
         </div>
       )}
 
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50" onClick={() => setShowCreateModal(false)}>
-          <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-lg mx-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold">发布新帖</h3>
-              <button onClick={() => setShowCreateModal(false)} className="text-zinc-400 hover:text-white">
+              <button 
+                onClick={() => setShowCreateModal(false)} 
+                className="text-zinc-400 hover:text-white"
+              >
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -382,10 +282,13 @@ export default function BoardPage() {
 
       {editingPost && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50" onClick={() => setEditingPost(null)}>
-          <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-lg mx-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold">编辑帖子</h3>
-              <button onClick={() => setEditingPost(null)} className="text-zinc-400 hover:text-white">
+              <button 
+                onClick={() => setEditingPost(null)} 
+                className="text-zinc-400 hover:text-white"
+              >
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -440,23 +343,11 @@ export default function BoardPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => {
-                if (isAuthenticated) {
-                  setShowResourceSelector(true);
-                } else {
-                  setShowPasswordModal(true);
-                }
-              }}
-              className="bg-zinc-800 hover:bg-zinc-700"
-            >
-              <Image className="h-4 w-4 mr-2" />
-              背景设置
-            </Button>
             {user && (
-              <Button className="bg-amber-600 hover:bg-amber-700" onClick={() => setShowCreateModal(true)}>
+              <Button 
+                className="bg-amber-600 hover:bg-amber-700" 
+                onClick={() => setShowCreateModal(true)}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 发布新帖
               </Button>
@@ -517,117 +408,118 @@ export default function BoardPage() {
 
           <div className="flex flex-wrap gap-2 mb-6">
             <Button
-              variant={selectedTag === null ? "default" : "ghost"}
+              variant={selectedTag === null ? "default" : "secondary"}
+              size="sm"
               onClick={() => setSelectedTag(null)}
-              className={selectedTag === null ? "bg-amber-600 hover:bg-amber-700" : ""}
+              className={selectedTag === null ? "bg-amber-600 hover:bg-amber-700" : "bg-zinc-800 hover:bg-zinc-700"}
             >
               全部
             </Button>
             {["DM悬赏", "寻找队伍", "跑团战报"].map((tag) => (
               <Button
                 key={tag}
-                variant={selectedTag === tag ? "default" : "ghost"}
+                variant={selectedTag === tag ? "default" : "secondary"}
+                size="sm"
                 onClick={() => setSelectedTag(tag)}
-                className={selectedTag === tag ? "bg-amber-600 hover:bg-amber-700" : ""}
+                className={selectedTag === tag ? "bg-amber-600 hover:bg-amber-700" : "bg-zinc-800 hover:bg-zinc-700"}
               >
                 {tag}
               </Button>
             ))}
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {filteredPosts.map((post) => (
-            <Card
-              key={post.id}
-              className="bg-zinc-900 border-zinc-800 hover:border-amber-500/50 transition-colors flex flex-col"
-            >
-              <CardHeader>
-                <div className="flex items-start justify-between gap-4">
-                  <div className="space-y-2 flex-1">
-                    <div className="flex items-center gap-3">
-                      <span
-                        className={`px-2 py-1 rounded text-xs font-medium border ${tagColors[post.tag]}`}
-                      >
-                        <Tag className="h-3 w-3 inline mr-1" />
-                        {post.tag}
-                      </span>
-                    </div>
-                    <CardTitle className="text-xl">
-                      {searchQuery ? highlightText(post.title, searchQuery) : post.title}
-                    </CardTitle>
-                    <CardDescription className="flex items-center gap-2">
-                      <span>作者: {searchQuery ? highlightText(post.author, searchQuery) : post.author}</span>
-                      {post.character && <span>• 角色: {post.character}</span>}
-                      <span className="text-zinc-600">
-                        • {new Date(post.createdAt).toLocaleString("zh-CN")}
-                      </span>
-                    </CardDescription>
-                  </div>
-                  {isPostOwner(post) && (
-                    <div className="flex gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => openEditModal(post)}>
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDeletePost(post.id)}>
-                        <Trash2 className="h-4 w-4 text-red-400" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4 flex-1">
-                <p className="text-zinc-300">
-                  {searchQuery ? highlightText(post.content, searchQuery) : post.content}
-                </p>
-                
-                {post.tag === "寻找队伍" && user && (
-                  <Link
-                    href={`/party?title=${encodeURIComponent(post.title)}&content=${encodeURIComponent(post.content)}`}
-                  >
-                    <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                      <Users className="h-4 w-4 mr-2" />
-                      一键发起组队
-                    </Button>
-                  </Link>
-                )}
-                
-                <div className="border-t border-zinc-800 pt-4 mt-auto">
-                  <div className="flex items-center gap-2 mb-3 text-zinc-400">
-                    <MessageCircle className="h-4 w-4" />
-                    <span className="text-sm">评论 ({post.comments.length})</span>
-                  </div>
-                  
-                  <div className="space-y-3 mb-4">
-                    {post.comments.map((comment) => (
-                      <div key={comment.id} className="bg-zinc-800/50 rounded-lg p-3">
-                        <div className="flex justify-between items-start mb-1">
-                          <span className="text-sm font-medium text-amber-400">{comment.author}</span>
-                          <span className="text-xs text-zinc-500">{new Date(comment.createdAt).toLocaleString("zh-CN")}</span>
-                        </div>
-                        <p className="text-sm text-zinc-300">{comment.content}</p>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {user && (
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        className="flex-1 bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white text-sm"
-                        placeholder="写下你的评论..."
-                        value={commentInputs[post.id] || ""}
-                        onChange={(e) => setCommentInputs({ ...commentInputs, [post.id]: e.target.value })}
-                        onKeyDown={(e) => e.key === "Enter" && handleAddComment(post.id)}
-                      />
-                      <Button className="bg-amber-600 hover:bg-amber-700" onClick={() => handleAddComment(post.id)}>
-                        <Send className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
+
+          {filteredPosts.length === 0 ? (
+            <Card className="bg-zinc-900 border-zinc-800">
+              <CardContent className="py-12 text-center">
+                <MessageSquare className="h-16 w-16 mx-auto mb-4 text-zinc-600" />
+                <p className="text-zinc-400">暂无帖子</p>
               </CardContent>
             </Card>
-          ))}
-          </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {filteredPosts.map((post) => (
+              <Card
+                key={post.id}
+                className="bg-zinc-900 border-zinc-800 hover:border-amber-500/50 transition-colors flex flex-col"
+              >
+                <CardHeader>
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-2 flex-1">
+                      <div className="flex items-center gap-3">
+                        <span
+                          className={`px-2 py-1 rounded text-xs font-medium border ${tagColors[post.tag]}`}
+                        >
+                          <Tag className="h-3 w-3 inline mr-1" />
+                          {post.tag}
+                        </span>
+                      </div>
+                      <CardTitle className="text-xl">
+                        {searchQuery ? highlightText(post.title, searchQuery) : post.title}
+                      </CardTitle>
+                      <CardDescription className="flex items-center gap-2">
+                        <span>作者: {searchQuery ? highlightText(post.author, searchQuery) : post.author}</span>
+                        {post.character && <span>• 角色: {post.character}</span>}
+                        <span className="text-zinc-600">
+                          • {new Date(post.createdAt).toLocaleString("zh-CN")}
+                        </span>
+                      </CardDescription>
+                    </div>
+                    {isPostOwner(post) && (
+                      <div className="flex gap-2">
+                        <Button variant="ghost" size="icon" onClick={() => openEditModal(post)}>
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDeletePost(post.id)}>
+                          <Trash2 className="h-4 w-4 text-red-400" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4 flex-1">
+                  <p className="text-zinc-300">
+                    {searchQuery ? highlightText(post.content, searchQuery) : post.content}
+                  </p>
+                  
+                  <div className="border-t border-zinc-800 pt-4 mt-auto">
+                    <div className="flex items-center gap-2 mb-3 text-zinc-400">
+                      <MessageCircle className="h-4 w-4" />
+                      <span className="text-sm">评论 ({post.comments.length})</span>
+                    </div>
+                    
+                    <div className="space-y-3 mb-4">
+                      {post.comments.map((comment) => (
+                        <div key={comment.id} className="bg-zinc-800/50 rounded-lg p-3">
+                          <div className="flex justify-between items-start mb-1">
+                            <span className="text-sm font-medium text-amber-400">{comment.author}</span>
+                            <span className="text-xs text-zinc-500">{new Date(comment.createdAt).toLocaleString("zh-CN")}</span>
+                          </div>
+                          <p className="text-sm text-zinc-300">{comment.content}</p>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {user && (
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          className="flex-1 bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white text-sm"
+                          placeholder="写下你的评论..."
+                          value={commentInputs[post.id] || ""}
+                          onChange={(e) => setCommentInputs({ ...commentInputs, [post.id]: e.target.value })}
+                          onKeyDown={(e) => e.key === "Enter" && handleAddComment(post.id)}
+                        />
+                        <Button className="bg-amber-600 hover:bg-amber-700" onClick={() => handleAddComment(post.id)}>
+                          <Send className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            </div>
+          )}
         </div>
       </main>
     </div>

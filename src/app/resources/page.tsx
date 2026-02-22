@@ -3,55 +3,27 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FolderOpen, Upload, Trash2, X, Image, Home, MapPin, User, FileImage, ArrowLeft } from "lucide-react";
+import { FolderOpen, Upload, Trash2, X, Image, User, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useApp, type ImageCategory } from "@/contexts/AppContext";
 
 const categoryLabels: Record<ImageCategory, string> = {
-  homeBg: "首页背景",
-  mapBg: "地图背景",
-  docsBg: "档案室背景",
-  boardBg: "布告栏背景",
-  partyBg: "组队界面背景",
   characterAvatar: "角色头像",
-  general: "通用",
 };
 
 const categoryIcons: Record<ImageCategory, React.ReactNode> = {
-  homeBg: <Home className="h-4 w-4" />,
-  mapBg: <MapPin className="h-4 w-4" />,
-  docsBg: <FileImage className="h-4 w-4" />,
-  boardBg: <FileImage className="h-4 w-4" />,
-  partyBg: <FileImage className="h-4 w-4" />,
   characterAvatar: <User className="h-4 w-4" />,
-  general: <FileImage className="h-4 w-4" />,
 };
 
 export default function ResourcesPage() {
   const { resources, addResource, deleteResource, isLoading, loadResources } = useApp();
-  const [selectedCategory, setSelectedCategory] = useState<ImageCategory | "all">("all");
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploadName, setUploadName] = useState("");
-  const [uploadCategory, setUploadCategory] = useState<ImageCategory>("general");
   const [uploadUrl, setUploadUrl] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
-  const clearOldLocalStorage = () => {
-    if (confirm("确定要清除旧的 localStorage 数据吗？这不会影响已保存到 IndexedDB 的图片。")) {
-      try {
-        localStorage.removeItem("wm-resources");
-        alert("已清除旧数据");
-      } catch (error) {
-        console.error("Failed to clear localStorage:", error);
-        alert("清除失败，请重试");
-      }
-    }
-  };
-
-  const filteredResources = selectedCategory === "all"
-    ? resources
-    : resources.filter((r) => r.category === selectedCategory);
+  const avatarResources = resources.filter((r) => r.category === "characterAvatar");
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -106,13 +78,12 @@ export default function ResourcesPage() {
       await addResource({
         name: uploadName,
         url: uploadUrl,
-        category: uploadCategory,
+        category: "characterAvatar",
       });
 
       setShowUploadModal(false);
       setUploadName("");
       setUploadUrl("");
-      setUploadCategory("general");
     } catch (error) {
       console.error("Failed to upload resource:", error);
       alert("上传失败，请重试");
@@ -151,7 +122,7 @@ export default function ResourcesPage() {
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold flex items-center gap-2">
                 <Upload className="h-5 w-5" />
-                上传图片
+                上传头像
               </h3>
               <button onClick={() => setShowUploadModal(false)} className="text-zinc-400 hover:text-white">
                 <X className="h-5 w-5" />
@@ -187,28 +158,14 @@ export default function ResourcesPage() {
                     <img src={uploadUrl} alt="预览" className="w-full h-full object-cover" />
                   </div>
                   <div>
-                    <label className="block text-sm text-zinc-400 mb-1">图片名称</label>
+                    <label className="block text-sm text-zinc-400 mb-1">头像名称</label>
                     <input
                       type="text"
                       className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white"
                       value={uploadName}
                       onChange={(e) => setUploadName(e.target.value)}
-                      placeholder="输入图片名称"
+                      placeholder="输入头像名称"
                     />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-zinc-400 mb-1">分类</label>
-                    <select
-                      className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white"
-                      value={uploadCategory}
-                      onChange={(e) => setUploadCategory(e.target.value as ImageCategory)}
-                    >
-                      {(Object.keys(categoryLabels) as ImageCategory[]).map((cat) => (
-                        <option key={cat} value={cat}>
-                          {categoryLabels[cat]}
-                        </option>
-                      ))}
-                    </select>
                   </div>
                   <div className="flex gap-2">
                     <Button
@@ -249,71 +206,39 @@ export default function ResourcesPage() {
             </Link>
             <div className="flex items-center gap-2">
               <FolderOpen className="h-6 w-6 text-amber-500" />
-              <h1 className="text-xl font-bold">资源库</h1>
+              <h1 className="text-xl font-bold">头像库</h1>
             </div>
           </div>
           <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearOldLocalStorage}
-            >
-              清除旧数据
-            </Button>
             <Button
               className="bg-amber-600 hover:bg-amber-700"
               onClick={() => setShowUploadModal(true)}
             >
               <Upload className="h-4 w-4 mr-2" />
-              上传图片
+              上传头像
             </Button>
           </div>
         </div>
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="flex gap-2 mb-6 flex-wrap">
-          <Button
-            variant={selectedCategory === "all" ? "default" : "secondary"}
-            size="sm"
-            onClick={() => setSelectedCategory("all")}
-            className={selectedCategory === "all" ? "bg-amber-600 hover:bg-amber-700" : "bg-zinc-800 hover:bg-zinc-700"}
-          >
-            全部
-          </Button>
-          {(Object.keys(categoryLabels) as ImageCategory[]).map((cat) => (
-            <Button
-              key={cat}
-              variant={selectedCategory === cat ? "default" : "secondary"}
-              size="sm"
-              onClick={() => setSelectedCategory(cat)}
-              className={selectedCategory === cat ? "bg-amber-600 hover:bg-amber-700" : "bg-zinc-800 hover:bg-zinc-700"}
-            >
-              <span className="flex items-center gap-2">
-                {categoryIcons[cat]}
-                {categoryLabels[cat]}
-              </span>
-            </Button>
-          ))}
-        </div>
-
-        {filteredResources.length === 0 ? (
+        {avatarResources.length === 0 ? (
           <Card className="bg-zinc-900 border-zinc-800">
             <CardContent className="py-12 text-center">
-              <Image className="h-16 w-16 mx-auto mb-4 text-zinc-600" />
-              <p className="text-zinc-400 mb-4">暂无图片资源</p>
+              <User className="h-16 w-16 mx-auto mb-4 text-zinc-600" />
+              <p className="text-zinc-400 mb-4">暂无头像资源</p>
               <Button
                 className="bg-amber-600 hover:bg-amber-700"
                 onClick={() => setShowUploadModal(true)}
               >
                 <Upload className="h-4 w-4 mr-2" />
-                上传第一张图片
+                上传第一个头像
               </Button>
             </CardContent>
           </Card>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {filteredResources.map((resource) => (
+            {avatarResources.map((resource) => (
               <Card
                 key={resource.id}
                 className="bg-zinc-900 border-zinc-800 overflow-hidden group"

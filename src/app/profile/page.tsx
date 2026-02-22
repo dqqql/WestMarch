@@ -137,7 +137,7 @@ export default function ProfilePage() {
     abilities: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
   });
 
-  const avatarResources = resources.filter((r) => r.category === "characterAvatar" || r.category === "general");
+  const avatarResources = resources.filter((r) => r.category === "characterAvatar");
 
   useEffect(() => {
     try {

@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { initDB, getAllResources, addResource as addResourceDB, deleteResource as deleteResourceDB } from "@/lib/indexedDB";
 
-export type ImageCategory = "homeBg" | "mapBg" | "docsBg" | "boardBg" | "partyBg" | "characterAvatar" | "general";
+export type ImageCategory = "characterAvatar";
 
 export interface ResourceImage {
   id: string;
@@ -14,11 +14,6 @@ export interface ResourceImage {
 }
 
 export interface AppSettings {
-  homeBg: string | null;
-  mapBg: string | null;
-  docsBg: string | null;
-  boardBg: string | null;
-  partyBg: string | null;
   userNickname: string | null;
   userAvatar: string | null;
   sessionHistory: string[];
@@ -39,6 +34,7 @@ interface AppContextType {
   resources: ResourceImage[];
   settings: AppSettings;
   isLoading: boolean;
+  isClient: boolean;
   addResource: (image: Omit<ResourceImage, "id" | "createdAt">) => Promise<void>;
   deleteResource: (id: string) => Promise<void>;
   updateSettings: (newSettings: Partial<AppSettings>) => void;
@@ -53,11 +49,6 @@ interface AppContextType {
 const PASSWORD = "WM2006";
 
 const defaultSettings: AppSettings = {
-  homeBg: null,
-  mapBg: null,
-  docsBg: null,
-  boardBg: null,
-  partyBg: null,
   userNickname: null,
   userAvatar: null,
   sessionHistory: [],
@@ -179,35 +170,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [resources, setResources] = useState<ResourceImage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
-  const [documents, setDocuments] = useState<Document[]>(() => {
+  const [documents, setDocuments] = useState<Document[]>(defaultDocuments);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
     try {
-      const saved = localStorage.getItem("wm-documents");
-      if (saved) {
-        const loadedDocs = JSON.parse(saved);
-        let hasGuide = loadedDocs.some((d: Document) => d.id === "guide");
-        if (!hasGuide) {
-          return [defaultDocuments[0], ...loadedDocs];
+      const savedSettings = localStorage.getItem("wm-settings");
+      if (savedSettings) {
+        try {
+          setSettings(JSON.parse(savedSettings));
+        } catch {
+          localStorage.removeItem("wm-settings");
         }
-        return loadedDocs.map((d: Document) => {
-          if (d.id === "guide" && !d.isPinned) {
-            return { ...d, isPinned: true };
-          }
-          return d;
-        });
       }
     } catch {
     }
-    return defaultDocuments;
-  });
 
-  useEffect(() => {
     try {
-      const saved = localStorage.getItem("wm-settings");
-      if (saved) {
-        try {
-          setSettings(JSON.parse(saved));
-        } catch {
-          localStorage.removeItem("wm-settings");
+      const savedDocs = localStorage.getItem("wm-documents");
+      if (savedDocs) {
+        const loadedDocs = JSON.parse(savedDocs);
+        let hasGuide = loadedDocs.some((d: Document) => d.id === "guide");
+        if (!hasGuide) {
+          setDocuments([defaultDocuments[0], ...loadedDocs]);
+        } else {
+          setDocuments(loadedDocs.map((d: Document) => {
+            if (d.id === "guide" && !d.isPinned) {
+              return { ...d, isPinned: true };
+            }
+            return d;
+          }));
         }
       }
     } catch {
@@ -236,11 +229,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("wm-settings", settingsStr);
     } catch {
       const minimalSettings: AppSettings = {
-        homeBg: null,
-        mapBg: null,
-        docsBg: null,
-        boardBg: null,
-        partyBg: null,
         userNickname: settingsToSave.userNickname,
         userAvatar: null,
         sessionHistory: settingsToSave.sessionHistory || [],
@@ -258,15 +246,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    saveSettings(settings);
-  }, [settings]);
+    if (isClient) {
+      saveSettings(settings);
+    }
+  }, [settings, isClient]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem("wm-documents", JSON.stringify(documents));
-    } catch {
+    if (isClient) {
+      try {
+        localStorage.setItem("wm-documents", JSON.stringify(documents));
+      } catch {
+      }
     }
-  }, [documents]);
+  }, [documents, isClient]);
 
   const addDocument = (doc: Omit<Document, "id" | "createdAt" | "updatedAt">) => {
     const newDoc: Document = {
@@ -321,6 +313,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         resources,
         settings,
         isLoading,
+        isClient,
         addResource,
         deleteResource,
         updateSettings,
