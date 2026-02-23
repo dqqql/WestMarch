@@ -20,14 +20,18 @@ enum MapNodeType {
 }
 
 model User {
-  id        String    @id @default(cuid())
-  username  String    @unique
-  password  String
-  isDM      Boolean   @default(false)
-  characters Character[]
-  posts     Post[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id          String          @id @default(cuid())
+  username    String          @unique
+  password    String
+  isDM        Boolean         @default(false)
+  nickname    String?
+  avatar      String?
+  characters  Character[]
+  posts       Post[]
+  resources   ResourceImage[]
+  settings    UserSetting[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
 }
 
 model Character {
@@ -43,6 +47,7 @@ model Character {
   wis       Int?
   cha       Int?
   bio       String?
+  fullBio   String?
   userId    String
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   posts     Post[]
@@ -51,16 +56,16 @@ model Character {
 }
 
 model Post {
-  id        String    @id @default(cuid())
-  title     String
-  content   String
-  tag       PostTag
-  authorId  String
-  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  id          String    @id @default(cuid())
+  title       String
+  content     String
+  tag         PostTag
+  authorId    String
+  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
   characterId String?
-  character Character?  @relation(fields: [characterId], references: [id])
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  character   Character?  @relation(fields: [characterId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model MapNode {
@@ -84,4 +89,39 @@ model MapEdge {
   target   MapNode  @relation("target", fields: [targetId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model ResourceImage {
+  id        String   @id @default(cuid())
+  name      String
+  url       String
+  category  String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Document {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  category    String
+  author      String
+  isPinned    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model UserSetting {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userNickname   String?
+  userAvatar     String?
+  sessionHistory Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  @@unique([userId])
 }

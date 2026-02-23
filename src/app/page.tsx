@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,60 +9,38 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { BookOpen, Map, MessageSquare, Users, Sword, X, CheckCircle2, User, LogOut } from "lucide-react";
+import { BookOpen, Map, MessageSquare, Users, Sword, X, User, LogOut } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useApp } from "@/contexts/AppContext";
 
 export default function Home() {
-  const { user, login, register, logout, isFirstTime } = useAuth();
+  const { user, login, logout, isLoading } = useAuth();
   const { isClient } = useApp();
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
-  const [registerUsername, setRegisterUsername] = useState("");
-  const [registerPassword, setRegisterPassword] = useState("");
-  const [registerConfirmPassword, setRegisterConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  useEffect(() => {
-    if (isFirstTime) {
-      setShowRegisterModal(true);
+  const handleLogin = async () => {
+    if (!loginUsername || !loginPassword) {
+      setError("请输入用户名和密码");
+      return;
     }
-  }, [isFirstTime]);
 
-  const handleLogin = () => {
-    const success = login(loginUsername, loginPassword);
+    setIsLoggingIn(true);
+    setError("");
+
+    const success = await login(loginUsername, loginPassword);
     if (success) {
       setShowLoginModal(false);
-      setError("");
       setLoginUsername("");
       setLoginPassword("");
     } else {
-      setError("用户名或密码错误");
+      setError("登录失败，请重试");
     }
-  };
-
-  const handleRegister = () => {
-    if (registerPassword !== registerConfirmPassword) {
-      setError("两次输入的密码不一致");
-      return;
-    }
-    if (registerPassword.length < 4) {
-      setError("密码至少需要4位");
-      return;
-    }
-    const success = register(registerUsername, registerPassword);
-    if (success) {
-      setShowRegisterModal(false);
-      setError("");
-      setRegisterUsername("");
-      setRegisterPassword("");
-      setRegisterConfirmPassword("");
-    } else {
-      setError("注册失败");
-    }
+    setIsLoggingIn(false);
   };
 
   return (
@@ -81,7 +59,7 @@ export default function Home() {
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50" onClick={() => setShowLoginModal(false)}>
           <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold">登录</h3>
+              <h3 className="text-xl font-bold">登录/注册</h3>
               <button onClick={() => setShowLoginModal(false)} className="text-zinc-400 hover:text-white">
                 <X className="h-5 w-5" />
               </button>
@@ -106,63 +84,18 @@ export default function Home() {
                   placeholder="输入密码"
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleLogin()}
                 />
               </div>
-              <Button className="w-full bg-amber-600 hover:bg-amber-700" onClick={handleLogin}>
-                登录
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showRegisterModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-md">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold">欢迎加入公会</h3>
-            </div>
-            <div className="space-y-4">
-              {error && <div className="text-red-400 text-sm bg-red-900/20 p-3 rounded">{error}</div>}
-              <div className="flex items-start gap-3 p-4 bg-amber-900/30 border border-amber-700/50 rounded-lg">
-                <CheckCircle2 className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-                <div className="text-sm">
-                  <p className="text-white font-medium">欢迎加入西征冒险公会！</p>
-                  <p className="text-zinc-300 mt-1">请设置你的冒险者名称和密码。</p>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm text-zinc-400 mb-1">冒险者名称</label>
-                <input 
-                  type="text" 
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white" 
-                  placeholder="你的角色名"
-                  value={registerUsername}
-                  onChange={(e) => setRegisterUsername(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-zinc-400 mb-1">密码</label>
-                <input 
-                  type="password" 
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white" 
-                  placeholder="设置密码"
-                  value={registerPassword}
-                  onChange={(e) => setRegisterPassword(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-zinc-400 mb-1">确认密码</label>
-                <input 
-                  type="password" 
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white" 
-                  placeholder="再次输入密码"
-                  value={registerConfirmPassword}
-                  onChange={(e) => setRegisterConfirmPassword(e.target.value)}
-                />
-              </div>
-              <Button className="w-full bg-amber-600 hover:bg-amber-700" onClick={handleRegister}>
-                开始冒险
+              <p className="text-xs text-zinc-500">
+                首次使用会自动创建账号
+              </p>
+              <Button 
+                className="w-full bg-amber-600 hover:bg-amber-700" 
+                onClick={handleLogin}
+                disabled={isLoggingIn}
+              >
+                {isLoggingIn ? "登录中..." : "登录/注册"}
               </Button>
             </div>
           </div>
@@ -193,7 +126,9 @@ export default function Home() {
                 </Button>
               </div>
             ) : (
-              <Button variant="ghost" onClick={() => setShowLoginModal(true)}>登录</Button>
+              <Button variant="ghost" onClick={() => setShowLoginModal(true)}>
+                {isLoading ? "加载中..." : "登录"}
+              </Button>
             )}
           </div>
         </div>

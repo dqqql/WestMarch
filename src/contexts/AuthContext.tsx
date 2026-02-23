@@ -6,71 +6,67 @@ interface User {
   id: string;
   username: string;
   isDM: boolean;
+  nickname?: string | null;
+  avatar?: string | null;
 }
 
 interface AuthContextType {
   user: User | null;
-  login: (username: string, password: string) => boolean;
-  register: (username: string, password: string) => boolean;
+  login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
-  isFirstTime: boolean;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isFirstTime, setIsFirstTime] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("westmarch_user");
-    const hasRegistered = localStorage.getItem("westmarch_registered");
-
-    if (!hasRegistered) {
-      setIsFirstTime(true);
-    } else if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-  }, []);
-
-  const register = (username: string, password: string): boolean => {
-    if (!username || !password) return false;
-
-    const newUser: User = {
-      id: Date.now().toString(),
-      username,
-      isDM: false,
-    };
-
-    localStorage.setItem("westmarch_user", JSON.stringify(newUser));
-    localStorage.setItem("westmarch_password", password);
-    localStorage.setItem("westmarch_registered", "true");
-
-    setUser(newUser);
-    setIsFirstTime(false);
-    return true;
-  };
-
-  const login = (username: string, password: string): boolean => {
-    const storedPassword = localStorage.getItem("westmarch_password");
-    const storedUser = localStorage.getItem("westmarch_user");
-
-    if (storedUser && storedPassword === password) {
-      const parsedUser = JSON.parse(storedUser);
-      if (parsedUser.username === username) {
-        setUser(parsedUser);
-        return true;
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch {
+        localStorage.removeItem("westmarch_user");
       }
     }
-    return false;
+    setIsLoading(false);
+  }, []);
+
+  const login = async (username: string, password: string): Promise<boolean> => {
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      if (!response.ok) {
+        return false;
+      }
+
+      const data = await response.json();
+      const userData = data.user;
+      setUser(userData);
+      localStorage.setItem("westmarch_user", JSON.stringify(userData));
+      return true;
+    } catch (error) {
+      console.error("Login error:", error);
+      return false;
+    }
   };
 
   const logout = () => {
     setUser(null);
+    localStorage.removeItem("westmarch_user");
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, isFirstTime }}>
+    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
