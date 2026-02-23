@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { MessageSquare, Plus, ArrowLeft, Tag, X, Edit2, Trash2, Send, Search, Clock, Trash } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import { useApp } from "@/contexts/AppContext";
 
 interface Post {
   id: string;
@@ -34,6 +35,7 @@ const tagColors = {
 
 export default function BoardPage() {
   const { user } = useAuth();
+  const { isClient } = useApp();
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);

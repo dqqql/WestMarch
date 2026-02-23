@@ -274,6 +274,15 @@ function MapContent() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col">
+      {isClient && (
+        <div className="fixed inset-0 z-0 pointer-events-none">
+          <img
+            src="/images/map-bg.png"
+            alt="地图背景"
+            className="w-full h-full object-cover opacity-45"
+          />
+        </div>
+      )}
       <header className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -325,9 +334,8 @@ function MapContent() {
             fitView
             minZoom={0.1}
             maxZoom={2.0}
-            className="bg-zinc-950"
+            className="bg-transparent"
           >
-            <Background color="#3f3f46" gap={16} />
             <MiniMap
               className="bg-zinc-900 border-zinc-800"
               nodeColor={(n) => {
