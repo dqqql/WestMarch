@@ -8,7 +8,6 @@ services:
       - "3000:3000"
     volumes:
       - ./data:/app/data
-      - ./content:/app/content:ro
     environment:
       - NODE_ENV=production
       - DATABASE_URL=file:/app/data/dev.db

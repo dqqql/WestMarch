@@ -3,10 +3,10 @@ import prisma from '@/lib/prisma'
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await params
     const { name, race, class: charClass, img, str, dex, con, int, wis, cha, bio, fullBio } = await request.json()
 
     const character = await prisma.character.update({
@@ -36,10 +36,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await params
 
     await prisma.character.delete({
       where: { id }

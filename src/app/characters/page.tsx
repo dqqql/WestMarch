@@ -14,71 +14,15 @@ interface Character {
   race: string;
   class: string;
   img: string | null;
-  abilities: {
-    str: number;
-    dex: number;
-    con: number;
-    int: number;
-    wis: number;
-    cha: number;
-  };
-  bio: string;
-  fullBio: string;
+  str: number | null;
+  dex: number | null;
+  con: number | null;
+  int: number | null;
+  wis: number | null;
+  cha: number | null;
+  bio: string | null;
+  fullBio: string | null;
 }
-
-const initialCharacters: Character[] = [
-  {
-    id: "1",
-    name: "芙蕾雅",
-    race: "人类",
-    class: "法师",
-    img: null,
-    abilities: {
-      str: 10,
-      dex: 14,
-      con: 12,
-      int: 18,
-      wis: 13,
-      cha: 16,
-    },
-    bio: "来自东方的神秘法师，追寻着古老魔法的秘密。",
-    fullBio: "芙蕾雅出生于东方的魔法王国，从小就展现出惊人的魔法天赋。她离开家乡，来到这片未知的边境，追寻着古老魔法的秘密。她性格冷静，善于思考，但在面对邪恶时也会毫不犹豫地站出来。"
-  },
-  {
-    id: "2",
-    name: "铁锤·石拳",
-    race: "矮人",
-    class: "战士",
-    img: null,
-    abilities: {
-      str: 18,
-      dex: 12,
-      con: 16,
-      int: 10,
-      wis: 13,
-      cha: 8,
-    },
-    bio: "石盾家族的勇士，誓言要夺回被怪物侵占的家园。",
-    fullBio: "铁锤来自石盾家族，这是一个有着悠久历史的矮人家族。几年前，他们的家园被一群邪恶的怪物侵占，铁锤的父亲也在那场战斗中牺牲。铁锤发誓要夺回自己的家园，为家族复仇。他擅长使用战锤，力大无穷，是队伍中坚实的前排。"
-  },
-  {
-    id: "3",
-    name: "月影·行者",
-    race: "精灵",
-    class: "游侠",
-    img: null,
-    abilities: {
-      str: 12,
-      dex: 18,
-      con: 14,
-      int: 13,
-      wis: 16,
-      cha: 10,
-    },
-    bio: "迷雾森林的守护者，擅长追踪和远程攻击。",
-    fullBio: "月影是迷雾森林的守护者，她的家族世代守护着这片古老的森林。她与森林中的精灵和动物有着深厚的友谊，擅长追踪和射箭。她性格温和，但在保护森林和朋友时会变得异常坚定。"
-  },
-];
 
 const abilityIcons = {
   str: <Sword className="h-4 w-4" />,
@@ -101,7 +45,8 @@ const abilityNames = {
 export default function CharactersPage() {
   const { user } = useAuth();
   const { resources } = useApp();
-  const [characters, setCharacters] = useState<Character[]>(initialCharacters);
+  const [characters, setCharacters] = useState<Character[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [editingCharacter, setEditingCharacter] = useState<Character | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -112,10 +57,36 @@ export default function CharactersPage() {
     class: "",
     bio: "",
     fullBio: "",
-    abilities: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
+    str: 10,
+    dex: 10,
+    con: 10,
+    int: 10,
+    wis: 10,
+    cha: 10,
   });
 
   const avatarResources = resources.filter((r) => r.category === "characterAvatar");
+
+  useEffect(() => {
+    if (user) {
+      loadCharacters();
+    }
+  }, [user]);
+
+  const loadCharacters = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(`/api/characters?userId=${user?.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setCharacters(data);
+      }
+    } catch (error) {
+      console.error("Failed to load characters:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -133,42 +104,95 @@ export default function CharactersPage() {
     setFormData({ ...char });
   };
 
-  const handleSaveCharacter = () => {
-    if (!formData.name || !formData.race || !formData.class) return;
+  const handleSaveCharacter = async () => {
+    if (!formData.name || !formData.race || !formData.class || !user) return;
     
-    if (editingCharacter) {
-      setCharacters(characters.map(c => 
-        c.id === editingCharacter.id ? { ...c, ...formData } as Character : c
-      ));
-    } else {
-      const newChar: Character = {
-        id: Date.now().toString(),
-        name: formData.name!,
-        race: formData.race!,
-        class: formData.class!,
-        img: null,
-        bio: formData.bio || "",
-        fullBio: formData.fullBio || "",
-        abilities: formData.abilities || { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
-      };
-      setCharacters([...characters, newChar]);
+    try {
+      if (editingCharacter) {
+        const response = await fetch(`/api/characters/${editingCharacter.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: formData.name,
+            race: formData.race,
+            class: formData.class,
+            img: formData.img,
+            str: formData.str,
+            dex: formData.dex,
+            con: formData.con,
+            int: formData.int,
+            wis: formData.wis,
+            cha: formData.cha,
+            bio: formData.bio,
+            fullBio: formData.fullBio,
+          }),
+        });
+        if (response.ok) {
+          const updatedChar = await response.json();
+          setCharacters(characters.map(c => 
+            c.id === editingCharacter.id ? updatedChar : c
+          ));
+        }
+      } else {
+        const response = await fetch("/api/characters", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: formData.name,
+            race: formData.race,
+            class: formData.class,
+            img: formData.img,
+            str: formData.str,
+            dex: formData.dex,
+            con: formData.con,
+            int: formData.int,
+            wis: formData.wis,
+            cha: formData.cha,
+            bio: formData.bio,
+            fullBio: formData.fullBio,
+            userId: user.id,
+          }),
+        });
+        if (response.ok) {
+          const newChar = await response.json();
+          setCharacters([...characters, newChar]);
+        }
+      }
+      
+      setEditingCharacter(null);
+      setShowCreateModal(false);
+      setFormData({
+        name: "",
+        race: "",
+        class: "",
+        bio: "",
+        fullBio: "",
+        str: 10,
+        dex: 10,
+        con: 10,
+        int: 10,
+        wis: 10,
+        cha: 10,
+      });
+    } catch (error) {
+      console.error("Failed to save character:", error);
+      alert("保存角色失败");
     }
-    
-    setEditingCharacter(null);
-    setShowCreateModal(false);
-    setFormData({
-      name: "",
-      race: "",
-      class: "",
-      bio: "",
-      fullBio: "",
-      abilities: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
-    });
   };
 
-  const handleDeleteCharacter = (id: string) => {
-    if (confirm("确定要删除这个角色吗？")) {
-      setCharacters(characters.filter(c => c.id !== id));
+  const handleDeleteCharacter = async (id: string) => {
+    if (!confirm("确定要删除这个角色吗？")) return;
+    
+    try {
+      const response = await fetch(`/api/characters/${id}`, {
+        method: "DELETE",
+      });
+      if (response.ok) {
+        setCharacters(characters.filter(c => c.id !== id));
+      }
+    } catch (error) {
+      console.error("Failed to delete character:", error);
+      alert("删除角色失败");
     }
   };
 
@@ -255,7 +279,12 @@ export default function CharactersPage() {
                     class: "",
                     bio: "",
                     fullBio: "",
-                    abilities: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
+                    str: 10,
+                    dex: 10,
+                    con: 10,
+                    int: 10,
+                    wis: 10,
+                    cha: 10,
                   });
                 }} 
                 className="text-zinc-400 hover:text-white"
@@ -316,24 +345,21 @@ export default function CharactersPage() {
               <div>
                 <label className="block text-sm text-zinc-400 mb-2">属性</label>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {Object.entries(formData.abilities || {}).map(([key, value]) => (
+                  {(["str", "dex", "con", "int", "wis", "cha"] as const).map((key) => (
                     <div key={key} className="bg-zinc-800 rounded-lg p-3">
                       <div className="flex items-center gap-2 text-zinc-400 text-xs mb-2">
-                        {abilityIcons[key as keyof typeof abilityIcons]}
-                        <span>{abilityNames[key as keyof typeof abilityNames]}</span>
+                        {abilityIcons[key]}
+                        <span>{abilityNames[key]}</span>
                       </div>
                       <input 
                         type="number" 
                         min="1" 
                         max="30" 
                         className="w-full bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-white text-center"
-                        value={value}
+                        value={formData[key] || 10}
                         onChange={(e) => setFormData({
                           ...formData,
-                          abilities: {
-                            ...formData.abilities!,
-                            [key]: parseInt(e.target.value) || 10,
-                          },
+                          [key]: parseInt(e.target.value) || 10,
                         })}
                       />
                     </div>
@@ -426,83 +452,93 @@ export default function CharactersPage() {
         </div>
       </header>
       <main className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {characters.map((char) => (
-            <Card
-              key={char.id}
-              className="bg-zinc-900 border-zinc-800 hover:border-amber-500/50 transition-colors overflow-hidden"
-            >
-              <div className="h-32 bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center relative">
-                {char.img ? (
-                  <img src={char.img} alt={char.name} className="w-full h-full object-cover" />
-                ) : (
-                  <User className="h-16 w-16 text-zinc-600" />
-                )}
-                <div className="absolute top-2 right-2 flex gap-1">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 bg-zinc-900/80 hover:bg-zinc-800"
-                    onClick={() => handleEditCharacter(char)}
-                  >
-                    <Edit2 className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 bg-zinc-900/80 hover:bg-red-900/50"
-                    onClick={() => handleDeleteCharacter(char.id)}
-                  >
-                    <Trash2 className="h-4 w-4 text-red-400" />
-                  </Button>
-                </div>
-              </div>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>{char.name}</span>
-                  <span className="text-sm font-normal text-zinc-400">
-                    {char.race} · {char.class}
-                  </span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-3 gap-2">
-                  {Object.entries(char.abilities).map(([key, value]) => (
-                    <div
-                      key={key}
-                      className="bg-zinc-800 rounded-lg p-2 text-center"
+        {isLoading ? (
+          <div className="text-center py-12">
+            <p className="text-zinc-400">加载中...</p>
+          </div>
+        ) : characters.length === 0 ? (
+          <div className="text-center py-12">
+            <User className="h-16 w-16 text-zinc-600 mx-auto mb-4" />
+            <h3 className="text-xl font-bold mb-2">暂无角色</h3>
+            <p className="text-zinc-400 mb-6">点击上方"创建角色"按钮添加你的第一个角色</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {characters.map((char) => (
+              <Card
+                key={char.id}
+                className="bg-zinc-900 border-zinc-800 hover:border-amber-500/50 transition-colors overflow-hidden"
+              >
+                <div className="h-32 bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center relative">
+                  {char.img ? (
+                    <img src={char.img} alt={char.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="h-16 w-16 text-zinc-600" />
+                  )}
+                  <div className="absolute top-2 right-2 flex gap-1">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 bg-zinc-900/80 hover:bg-zinc-800"
+                      onClick={() => handleEditCharacter(char)}
                     >
-                      <div className="flex items-center justify-center gap-1 text-zinc-400 text-xs mb-1">
-                        {abilityIcons[key as keyof typeof abilityIcons]}
-                        <span>
-                          {abilityNames[key as keyof typeof abilityNames]}
-                        </span>
-                      </div>
-                      <div className="text-xl font-bold text-amber-400">
-                        {value}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                {char.bio && (
-                  <div className="space-y-2">
-                    <p className="text-sm text-zinc-400">
-                      {char.bio}
-                    </p>
-                    {char.fullBio && (
-                      <details className="text-xs">
-                        <summary className="cursor-pointer text-amber-400 hover:text-amber-300">查看完整背景</summary>
-                        <p className="text-zinc-400 mt-2 pt-2 border-t border-zinc-800">
-                          {char.fullBio}
-                        </p>
-                      </details>
-                    )}
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 bg-zinc-900/80 hover:bg-red-900/50"
+                      onClick={() => handleDeleteCharacter(char.id)}
+                    >
+                      <Trash2 className="h-4 w-4 text-red-400" />
+                    </Button>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                </div>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>{char.name}</span>
+                    <span className="text-sm font-normal text-zinc-400">
+                      {char.race} · {char.class}
+                    </span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-3 gap-2">
+                    {(["str", "dex", "con", "int", "wis", "cha"] as const).map((key) => (
+                      <div
+                        key={key}
+                        className="bg-zinc-800 rounded-lg p-2 text-center"
+                      >
+                        <div className="flex items-center justify-center gap-1 text-zinc-400 text-xs mb-1">
+                          {abilityIcons[key]}
+                          <span>{abilityNames[key]}</span>
+                        </div>
+                        <div className="text-xl font-bold text-amber-400">
+                          {char[key] || 10}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {char.bio && (
+                    <div className="space-y-2">
+                      <p className="text-sm text-zinc-400">
+                        {char.bio}
+                      </p>
+                      {char.fullBio && (
+                        <details className="text-xs">
+                          <summary className="cursor-pointer text-amber-400 hover:text-amber-300">查看完整背景</summary>
+                          <p className="text-zinc-400 mt-2 pt-2 border-t border-zinc-800">
+                            {char.fullBio}
+                          </p>
+                        </details>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );

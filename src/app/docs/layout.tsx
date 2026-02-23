@@ -4,21 +4,16 @@ import Link from "next/link";
 import {
   BookOpen,
   ArrowLeft,
-  Image,
-  Lock,
-  Eye,
   X,
   Plus,
   Hash,
-  Folder,
   FileText,
   Pin,
   Edit2,
   Trash2,
   Save,
-  MoreHorizontal,
 } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useApp, Document } from "@/contexts/AppContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -31,20 +26,13 @@ export default function DocsLayout({
   children: React.ReactNode;
 }) {
   const {
-    resources,
-    settings,
-    updateSettings,
-    verifyPassword,
     documents,
     addDocument,
     updateDocument,
     deleteDocument,
+    isClient,
   } = useApp();
   const { user } = useAuth();
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [showResourceSelector, setShowResourceSelector] = useState(false);
-  const [password, setPassword] = useState("");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingDoc, setEditingDoc] = useState<Document | null>(null);
@@ -58,7 +46,6 @@ export default function DocsLayout({
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [isMounted, setIsMounted] = useState(false);
-  const [docsBgError, setDocsBgError] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -71,31 +58,6 @@ export default function DocsLayout({
   });
 
   const categories = Array.from(new Set(documents.map((d) => d.category)));
-
-  const handleVerifyPassword = () => {
-    if (verifyPassword(password)) {
-      setIsAuthenticated(true);
-      setShowPasswordModal(false);
-      setPassword("");
-      setShowResourceSelector(true);
-    } else {
-      alert("密码错误");
-    }
-  };
-
-  const selectDocsBg = (url: string | null) => {
-    updateSettings({ docsBg: url });
-    setShowResourceSelector(false);
-  };
-
-  const docsResources = resources.filter(
-    (r) => r.category === "docsBg" || r.category === "general"
-  );
-
-  const handleDocsBgError = () => {
-    setDocsBgError(true);
-    updateSettings({ docsBg: null });
-  };
 
   const handleCreateDoc = () => {
     if (!newDoc.title || !newDoc.content) return;
@@ -161,103 +123,13 @@ export default function DocsLayout({
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex h-screen overflow-hidden">
-      {settings.docsBg && !docsBgError && (
-        <div className="fixed inset-0 z-0 pointer-events-none" suppressHydrationWarning={true}>
+      {isClient && (
+        <div className="fixed inset-0 z-0 pointer-events-none">
           <img
-            src={settings.docsBg}
+            src="/images/general-bg.png"
             alt="档案室背景"
-            className="w-full h-full object-cover opacity-20"
-            onError={handleDocsBgError}
+            className="w-full h-full object-cover opacity-30 blur-[2px]"
           />
-        </div>
-      )}
-
-      {showPasswordModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-md">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold flex items-center gap-2">
-                <Lock className="h-5 w-5" />
-                输入密码
-              </h3>
-              <button
-                onClick={() => setShowPasswordModal(false)}
-                className="text-zinc-400 hover:text-white"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm text-zinc-400 mb-1">密码</label>
-                <input
-                  type="password"
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleVerifyPassword()}
-                />
-              </div>
-              <Button
-                className="w-full bg-amber-600 hover:bg-amber-700"
-                onClick={handleVerifyPassword}
-              >
-                确认
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showResourceSelector && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-4xl max-h-[80vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold flex items-center gap-2">
-                <Image className="h-5 w-5" />
-                选择档案室背景
-              </h3>
-              <button
-                onClick={() => setShowResourceSelector(false)}
-                className="text-zinc-400 hover:text-white"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="space-y-4">
-              <Button
-                variant="ghost"
-                className="w-full justify-start border border-zinc-700 bg-zinc-800"
-                onClick={() => selectDocsBg(null)}
-              >
-                <Eye className="h-4 w-4 mr-2" />
-                使用默认背景
-              </Button>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {docsResources.map((img) => (
-                  <div
-                    key={img.id}
-                    className="relative group cursor-pointer"
-                    onClick={() => selectDocsBg(img.url)}
-                  >
-                    <div className="aspect-video bg-zinc-800 rounded-lg overflow-hidden border border-zinc-700">
-                      <img
-                        src={img.url}
-                        alt={img.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <p className="text-sm text-zinc-400 mt-1 truncate">{img.name}</p>
-                  </div>
-                ))}
-              </div>
-              {docsResources.length === 0 && (
-                <p className="text-zinc-500 text-center py-8">
-                  暂无图片资源，请先去资源库上传
-                </p>
-              )}
-            </div>
-          </div>
         </div>
       )}
 
@@ -353,20 +225,6 @@ export default function DocsLayout({
         <div className="w-10 h-10 bg-amber-600 rounded-lg flex items-center justify-center">
           <BookOpen className="h-6 w-6 text-white" />
         </div>
-        <div className="flex-1" />
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => {
-            if (isAuthenticated) {
-              setShowResourceSelector(true);
-            } else {
-              setShowPasswordModal(true);
-            }
-          }}
-        >
-          <Image className="h-5 w-5 text-zinc-400" />
-        </Button>
       </div>
 
       <div className="w-64 bg-zinc-900/95 border-r border-zinc-800 flex flex-col relative z-10">

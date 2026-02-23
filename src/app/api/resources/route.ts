@@ -21,6 +21,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '缺少必要参数' }, { status: 400 })
     }
 
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    })
+
+    if (!user) {
+      return NextResponse.json({ error: '用户不存在' }, { status: 400 })
+    }
+
     const resource = await prisma.resourceImage.create({
       data: {
         name,

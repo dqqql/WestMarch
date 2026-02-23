@@ -37,7 +37,7 @@ interface AppContextType {
   settings: AppSettings;
   isLoading: boolean;
   isClient: boolean;
-  addResource: (image: Omit<ResourceImage, "id" | "createdAt" | "updatedAt">) => Promise<void>;
+  addResource: (image: Omit<ResourceImage, "id" | "createdAt" | "updatedAt" | "userId">) => Promise<void>;
   deleteResource: (id: string) => Promise<void>;
   updateSettings: (newSettings: Partial<AppSettings>) => Promise<void>;
   verifyPassword: (password: string) => boolean;
@@ -124,7 +124,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [isClient, user]);
 
-  const addResource = async (image: Omit<ResourceImage, "id" | "createdAt" | "updatedAt">) => {
+  const addResource = async (image: Omit<ResourceImage, "id" | "createdAt" | "updatedAt" | "userId">) => {
     if (!user) throw new Error("用户未登录");
     try {
       const response = await fetch("/api/resources", {

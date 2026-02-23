@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Card,
   CardContent,
@@ -9,68 +9,22 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Plus, ArrowLeft, Tag, X, Edit2, Trash2, Send, MessageCircle, Users, Search, Clock, Trash } from "lucide-react";
+import { MessageSquare, Plus, ArrowLeft, Tag, X, Edit2, Trash2, Send, Search, Clock, Trash } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { useApp } from "@/contexts/AppContext";
-
-interface Comment {
-  id: string;
-  author: string;
-  content: string;
-  createdAt: string;
-}
 
 interface Post {
   id: string;
   title: string;
   content: string;
   tag: "DM悬赏" | "寻找队伍" | "跑团战报";
-  author: string;
-  character: string | null;
+  authorId: string;
+  author: { id: string; username: string; nickname: string | null };
+  characterId: string | null;
+  character: { id: string; name: string } | null;
   createdAt: string;
-  comments: Comment[];
+  updatedAt: string;
 }
-
-const initialPosts: Post[] = [
-  {
-    id: "1",
-    title: "寻找队伍：探索废弃矿山",
-    content: "我们需要一名战士和一名治疗者来探索西部边境的废弃矿山，据说那里藏有丰富的矿石和古老的宝藏。",
-    tag: "寻找队伍",
-    author: "冒险者张三",
-    character: "铁锤·石拳",
-    createdAt: new Date(Date.now() - 3600000).toISOString(),
-    comments: [
-      {
-        id: "c1",
-        author: "冒险者李四",
-        content: "我想加入！我是游侠。",
-        createdAt: new Date(Date.now() - 3000000).toISOString(),
-      },
-    ],
-  },
-  {
-    id: "2",
-    title: "战报：迷雾森林探险",
-    content: "昨天我们成功探索了迷雾森林，发现了一个神秘的精灵遗迹！详细战报如下...",
-    tag: "跑团战报",
-    author: "冒险者李四",
-    character: "月影·行者",
-    createdAt: new Date(Date.now() - 7200000).toISOString(),
-    comments: [],
-  },
-  {
-    id: "3",
-    title: "DM悬赏：剿灭哥布林营地",
-    content: "西部边境的哥布林活动日益频繁，现悬赏剿灭哥布林营地的冒险者队伍！",
-    tag: "DM悬赏",
-    author: "DM",
-    character: null,
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-    comments: [],
-  },
-];
 
 const tagColors = {
   "DM悬赏": "bg-red-900/50 text-red-300 border-red-800",
@@ -80,12 +34,11 @@ const tagColors = {
 
 export default function BoardPage() {
   const { user } = useAuth();
-  const { isClient } = useApp();
-  const [posts, setPosts] = useState<Post[]>(initialPosts);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [newPost, setNewPost] = useState({ title: "", content: "", tag: "寻找队伍" as "DM悬赏" | "寻找队伍" | "跑团战报" });
-  const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchHistory, setSearchHistory] = useState<string[]>(() => {
@@ -96,57 +49,89 @@ export default function BoardPage() {
     return [];
   });
 
-  const handleCreatePost = () => {
-    if (!newPost.title || !newPost.content) return;
-    const post: Post = {
-      id: Date.now().toString(),
-      title: newPost.title,
-      content: newPost.content,
-      tag: newPost.tag,
-      author: user?.username || "匿名",
-      character: null,
-      createdAt: new Date().toISOString(),
-      comments: [],
-    };
-    setPosts([post, ...posts]);
-    setNewPost({ title: "", content: "", tag: "寻找队伍" });
-    setShowCreateModal(false);
-  };
+  useEffect(() => {
+    loadPosts();
+  }, []);
 
-  const handleEditPost = () => {
-    if (!editingPost || !newPost.title || !newPost.content) return;
-    setPosts(posts.map(p => p.id === editingPost.id ? { ...p, ...newPost } : p));
-    setEditingPost(null);
-    setNewPost({ title: "", content: "", tag: "寻找队伍" });
-  };
-
-  const handleDeletePost = (id: string) => {
-    if (confirm("确定要删除这篇帖子吗？")) {
-      setPosts(posts.filter(p => p.id !== id));
+  const loadPosts = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch("/api/posts");
+      if (response.ok) {
+        const data = await response.json();
+        setPosts(data);
+      }
+    } catch (error) {
+      console.error("Failed to load posts:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleAddComment = (postId: string) => {
-    const content = commentInputs[postId] || "";
-    if (!content.trim()) return;
-    setPosts(posts.map(p => {
-      if (p.id === postId) {
-        return {
-          ...p,
-          comments: [
-            ...p.comments,
-            {
-              id: Date.now().toString(),
-              author: user?.username || "匿名",
-              content,
-              createdAt: new Date().toISOString(),
-            },
-          ],
-        };
+  const handleCreatePost = async () => {
+    if (!newPost.title || !newPost.content || !user) return;
+    try {
+      const response = await fetch("/api/posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: newPost.title,
+          content: newPost.content,
+          tag: newPost.tag,
+          authorId: user.id,
+          characterId: null
+        }),
+      });
+      if (response.ok) {
+        const createdPost = await response.json();
+        setPosts([createdPost, ...posts]);
+        setNewPost({ title: "", content: "", tag: "寻找队伍" });
+        setShowCreateModal(false);
       }
-      return p;
-    }));
-    setCommentInputs({ ...commentInputs, [postId]: "" });
+    } catch (error) {
+      console.error("Failed to create post:", error);
+      alert("创建帖子失败");
+    }
+  };
+
+  const handleEditPost = async () => {
+    if (!editingPost || !newPost.title || !newPost.content) return;
+    try {
+      const response = await fetch(`/api/posts/${editingPost.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: newPost.title,
+          content: newPost.content,
+          tag: newPost.tag,
+          characterId: null
+        }),
+      });
+      if (response.ok) {
+        const updatedPost = await response.json();
+        setPosts(posts.map(p => p.id === editingPost.id ? updatedPost : p));
+        setEditingPost(null);
+        setNewPost({ title: "", content: "", tag: "寻找队伍" });
+      }
+    } catch (error) {
+      console.error("Failed to edit post:", error);
+      alert("编辑帖子失败");
+    }
+  };
+
+  const handleDeletePost = async (id: string) => {
+    if (!confirm("确定要删除这篇帖子吗？")) return;
+    try {
+      const response = await fetch(`/api/posts/${id}`, {
+        method: "DELETE",
+      });
+      if (response.ok) {
+        setPosts(posts.filter(p => p.id !== id));
+      }
+    } catch (error) {
+      console.error("Failed to delete post:", error);
+      alert("删除帖子失败");
+    }
   };
 
   const openEditModal = (post: Post) => {
@@ -155,7 +140,7 @@ export default function BoardPage() {
   };
 
   const isPostOwner = (post: Post) => {
-    return user && post.author === user.username;
+    return user && post.authorId === user.id;
   };
 
   const handleSearch = (query: string) => {
@@ -205,28 +190,27 @@ export default function BoardPage() {
     
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
+      const authorName = (post: Post) => post.author.nickname || post.author.username;
       result = result.filter(post =>
         post.title.toLowerCase().includes(query) ||
         post.content.toLowerCase().includes(query) ||
-        post.author.toLowerCase().includes(query)
+        authorName(post).toLowerCase().includes(query)
       );
     }
     
     return result;
   }, [sortedPosts, selectedTag, searchQuery]);
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center">
+        <p className="text-zinc-400">加载中...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      {isClient && (
-        <div className="fixed inset-0 z-0 pointer-events-none">
-          <img 
-            src="/images/general-bg.png" 
-            alt="布告栏背景" 
-            className="w-full h-full object-cover opacity-30 blur-[2px]" 
-          />
-        </div>
-      )}
-
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50" onClick={() => setShowCreateModal(false)}>
           <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-lg mx-4" onClick={(e) => e.stopPropagation()}>
@@ -437,87 +421,55 @@ export default function BoardPage() {
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {filteredPosts.map((post) => (
-              <Card
-                key={post.id}
-                className="bg-zinc-900 border-zinc-800 hover:border-amber-500/50 transition-colors flex flex-col"
-              >
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="space-y-2 flex-1">
-                      <div className="flex items-center gap-3">
-                        <span
-                          className={`px-2 py-1 rounded text-xs font-medium border ${tagColors[post.tag]}`}
-                        >
-                          <Tag className="h-3 w-3 inline mr-1" />
-                          {post.tag}
-                        </span>
-                      </div>
-                      <CardTitle className="text-xl">
-                        {searchQuery ? highlightText(post.title, searchQuery) : post.title}
-                      </CardTitle>
-                      <CardDescription className="flex items-center gap-2">
-                        <span>作者: {searchQuery ? highlightText(post.author, searchQuery) : post.author}</span>
-                        {post.character && <span>• 角色: {post.character}</span>}
-                        <span className="text-zinc-600">
-                          • {new Date(post.createdAt).toLocaleString("zh-CN")}
-                        </span>
-                      </CardDescription>
-                    </div>
-                    {isPostOwner(post) && (
-                      <div className="flex gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => openEditModal(post)}>
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDeletePost(post.id)}>
-                          <Trash2 className="h-4 w-4 text-red-400" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4 flex-1">
-                  <p className="text-zinc-300">
-                    {searchQuery ? highlightText(post.content, searchQuery) : post.content}
-                  </p>
-                  
-                  <div className="border-t border-zinc-800 pt-4 mt-auto">
-                    <div className="flex items-center gap-2 mb-3 text-zinc-400">
-                      <MessageCircle className="h-4 w-4" />
-                      <span className="text-sm">评论 ({post.comments.length})</span>
-                    </div>
-                    
-                    <div className="space-y-3 mb-4">
-                      {post.comments.map((comment) => (
-                        <div key={comment.id} className="bg-zinc-800/50 rounded-lg p-3">
-                          <div className="flex justify-between items-start mb-1">
-                            <span className="text-sm font-medium text-amber-400">{comment.author}</span>
-                            <span className="text-xs text-zinc-500">{new Date(comment.createdAt).toLocaleString("zh-CN")}</span>
+              {filteredPosts.map((post) => {
+                const authorName = post.author.nickname || post.author.username;
+                return (
+                  <Card
+                    key={post.id}
+                    className="bg-zinc-900 border-zinc-800 hover:border-amber-500/50 transition-colors flex flex-col"
+                  >
+                    <CardHeader>
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="space-y-2 flex-1">
+                          <div className="flex items-center gap-3">
+                            <span
+                              className={`px-2 py-1 rounded text-xs font-medium border ${tagColors[post.tag]}`}
+                            >
+                              <Tag className="h-3 w-3 inline mr-1" />
+                              {post.tag}
+                            </span>
                           </div>
-                          <p className="text-sm text-zinc-300">{comment.content}</p>
+                          <CardTitle className="text-xl">
+                            {searchQuery ? highlightText(post.title, searchQuery) : post.title}
+                          </CardTitle>
+                          <CardDescription className="flex items-center gap-2">
+                            <span>作者: {searchQuery ? highlightText(authorName, searchQuery) : authorName}</span>
+                            {post.character && <span>• 角色: {post.character.name}</span>}
+                            <span className="text-zinc-600">
+                              • {new Date(post.createdAt).toLocaleString("zh-CN")}
+                            </span>
+                          </CardDescription>
                         </div>
-                      ))}
-                    </div>
-                    
-                    {user && (
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          className="flex-1 bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white text-sm"
-                          placeholder="写下你的评论..."
-                          value={commentInputs[post.id] || ""}
-                          onChange={(e) => setCommentInputs({ ...commentInputs, [post.id]: e.target.value })}
-                          onKeyDown={(e) => e.key === "Enter" && handleAddComment(post.id)}
-                        />
-                        <Button className="bg-amber-600 hover:bg-amber-700" onClick={() => handleAddComment(post.id)}>
-                          <Send className="h-4 w-4" />
-                        </Button>
+                        {isPostOwner(post) && (
+                          <div className="flex gap-2">
+                            <Button variant="ghost" size="icon" onClick={() => openEditModal(post)}>
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleDeletePost(post.id)}>
+                              <Trash2 className="h-4 w-4 text-red-400" />
+                            </Button>
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                    </CardHeader>
+                    <CardContent className="space-y-4 flex-1">
+                      <p className="text-zinc-300">
+                        {searchQuery ? highlightText(post.content, searchQuery) : post.content}
+                      </p>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </div>

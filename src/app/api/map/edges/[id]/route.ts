@@ -8,13 +8,13 @@ export async function DELETE(
   try {
     const { id } = await params
 
-    await prisma.resourceImage.delete({
+    await prisma.mapEdge.delete({
       where: { id }
     })
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Delete resource error:', error)
-    return NextResponse.json({ error: '删除资源失败' }, { status: 500 })
+    console.error('Delete edge error:', error)
+    return NextResponse.json({ error: '删除边失败' }, { status: 500 })
   }
 }

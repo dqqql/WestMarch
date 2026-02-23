@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -21,41 +21,25 @@ import { Button } from "@/components/ui/button";
 import { Map as MapIcon, ArrowLeft, Edit, Plus, Info, Trash2, X, Save } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useApp } from "@/contexts/AppContext";
 
-const initialNodes: Node[] = [
-  {
-    id: "1",
-    type: "custom",
-    position: { x: 250, y: 100 },
-    data: { label: "起始城镇", type: "城镇", description: "冒险从这里开始的和平城镇" },
-  },
-  {
-    id: "2",
-    type: "custom",
-    position: { x: 100, y: 250 },
-    data: { label: "迷雾森林", type: "地点", description: "充满未知迷雾的神秘森林" },
-  },
-  {
-    id: "3",
-    type: "custom",
-    position: { x: 400, y: 250 },
-    data: { label: "废弃矿山", type: "地点", description: "曾经繁荣的矿山，如今已被废弃" },
-  },
-  {
-    id: "4",
-    type: "custom",
-    position: { x: 250, y: 400 },
-    data: { label: "哥布林营地", type: "事件", description: "哥布林聚集的危险营地" },
-  },
-];
+interface MapNode {
+  id: string;
+  label: string;
+  type: "城镇" | "地点" | "事件";
+  x: number;
+  y: number;
+  description: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
 
-const initialEdges: Edge[] = [
-  { id: "e1-2", source: "1", target: "2", animated: true, markerEnd: { type: MarkerType.ArrowClosed } },
-  { id: "e1-3", source: "1", target: "3", animated: true, markerEnd: { type: MarkerType.ArrowClosed } },
-  { id: "e2-4", source: "2", target: "4", animated: true, markerEnd: { type: MarkerType.ArrowClosed } },
-  { id: "e3-4", source: "3", target: "4", animated: true, markerEnd: { type: MarkerType.ArrowClosed } },
-];
+interface MapEdge {
+  id: string;
+  sourceId: string;
+  targetId: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 const CustomNode = ({ data, selected }: { data: any; selected: boolean }) => {
   const typeColors = {
@@ -84,18 +68,75 @@ const nodeTypes = {
 
 function MapContent() {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [isEditMode, setIsEditMode] = useState(false);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [isEditingNode, setIsEditingNode] = useState(false);
   const [editForm, setEditForm] = useState({ label: "", type: "地点" as "城镇" | "地点" | "事件", description: "" });
-  const { isClient } = useApp();
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadMap();
+  }, []);
+
+  const loadMap = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch("/api/map");
+      if (response.ok) {
+        const data = await response.json();
+        const mappedNodes: Node[] = data.nodes.map((node: MapNode) => ({
+          id: node.id,
+          type: "custom",
+          position: { x: node.x, y: node.y },
+          data: { label: node.label, type: node.type, description: node.description }
+        }));
+        const mappedEdges: Edge[] = data.edges.map((edge: MapEdge) => ({
+          id: edge.id,
+          source: edge.sourceId,
+          target: edge.targetId,
+          animated: true,
+          markerEnd: { type: MarkerType.ArrowClosed }
+        }));
+        setNodes(mappedNodes);
+        setEdges(mappedEdges);
+      }
+    } catch (error) {
+      console.error("Failed to load map:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge({ ...params, animated: true, markerEnd: { type: MarkerType.ArrowClosed } }, eds)),
-    [setEdges]
+    async (params: Connection) => {
+      if (!isEditMode) return;
+      try {
+        const response = await fetch("/api/map/edges", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sourceId: params.source,
+            targetId: params.target
+          }),
+        });
+        if (response.ok) {
+          const newEdge = await response.json();
+          setEdges((eds) => addEdge({ 
+            id: newEdge.id,
+            source: params.source,
+            target: params.target,
+            animated: true,
+            markerEnd: { type: MarkerType.ArrowClosed }
+          }, eds));
+        }
+      } catch (error) {
+        console.error("Failed to create edge:", error);
+      }
+    },
+    [isEditMode, setEdges]
   );
 
   const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
@@ -108,14 +149,32 @@ function MapContent() {
     setIsEditingNode(false);
   }, []);
 
-  const addNode = () => {
-    const newNode: Node = {
-      id: `node-${Date.now()}`,
-      type: "custom",
-      position: { x: Math.random() * 400 + 100, y: Math.random() * 300 + 100 },
-      data: { label: "新地点", type: "地点", description: "" },
-    };
-    setNodes((nds) => [...nds, newNode]);
+  const addNode = async () => {
+    try {
+      const response = await fetch("/api/map/nodes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          label: "新地点",
+          type: "地点",
+          x: Math.random() * 400 + 100,
+          y: Math.random() * 300 + 100,
+          description: ""
+        }),
+      });
+      if (response.ok) {
+        const newNode = await response.json();
+        const node: Node = {
+          id: newNode.id,
+          type: "custom",
+          position: { x: newNode.x, y: newNode.y },
+          data: { label: newNode.label, type: newNode.type, description: newNode.description }
+        };
+        setNodes((nds) => [...nds, node]);
+      }
+    } catch (error) {
+      console.error("Failed to create node:", error);
+    }
   };
 
   const startEditNode = () => {
@@ -128,40 +187,93 @@ function MapContent() {
     setIsEditingNode(true);
   };
 
-  const saveNodeEdit = () => {
+  const saveNodeEdit = async () => {
     if (!selectedNode) return;
-    setNodes((nds) =>
-      nds.map((n) =>
-        n.id === selectedNode.id
-          ? { ...n, data: { ...n.data, ...editForm } }
-          : n
-      )
-    );
-    setSelectedNode((prev) => prev ? { ...prev, data: { ...prev.data, ...editForm } } : null);
-    setIsEditingNode(false);
-  };
-
-  const deleteNode = () => {
-    if (!selectedNode) return;
-    if (confirm(`确定要删除节点"${selectedNode.data.label as string}"吗？`)) {
-      setNodes((nds) => nds.filter((n) => n.id !== selectedNode.id));
-      setEdges((eds) => eds.filter((e) => e.source !== selectedNode.id && e.target !== selectedNode.id));
-      setSelectedNode(null);
+    try {
+      const response = await fetch(`/api/map/nodes/${selectedNode.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          label: editForm.label,
+          type: editForm.type,
+          x: selectedNode.position.x,
+          y: selectedNode.position.y,
+          description: editForm.description
+        }),
+      });
+      if (response.ok) {
+        const updatedNode = await response.json();
+        setNodes((nds) =>
+          nds.map((n) =>
+            n.id === selectedNode.id
+              ? { ...n, data: { ...n.data, ...editForm } }
+              : n
+          )
+        );
+        setSelectedNode((prev) => prev ? { ...prev, data: { ...prev.data, ...editForm } } : null);
+        setIsEditingNode(false);
+      }
+    } catch (error) {
+      console.error("Failed to update node:", error);
     }
   };
 
+  const deleteNode = async () => {
+    if (!selectedNode) return;
+    if (!confirm(`确定要删除节点"${selectedNode.data.label as string}"吗？`)) return;
+    try {
+      const response = await fetch(`/api/map/nodes/${selectedNode.id}`, {
+        method: "DELETE",
+      });
+      if (response.ok) {
+        setNodes((nds) => nds.filter((n) => n.id !== selectedNode.id));
+        setEdges((eds) => eds.filter((e) => e.source !== selectedNode.id && e.target !== selectedNode.id));
+        setSelectedNode(null);
+      }
+    } catch (error) {
+      console.error("Failed to delete node:", error);
+    }
+  };
+
+  const handleNodesChange = useCallback(
+    (changes: any[]) => {
+      onNodesChange(changes);
+      changes.forEach(async (change: any) => {
+        if (change.type === "position" && isEditMode) {
+          const node = nodes.find((n) => n.id === change.id);
+          if (node && change.position) {
+            try {
+              await fetch(`/api/map/nodes/${change.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  label: node.data.label,
+                  type: node.data.type,
+                  x: change.position.x,
+                  y: change.position.y,
+                  description: node.data.description
+                }),
+              });
+            } catch (error) {
+              console.error("Failed to update node position:", error);
+            }
+          }
+        }
+      });
+    },
+    [onNodesChange, isEditMode, nodes]
+  );
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center">
+        <p className="text-zinc-400">加载中...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col">
-      {isClient && (
-        <div className="fixed inset-0 z-0 pointer-events-none">
-          <img 
-            src="/images/map-bg.png" 
-            alt="地图背景" 
-            className="w-full h-full object-cover opacity-30 blur-[2px]" 
-          />
-        </div>
-      )}
-
       <header className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -201,7 +313,7 @@ function MapContent() {
           <ReactFlow
             nodes={nodes}
             edges={edges}
-            onNodesChange={onNodesChange}
+            onNodesChange={handleNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             onInit={setReactFlowInstance}
@@ -213,9 +325,9 @@ function MapContent() {
             fitView
             minZoom={0.1}
             maxZoom={2.0}
-            className={isClient ? "bg-transparent" : "bg-zinc-950"}
+            className="bg-zinc-950"
           >
-            {!isClient && <Background color="#3f3f46" gap={16} />}
+            <Background color="#3f3f46" gap={16} />
             <MiniMap
               className="bg-zinc-900 border-zinc-800"
               nodeColor={(n) => {

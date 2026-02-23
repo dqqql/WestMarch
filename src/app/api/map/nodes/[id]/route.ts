@@ -7,22 +7,23 @@ export async function PUT(
 ) {
   try {
     const { id } = await params
-    const { title, content, category, isPinned } = await request.json()
+    const { label, type, x, y, description } = await request.json()
 
-    const document = await prisma.document.update({
+    const node = await prisma.mapNode.update({
       where: { id },
       data: {
-        title,
-        content,
-        category,
-        isPinned
+        label,
+        type: type as any,
+        x,
+        y,
+        description
       }
     })
 
-    return NextResponse.json(document)
+    return NextResponse.json(node)
   } catch (error) {
-    console.error('Update document error:', error)
-    return NextResponse.json({ error: '更新文档失败' }, { status: 500 })
+    console.error('Update node error:', error)
+    return NextResponse.json({ error: '更新节点失败' }, { status: 500 })
   }
 }
 
@@ -33,13 +34,13 @@ export async function DELETE(
   try {
     const { id } = await params
 
-    await prisma.document.delete({
+    await prisma.mapNode.delete({
       where: { id }
     })
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Delete document error:', error)
-    return NextResponse.json({ error: '删除文档失败' }, { status: 500 })
+    console.error('Delete node error:', error)
+    return NextResponse.json({ error: '删除节点失败' }, { status: 500 })
   }
 }
