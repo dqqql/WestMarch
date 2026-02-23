@@ -25,26 +25,19 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nextjs -u 1001
-
 RUN npm install prisma@6.5.0
 
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 
-COPY --chown=nextjs:nodejs start.sh ./start.sh
+COPY start.sh ./start.sh
 RUN chmod +x ./start.sh
 
-RUN mkdir -p /app/data && chown -R nextjs:nodejs /app/data && chmod -R 755 /app/data
-
-RUN touch /app/data/dev.db && chown nextjs:nodejs /app/data/dev.db && chmod 664 /app/data/dev.db
-
-USER nextjs
+RUN mkdir -p /app/data
 
 EXPOSE 3000
 
