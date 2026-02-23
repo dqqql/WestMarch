@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Map as MapIcon, ArrowLeft, Edit, Plus, Info, Trash2, X, Save } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useApp } from "@/contexts/AppContext";
 
 interface MapNode {
   id: string;
@@ -67,6 +68,7 @@ const nodeTypes = {
 };
 
 function MapContent() {
+  const { isClient } = useApp();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
