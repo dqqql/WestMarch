@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Users, User, Calendar, X, Plus, Edit2, Trash2, Tag } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import { useApp } from "@/contexts/AppContext";
 
 interface Character {
   id: string;
@@ -32,6 +33,7 @@ interface Party {
 
 export default function PartyPage() {
   const { user } = useAuth();
+  const { isClient } = useApp();
   const [parties, setParties] = useState<Party[]>([]);
   const [characters, setCharacters] = useState<Character[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -247,6 +249,15 @@ export default function PartyPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
+      {isClient && (
+        <div className="fixed inset-0 z-0 pointer-events-none">
+          <img
+            src="/images/general-bg.png"
+            alt="组队背景"
+            className="w-full h-full object-cover opacity-30 blur-[2px]"
+          />
+        </div>
+      )}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 overflow-y-auto py-8">
           <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-lg mx-4" onClick={(e) => e.stopPropagation()}>

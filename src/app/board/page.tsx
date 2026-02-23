@@ -211,6 +211,15 @@ export default function BoardPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
+      {isClient && (
+        <div className="fixed inset-0 z-0 pointer-events-none">
+          <img
+            src="/images/general-bg.png"
+            alt="公告栏背景"
+            className="w-full h-full object-cover opacity-30 blur-[2px]"
+          />
+        </div>
+      )}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50" onClick={() => setShowCreateModal(false)}>
           <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-lg mx-4" onClick={(e) => e.stopPropagation()}>
