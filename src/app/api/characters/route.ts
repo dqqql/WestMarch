@@ -1,16 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import prisma from '@/lib/prisma'
+import { repositories } from '@/repositories'
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
 
-    const characters = await prisma.character.findMany({
-      where: userId ? { userId } : undefined,
-      orderBy: { createdAt: 'desc' }
-    })
-
+    const characters = await repositories.character.findAll(userId || undefined)
     return NextResponse.json(characters)
   } catch (error) {
     console.error('Get characters error:', error)
@@ -26,30 +22,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '缺少必要参数' }, { status: 400 })
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId }
-    })
-
+    const user = await repositories.user.findById(userId)
     if (!user) {
       return NextResponse.json({ error: '用户不存在' }, { status: 400 })
     }
 
-    const character = await prisma.character.create({
-      data: {
-        name,
-        race,
-        class: charClass,
-        img,
-        str,
-        dex,
-        con,
-        int,
-        wis,
-        cha,
-        bio,
-        fullBio,
-        userId
-      }
+    const character = await repositories.character.create({
+      name,
+      race,
+      class: charClass,
+      img,
+      str,
+      dex,
+      con,
+      int,
+      wis,
+      cha,
+      bio,
+      fullBio,
+      userId
     })
 
     return NextResponse.json(character)

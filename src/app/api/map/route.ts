@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import prisma from '@/lib/prisma'
+import { repositories } from '@/repositories'
 
 export async function GET(request: NextRequest) {
   try {
-    const [nodes, edges] = await Promise.all([
-      prisma.mapNode.findMany(),
-      prisma.mapEdge.findMany()
-    ])
-    return NextResponse.json({ nodes, edges })
+    const mapData = await repositories.map.getFullMap()
+    return NextResponse.json(mapData)
   } catch (error) {
     console.error('Get map error:', error)
     return NextResponse.json({ error: '获取地图失败' }, { status: 500 })

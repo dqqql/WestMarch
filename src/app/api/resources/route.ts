@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import prisma from '@/lib/prisma'
+import { repositories } from '@/repositories'
 
 export async function GET() {
   try {
-    const resources = await prisma.resourceImage.findMany({
-      orderBy: { createdAt: 'desc' }
-    })
+    const resources = await repositories.resource.findAll()
     return NextResponse.json(resources)
   } catch (error) {
     console.error('Get resources error:', error)
@@ -21,21 +19,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '缺少必要参数' }, { status: 400 })
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId }
-    })
-
+    const user = await repositories.user.findById(userId)
     if (!user) {
       return NextResponse.json({ error: '用户不存在' }, { status: 400 })
     }
 
-    const resource = await prisma.resourceImage.create({
-      data: {
-        name,
-        url,
-        category,
-        userId
-      }
+    const resource = await repositories.resource.create({
+      name,
+      url,
+      category,
+      userId
     })
 
     return NextResponse.json(resource)

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import prisma from '@/lib/prisma'
+import { repositories } from '@/repositories'
 
 export async function DELETE(
   request: NextRequest,
@@ -7,11 +7,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
-
-    await prisma.mapEdge.delete({
-      where: { id }
-    })
-
+    await repositories.map.deleteEdge(id)
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Delete edge error:', error)

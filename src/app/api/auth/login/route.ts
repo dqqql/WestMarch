@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import prisma from '@/lib/prisma'
+import { repositories } from '@/repositories'
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,16 +9,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '用户名和密码不能为空' }, { status: 400 })
     }
 
-    let user = await prisma.user.findUnique({
-      where: { username }
-    })
+    let user = await repositories.user.findByUsername(username)
 
     if (!user) {
-      user = await prisma.user.create({
-        data: {
-          username,
-          password,
-        }
+      user = await repositories.user.create({
+        username,
+        password
       })
     } else if (user.password !== password) {
       return NextResponse.json({ error: '密码错误' }, { status: 401 })

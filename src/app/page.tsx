@@ -13,6 +13,7 @@ import { BookOpen, Map, MessageSquare, Users, Sword, X, User, LogOut } from "luc
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useApp } from "@/contexts/AppContext";
+import { DateDisplay } from "@/components/DateDisplay";
 
 export default function Home() {
   const { user, login, logout, isLoading } = useAuth();
@@ -104,9 +105,10 @@ export default function Home() {
 
       <header className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             <Sword className="h-8 w-8 text-amber-500" />
             <h1 className="text-2xl font-bold tracking-tight">不冻港的西征世界</h1>
+            <DateDisplay />
           </div>
           <div className="flex items-center gap-4">
             {user ? (

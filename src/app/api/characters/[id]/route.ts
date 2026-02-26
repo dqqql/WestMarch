@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import prisma from '@/lib/prisma'
+import { repositories } from '@/repositories'
 
 export async function PUT(
   request: NextRequest,
@@ -9,22 +9,19 @@ export async function PUT(
     const { id } = await params
     const { name, race, class: charClass, img, str, dex, con, int, wis, cha, bio, fullBio } = await request.json()
 
-    const character = await prisma.character.update({
-      where: { id },
-      data: {
-        name,
-        race,
-        class: charClass,
-        img,
-        str,
-        dex,
-        con,
-        int,
-        wis,
-        cha,
-        bio,
-        fullBio
-      }
+    const character = await repositories.character.update(id, {
+      name,
+      race,
+      class: charClass,
+      img,
+      str,
+      dex,
+      con,
+      int,
+      wis,
+      cha,
+      bio,
+      fullBio
     })
 
     return NextResponse.json(character)
@@ -40,11 +37,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
-
-    await prisma.character.delete({
-      where: { id }
-    })
-
+    await repositories.character.delete(id)
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Delete character error:', error)

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import prisma from '@/lib/prisma'
+import { repositories } from '@/repositories'
 
 export async function PUT(
   request: NextRequest,
@@ -9,15 +9,12 @@ export async function PUT(
     const { id } = await params
     const { label, type, x, y, description } = await request.json()
 
-    const node = await prisma.mapNode.update({
-      where: { id },
-      data: {
-        label,
-        type: type as any,
-        x,
-        y,
-        description
-      }
+    const node = await repositories.map.updateNode(id, {
+      label,
+      type,
+      x,
+      y,
+      description
     })
 
     return NextResponse.json(node)
@@ -33,11 +30,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
-
-    await prisma.mapNode.delete({
-      where: { id }
-    })
-
+    await repositories.map.deleteNode(id)
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Delete node error:', error)

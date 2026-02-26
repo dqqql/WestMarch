@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import prisma from '@/lib/prisma'
+import { repositories } from '@/repositories'
 
 export async function GET(
   request: NextRequest,
@@ -8,10 +8,7 @@ export async function GET(
   try {
     const { userId } = await params
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId }
-    })
-
+    const user = await repositories.user.findById(userId)
     if (!user) {
       return NextResponse.json({
         userNickname: null,
@@ -20,20 +17,7 @@ export async function GET(
       })
     }
 
-    let settings = await prisma.userSetting.findUnique({
-      where: { userId }
-    })
-
-    if (!settings) {
-      settings = await prisma.userSetting.create({
-        data: {
-          userId,
-          userNickname: null,
-          userAvatar: null,
-          sessionHistory: [] as any
-        }
-      })
-    }
+    const settings = await repositories.settings.findByUserId(userId)
 
     return NextResponse.json({
       userNickname: settings.userNickname,
@@ -58,10 +42,7 @@ export async function PUT(
     const { userId } = await params
     const { userNickname, userAvatar, sessionHistory } = await request.json()
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId }
-    })
-
+    const user = await repositories.user.findById(userId)
     if (!user) {
       return NextResponse.json({
         userNickname: null,
@@ -70,19 +51,10 @@ export async function PUT(
       })
     }
 
-    const settings = await prisma.userSetting.upsert({
-      where: { userId },
-      update: {
-        userNickname,
-        userAvatar,
-        sessionHistory: sessionHistory as any
-      },
-      create: {
-        userId,
-        userNickname,
-        userAvatar,
-        sessionHistory: sessionHistory as any
-      }
+    const settings = await repositories.settings.update(userId, {
+      userNickname,
+      userAvatar,
+      sessionHistory
     })
 
     return NextResponse.json({

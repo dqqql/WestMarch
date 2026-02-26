@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import prisma from '@/lib/prisma'
+import { repositories } from '@/repositories'
 
 export async function PUT(
   request: NextRequest,
@@ -9,14 +9,11 @@ export async function PUT(
     const { id } = await params
     const { title, content, category, isPinned } = await request.json()
 
-    const document = await prisma.document.update({
-      where: { id },
-      data: {
-        title,
-        content,
-        category,
-        isPinned
-      }
+    const document = await repositories.document.update(id, {
+      title,
+      content,
+      category,
+      isPinned
     })
 
     return NextResponse.json(document)
@@ -32,11 +29,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
-
-    await prisma.document.delete({
-      where: { id }
-    })
-
+    await repositories.document.delete(id)
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Delete document error:', error)

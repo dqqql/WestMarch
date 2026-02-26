@@ -1,26 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-import prisma from '@/lib/prisma'
+import { repositories } from '@/repositories'
 import { defaultDocuments } from '@/config'
 
 export async function GET() {
   try {
-    let documents = await prisma.document.findMany({
-      orderBy: [
-        { isPinned: 'desc' },
-        { createdAt: 'desc' }
-      ]
-    })
+    let documents = await repositories.document.findAll()
 
     if (documents.length === 0) {
       for (const doc of defaultDocuments) {
-        await prisma.document.create({ data: doc })
+        await repositories.document.create(doc)
       }
-      documents = await prisma.document.findMany({
-        orderBy: [
-          { isPinned: 'desc' },
-          { createdAt: 'desc' }
-        ]
-      })
+      documents = await repositories.document.findAll()
     }
 
     return NextResponse.json(documents)
@@ -38,14 +28,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '缺少必要参数' }, { status: 400 })
     }
 
-    const document = await prisma.document.create({
-      data: {
-        title,
-        content,
-        category,
-        author,
-        isPinned: isPinned || false
-      }
+    const document = await repositories.document.create({
+      title,
+      content,
+      category,
+      author,
+      isPinned: isPinned || false
     })
 
     return NextResponse.json(document)

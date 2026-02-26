@@ -57,8 +57,6 @@ export default function DocsLayout({
     return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
   });
 
-  const categories = Array.from(new Set(documents.map((d: any) => d.category)));
-
   const handleCreateDoc = () => {
     if (!newDoc.title || !newDoc.content) return;
     addDocument({
@@ -179,13 +177,7 @@ export default function DocsLayout({
                   placeholder="分类名称"
                   value={newDoc.category}
                   onChange={(e) => setNewDoc({ ...newDoc, category: e.target.value })}
-                  list="categoryList"
                 />
-                <datalist id="categoryList">
-                  {categories.map((c: string) => (
-                    <option key={c} value={c} />
-                  ))}
-                </datalist>
               </div>
               <div>
                 <label className="block text-sm text-zinc-400 mb-1">内容 (支持 Markdown)</label>

@@ -1,26 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import prisma from '@/lib/prisma'
+import { repositories } from '@/repositories'
 
 export async function GET(request: NextRequest) {
   try {
-    const parties = await prisma.party.findMany({
-      orderBy: { createdAt: 'desc' },
-      include: {
-        author: {
-          select: { id: true, username: true, nickname: true }
-        },
-        character: {
-          select: { id: true, name: true, race: true, class: true, img: true }
-        },
-        members: {
-          include: {
-            character: {
-              select: { id: true, name: true, race: true, class: true, img: true }
-            }
-          }
-        }
-      }
-    })
+    const parties = await repositories.party.findAll()
     return NextResponse.json(parties)
   } catch (error) {
     console.error('Get parties error:', error)
@@ -36,67 +19,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '缺少必要参数' }, { status: 400 })
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: authorId }
-    })
+    const user = await repositories.user.findById(authorId)
     if (!user) {
       return NextResponse.json({ error: '用户不存在' }, { status: 400 })
     }
 
-    const party = await prisma.party.create({
-      data: {
-        title,
-        content,
-        authorId,
-        characterId,
-        maxCount: maxCount || 4,
-        nextSessionTime: nextSessionTime ? new Date(nextSessionTime) : null
-      },
-      include: {
-        author: {
-          select: { id: true, username: true, nickname: true }
-        },
-        character: {
-          select: { id: true, name: true, race: true, class: true, img: true }
-        },
-        members: {
-          include: {
-            character: {
-              select: { id: true, name: true, race: true, class: true, img: true }
-            }
-          }
-        }
-      }
+    const party = await repositories.party.create({
+      title,
+      content,
+      authorId,
+      characterId: characterId || null,
+      maxCount: maxCount || 4,
+      nextSessionTime: nextSessionTime || null
     })
 
     if (characterId) {
-      await prisma.partyMember.create({
-        data: {
-          partyId: party.id,
-          characterId
-        }
-      })
+      await repositories.party.addMember(party.id, characterId)
     }
 
-    const updatedParty = await prisma.party.findUnique({
-      where: { id: party.id },
-      include: {
-        author: {
-          select: { id: true, username: true, nickname: true }
-        },
-        character: {
-          select: { id: true, name: true, race: true, class: true, img: true }
-        },
-        members: {
-          include: {
-            character: {
-              select: { id: true, name: true, race: true, class: true, img: true }
-            }
-          }
-        }
-      }
-    })
-
+    const updatedParty = await repositories.party.findById(party.id)
     return NextResponse.json(updatedParty)
   } catch (error) {
     console.error('Create party error:', error)

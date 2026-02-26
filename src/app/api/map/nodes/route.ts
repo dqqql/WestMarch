@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import prisma from '@/lib/prisma'
+import { repositories } from '@/repositories'
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,14 +9,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '缺少必要参数' }, { status: 400 })
     }
 
-    const node = await prisma.mapNode.create({
-      data: {
-        label,
-        type: type as any,
-        x,
-        y,
-        description
-      }
+    const node = await repositories.map.createNode({
+      label,
+      type,
+      x,
+      y,
+      description
     })
 
     return NextResponse.json(node)
