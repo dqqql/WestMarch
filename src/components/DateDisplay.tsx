@@ -20,33 +20,46 @@ export function DateDisplay() {
     setEditMonth(now.getMonth() + 1);
     setEditDay(now.getDate());
     setEditEraName(eraName);
+  }, []);
 
-    const tomorrow = new Date(now);
+  useEffect(() => {
+    if (!currentDate) return;
+
+    const tomorrow = new Date(currentDate);
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(0, 0, 0, 0);
 
+    const now = new Date();
     const msUntilMidnight = tomorrow.getTime() - now.getTime();
 
     const timeoutId = setTimeout(() => {
-      const newDate = new Date();
-      setCurrentDate(newDate);
-      setEditYear(newDate.getFullYear());
-      setEditMonth(newDate.getMonth() + 1);
-      setEditDay(newDate.getDate());
-
-      const intervalId = setInterval(() => {
-        const newDate = new Date();
-        setCurrentDate(newDate);
+      setCurrentDate(prevDate => {
+        if (!prevDate) return prevDate;
+        const newDate = new Date(prevDate);
+        newDate.setDate(newDate.getDate() + 1);
         setEditYear(newDate.getFullYear());
         setEditMonth(newDate.getMonth() + 1);
         setEditDay(newDate.getDate());
+        return newDate;
+      });
+
+      const intervalId = setInterval(() => {
+        setCurrentDate(prevDate => {
+          if (!prevDate) return prevDate;
+          const newDate = new Date(prevDate);
+          newDate.setDate(newDate.getDate() + 1);
+          setEditYear(newDate.getFullYear());
+          setEditMonth(newDate.getMonth() + 1);
+          setEditDay(newDate.getDate());
+          return newDate;
+        });
       }, 24 * 60 * 60 * 1000);
 
       return () => clearInterval(intervalId);
     }, msUntilMidnight);
 
     return () => clearTimeout(timeoutId);
-  }, []);
+  }, [currentDate]);
 
   const handleEdit = () => {
     setIsEditing(true);
