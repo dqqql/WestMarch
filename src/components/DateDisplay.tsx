@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { Calendar, Edit2, X, Check } from "lucide-react";
 
-const STORAGE_KEY_DATE = "westmarch_custom_date";
-const STORAGE_KEY_ERA = "westmarch_era_name";
+const SETTING_KEY_DATE = "game_date";
+const SETTING_KEY_ERA = "era_name";
 
 export function DateDisplay() {
   const [currentDate, setCurrentDate] = useState<Date | null>(null);
@@ -15,30 +15,47 @@ export function DateDisplay() {
   const [eraName, setEraName] = useState("深冬之年");
   const [isEditingEra, setIsEditingEra] = useState(false);
   const [editEraName, setEditEraName] = useState("深冬之年");
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const savedDate = localStorage.getItem(STORAGE_KEY_DATE);
-    const savedEra = localStorage.getItem(STORAGE_KEY_ERA);
-    
-    if (savedDate) {
-      const parsedDate = new Date(savedDate);
-      if (!isNaN(parsedDate.getTime())) {
-        setCurrentDate(parsedDate);
-        setEditYear(parsedDate.getFullYear());
-        setEditMonth(parsedDate.getMonth() + 1);
-        setEditDay(parsedDate.getDate());
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(`/api/system-settings?keys=${SETTING_KEY_DATE},${SETTING_KEY_ERA}`);
+      if (response.ok) {
+        const settings = await response.json();
+        
+        if (settings[SETTING_KEY_DATE]) {
+          const parsedDate = new Date(settings[SETTING_KEY_DATE]);
+          if (!isNaN(parsedDate.getTime())) {
+            setCurrentDate(parsedDate);
+            setEditYear(parsedDate.getFullYear());
+            setEditMonth(parsedDate.getMonth() + 1);
+            setEditDay(parsedDate.getDate());
+          } else {
+            initializeWithCurrentDate();
+          }
+        } else {
+          initializeWithCurrentDate();
+        }
+        
+        if (settings[SETTING_KEY_ERA]) {
+          setEraName(settings[SETTING_KEY_ERA]);
+          setEditEraName(settings[SETTING_KEY_ERA]);
+        }
       } else {
         initializeWithCurrentDate();
       }
-    } else {
+    } catch (error) {
+      console.error("Failed to load settings:", error);
       initializeWithCurrentDate();
+    } finally {
+      setIsLoading(false);
     }
-    
-    if (savedEra) {
-      setEraName(savedEra);
-      setEditEraName(savedEra);
-    }
-  }, []);
+  };
 
   const initializeWithCurrentDate = () => {
     const now = new Date();
@@ -46,6 +63,18 @@ export function DateDisplay() {
     setEditYear(now.getFullYear());
     setEditMonth(now.getMonth() + 1);
     setEditDay(now.getDate());
+  };
+
+  const saveSetting = async (key: string, value: string) => {
+    try {
+      await fetch("/api/system-settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key, value })
+      });
+    } catch (error) {
+      console.error("Failed to save setting:", error);
+    }
   };
 
   useEffect(() => {
@@ -66,6 +95,7 @@ export function DateDisplay() {
         setEditYear(newDate.getFullYear());
         setEditMonth(newDate.getMonth() + 1);
         setEditDay(newDate.getDate());
+        saveSetting(SETTING_KEY_DATE, newDate.toISOString());
         return newDate;
       });
 
@@ -77,6 +107,7 @@ export function DateDisplay() {
           setEditYear(newDate.getFullYear());
           setEditMonth(newDate.getMonth() + 1);
           setEditDay(newDate.getDate());
+          saveSetting(SETTING_KEY_DATE, newDate.toISOString());
           return newDate;
         });
       }, 24 * 60 * 60 * 1000);
@@ -91,10 +122,10 @@ export function DateDisplay() {
     setIsEditing(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const newDate = new Date(editYear, editMonth - 1, editDay);
     setCurrentDate(newDate);
-    localStorage.setItem(STORAGE_KEY_DATE, newDate.toISOString());
+    await saveSetting(SETTING_KEY_DATE, newDate.toISOString());
     setIsEditing(false);
   };
 
@@ -112,9 +143,9 @@ export function DateDisplay() {
     setIsEditingEra(true);
   };
 
-  const handleSaveEra = () => {
+  const handleSaveEra = async () => {
     setEraName(editEraName);
-    localStorage.setItem(STORAGE_KEY_ERA, editEraName);
+    await saveSetting(SETTING_KEY_ERA, editEraName);
     setIsEditingEra(false);
   };
 
@@ -123,7 +154,7 @@ export function DateDisplay() {
     setIsEditingEra(false);
   };
 
-  if (!currentDate) {
+  if (isLoading || !currentDate) {
     return (
       <div className="flex items-center gap-2 text-zinc-400">
         <Calendar className="h-6 w-6" />
@@ -138,7 +169,6 @@ export function DateDisplay() {
   const weekdays = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
   const weekday = weekdays[currentDate.getDay()];
   
-  // 计算以1492年为原点的年份
   const yearFrom1492 = year - 1492;
 
   if (isEditing) {
