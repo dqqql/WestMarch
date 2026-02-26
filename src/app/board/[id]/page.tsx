@@ -19,11 +19,9 @@ interface Post {
   character: { id: string; name: string } | null;
   createdAt: string;
   updatedAt: string;
-  rewards?: {
-    honor: number;
-    gold: number;
-    reputation: number;
-  };
+  honor: number;
+  gold: number;
+  reputation: number;
 }
 
 const tagColors = {
@@ -48,6 +46,9 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
   const [editTag, setEditTag] = useState<"DM悬赏" | "杂谈" | "跑团战报">("杂谈");
+  const [editHonor, setEditHonor] = useState(0);
+  const [editGold, setEditGold] = useState(0);
+  const [editReputation, setEditReputation] = useState(0);
 
   useEffect(() => {
     loadPost();
@@ -64,6 +65,9 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
         setEditContent(data.content);
         const displayTag = getDisplayTag(data.tag);
         setEditTag(displayTag as any);
+        setEditHonor(data.honor || 0);
+        setEditGold(data.gold || 0);
+        setEditReputation(data.reputation || 0);
       }
     } catch (error) {
       console.error("Failed to load post:", error);
@@ -82,7 +86,10 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
           title: editTitle,
           content: editContent,
           tag: editTag,
-          characterId: null
+          characterId: null,
+          honor: editHonor,
+          gold: editGold,
+          reputation: editReputation
         }),
       });
       if (response.ok) {
@@ -182,6 +189,43 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
                   <option value="DM悬赏">DM悬赏</option>
                 </select>
               </div>
+              {editTag === "DM悬赏" && (
+                <div className="space-y-3 p-4 bg-zinc-800/50 rounded-lg border border-zinc-700">
+                  <h3 className="text-sm font-medium text-zinc-300">任务奖励</h3>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-xs text-zinc-400 mb-1">荣誉</label>
+                      <input 
+                        type="number" 
+                        min="0"
+                        className="w-full bg-zinc-700 border border-zinc-600 rounded px-3 py-2 text-white" 
+                        value={editHonor}
+                        onChange={(e) => setEditHonor(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-zinc-400 mb-1">金币</label>
+                      <input 
+                        type="number" 
+                        min="0"
+                        className="w-full bg-zinc-700 border border-zinc-600 rounded px-3 py-2 text-white" 
+                        value={editGold}
+                        onChange={(e) => setEditGold(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-zinc-400 mb-1">声望</label>
+                      <input 
+                        type="number" 
+                        min="0"
+                        className="w-full bg-zinc-700 border border-zinc-600 rounded px-3 py-2 text-white" 
+                        value={editReputation}
+                        onChange={(e) => setEditReputation(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
               <div>
                 <label className="block text-sm text-zinc-400 mb-1">内容 (支持Markdown格式)</label>
                 <textarea 
@@ -247,7 +291,7 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
                 </span>
                 {displayTag === "DM悬赏" && (
                   <span className="px-2 py-1 bg-amber-900/50 text-amber-300 border border-amber-800 rounded text-xs font-medium">
-                    奖励: 荣誉 {post.rewards?.honor || 0} | 金币 {post.rewards?.gold || 0} | 声望 {post.rewards?.reputation || 0}
+                    奖励: 荣誉 {post.honor || 0} | 金币 {post.gold || 0} | 声望 {post.reputation || 0}
                   </span>
                 )}
               </div>

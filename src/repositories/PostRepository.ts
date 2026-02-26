@@ -30,7 +30,7 @@ export class PostRepository {
     });
   }
 
-  async create(data: { title: string; content: string; tag: PostTag; authorId: string; characterId?: string | null }) {
+  async create(data: { title: string; content: string; tag: PostTag; authorId: string; characterId?: string | null; honor?: number; gold?: number; reputation?: number }) {
     return prisma.post.create({
       data,
       include: {
@@ -44,7 +44,7 @@ export class PostRepository {
     });
   }
 
-  async update(id: string, data: { title?: string; content?: string; tag?: PostTag; characterId?: string | null }) {
+  async update(id: string, data: { title?: string; content?: string; tag?: PostTag; characterId?: string | null; honor?: number; gold?: number; reputation?: number }) {
     return prisma.post.update({
       where: { id },
       data,

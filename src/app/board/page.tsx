@@ -23,11 +23,9 @@ interface Post {
   character: { id: string; name: string } | null;
   createdAt: string;
   updatedAt: string;
-  rewards?: {
-    honor: number;
-    gold: number;
-    reputation: number;
-  };
+  honor: number;
+  gold: number;
+  reputation: number;
 }
 
 const tagColors = {
@@ -49,7 +47,7 @@ export default function BoardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
-  const [newPost, setNewPost] = useState({ title: "", content: "", tag: "杂谈" as "DM悬赏" | "杂谈" | "跑团战报" });
+  const [newPost, setNewPost] = useState({ title: "", content: "", tag: "杂谈" as "DM悬赏" | "杂谈" | "跑团战报", honor: 0, gold: 0, reputation: 0 });
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchHistory, setSearchHistory] = useState<string[]>(() => {
@@ -86,13 +84,16 @@ export default function BoardPage() {
           content: newPost.content,
           tag: newPost.tag,
           authorId: user.id,
-          characterId: null
+          characterId: null,
+          honor: newPost.honor,
+          gold: newPost.gold,
+          reputation: newPost.reputation
         }),
       });
       if (response.ok) {
         const createdPost = await response.json();
         setPosts([createdPost, ...posts]);
-        setNewPost({ title: "", content: "", tag: "杂谈" });
+        setNewPost({ title: "", content: "", tag: "杂谈", honor: 0, gold: 0, reputation: 0 });
         setShowCreateModal(false);
       }
     } catch (error) {
@@ -111,14 +112,17 @@ export default function BoardPage() {
           title: newPost.title,
           content: newPost.content,
           tag: newPost.tag,
-          characterId: null
+          characterId: null,
+          honor: newPost.honor,
+          gold: newPost.gold,
+          reputation: newPost.reputation
         }),
       });
       if (response.ok) {
         const updatedPost = await response.json();
         setPosts(posts.map(p => p.id === editingPost.id ? updatedPost : p));
         setEditingPost(null);
-        setNewPost({ title: "", content: "", tag: "杂谈" });
+        setNewPost({ title: "", content: "", tag: "杂谈", honor: 0, gold: 0, reputation: 0 });
       }
     } catch (error) {
       console.error("Failed to edit post:", error);
@@ -144,7 +148,14 @@ export default function BoardPage() {
   const openEditModal = (post: Post) => {
     setEditingPost(post);
     const displayTag = getDisplayTag(post.tag);
-    setNewPost({ title: post.title, content: post.content, tag: displayTag as any });
+    setNewPost({ 
+      title: post.title, 
+      content: post.content, 
+      tag: displayTag as any,
+      honor: post.honor || 0,
+      gold: post.gold || 0,
+      reputation: post.reputation || 0
+    });
   };
 
   const isPostOwner = (post: Post) => {
@@ -262,6 +273,43 @@ export default function BoardPage() {
                   <option value="DM悬赏">DM悬赏</option>
                 </select>
               </div>
+              {newPost.tag === "DM悬赏" && (
+                <div className="space-y-3 p-4 bg-zinc-800/50 rounded-lg border border-zinc-700">
+                  <h3 className="text-sm font-medium text-zinc-300">任务奖励</h3>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-xs text-zinc-400 mb-1">荣誉</label>
+                      <input 
+                        type="number" 
+                        min="0"
+                        className="w-full bg-zinc-700 border border-zinc-600 rounded px-3 py-2 text-white" 
+                        value={newPost.honor}
+                        onChange={(e) => setNewPost({ ...newPost, honor: parseInt(e.target.value) || 0 })}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-zinc-400 mb-1">金币</label>
+                      <input 
+                        type="number" 
+                        min="0"
+                        className="w-full bg-zinc-700 border border-zinc-600 rounded px-3 py-2 text-white" 
+                        value={newPost.gold}
+                        onChange={(e) => setNewPost({ ...newPost, gold: parseInt(e.target.value) || 0 })}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-zinc-400 mb-1">声望</label>
+                      <input 
+                        type="number" 
+                        min="0"
+                        className="w-full bg-zinc-700 border border-zinc-600 rounded px-3 py-2 text-white" 
+                        value={newPost.reputation}
+                        onChange={(e) => setNewPost({ ...newPost, reputation: parseInt(e.target.value) || 0 })}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
               <div>
                 <label className="block text-sm text-zinc-400 mb-1">内容</label>
                 <textarea 
@@ -314,6 +362,43 @@ export default function BoardPage() {
                   <option value="DM悬赏">DM悬赏</option>
                 </select>
               </div>
+              {newPost.tag === "DM悬赏" && (
+                <div className="space-y-3 p-4 bg-zinc-800/50 rounded-lg border border-zinc-700">
+                  <h3 className="text-sm font-medium text-zinc-300">任务奖励</h3>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-xs text-zinc-400 mb-1">荣誉</label>
+                      <input 
+                        type="number" 
+                        min="0"
+                        className="w-full bg-zinc-700 border border-zinc-600 rounded px-3 py-2 text-white" 
+                        value={newPost.honor}
+                        onChange={(e) => setNewPost({ ...newPost, honor: parseInt(e.target.value) || 0 })}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-zinc-400 mb-1">金币</label>
+                      <input 
+                        type="number" 
+                        min="0"
+                        className="w-full bg-zinc-700 border border-zinc-600 rounded px-3 py-2 text-white" 
+                        value={newPost.gold}
+                        onChange={(e) => setNewPost({ ...newPost, gold: parseInt(e.target.value) || 0 })}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-zinc-400 mb-1">声望</label>
+                      <input 
+                        type="number" 
+                        min="0"
+                        className="w-full bg-zinc-700 border border-zinc-600 rounded px-3 py-2 text-white" 
+                        value={newPost.reputation}
+                        onChange={(e) => setNewPost({ ...newPost, reputation: parseInt(e.target.value) || 0 })}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
               <div>
                 <label className="block text-sm text-zinc-400 mb-1">内容</label>
                 <textarea 
@@ -458,7 +543,7 @@ export default function BoardPage() {
                             {displayTag === "DM悬赏" && (
                               <div className="flex items-center gap-2">
                                 <span className="px-2 py-1 bg-amber-900/50 text-amber-300 border border-amber-800 rounded text-xs font-medium">
-                                  奖励: 荣誉 {post.rewards?.honor || 0} | 金币 {post.rewards?.gold || 0} | 声望 {post.rewards?.reputation || 0}
+                                  奖励: 荣誉 {post.honor || 0} | 金币 {post.gold || 0} | 声望 {post.reputation || 0}
                                 </span>
                               </div>
                             )}

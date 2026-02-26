@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react";
 import { Calendar, Edit2, X, Check } from "lucide-react";
 
+const STORAGE_KEY_DATE = "westmarch_custom_date";
+const STORAGE_KEY_ERA = "westmarch_era_name";
+
 export function DateDisplay() {
   const [currentDate, setCurrentDate] = useState<Date | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -14,13 +17,36 @@ export function DateDisplay() {
   const [editEraName, setEditEraName] = useState("深冬之年");
 
   useEffect(() => {
+    const savedDate = localStorage.getItem(STORAGE_KEY_DATE);
+    const savedEra = localStorage.getItem(STORAGE_KEY_ERA);
+    
+    if (savedDate) {
+      const parsedDate = new Date(savedDate);
+      if (!isNaN(parsedDate.getTime())) {
+        setCurrentDate(parsedDate);
+        setEditYear(parsedDate.getFullYear());
+        setEditMonth(parsedDate.getMonth() + 1);
+        setEditDay(parsedDate.getDate());
+      } else {
+        initializeWithCurrentDate();
+      }
+    } else {
+      initializeWithCurrentDate();
+    }
+    
+    if (savedEra) {
+      setEraName(savedEra);
+      setEditEraName(savedEra);
+    }
+  }, []);
+
+  const initializeWithCurrentDate = () => {
     const now = new Date();
     setCurrentDate(now);
     setEditYear(now.getFullYear());
     setEditMonth(now.getMonth() + 1);
     setEditDay(now.getDate());
-    setEditEraName(eraName);
-  }, []);
+  };
 
   useEffect(() => {
     if (!currentDate) return;
@@ -68,6 +94,7 @@ export function DateDisplay() {
   const handleSave = () => {
     const newDate = new Date(editYear, editMonth - 1, editDay);
     setCurrentDate(newDate);
+    localStorage.setItem(STORAGE_KEY_DATE, newDate.toISOString());
     setIsEditing(false);
   };
 
@@ -87,6 +114,7 @@ export function DateDisplay() {
 
   const handleSaveEra = () => {
     setEraName(editEraName);
+    localStorage.setItem(STORAGE_KEY_ERA, editEraName);
     setIsEditingEra(false);
   };
 

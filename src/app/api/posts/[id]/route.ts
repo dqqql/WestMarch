@@ -24,13 +24,16 @@ export async function PUT(
 ) {
   try {
     const { id } = await params
-    const { title, content, tag, characterId } = await request.json()
+    const { title, content, tag, characterId, honor, gold, reputation } = await request.json()
 
     const post = await repositories.post.update(id, {
       title,
       content,
       tag,
-      characterId
+      characterId,
+      honor,
+      gold,
+      reputation
     })
 
     return NextResponse.json(post)

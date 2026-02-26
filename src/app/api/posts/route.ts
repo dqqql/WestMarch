@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { title, content, tag, authorId, characterId } = await request.json()
+    const { title, content, tag, authorId, characterId, honor, gold, reputation } = await request.json()
 
     if (!title || !content || !tag || !authorId) {
       return NextResponse.json({ error: '缺少必要参数' }, { status: 400 })
@@ -29,7 +29,10 @@ export async function POST(request: NextRequest) {
       content,
       tag,
       authorId,
-      characterId
+      characterId,
+      honor: honor || 0,
+      gold: gold || 0,
+      reputation: reputation || 0
     })
 
     return NextResponse.json(post)
