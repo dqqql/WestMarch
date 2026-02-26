@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma';
+import type { MapNodeType } from '@prisma/client';
 
 export class MapRepository {
   async getFullMap() {
@@ -21,7 +22,7 @@ export class MapRepository {
 
   async createNode(data: {
     label: string;
-    type: string;
+    type: MapNodeType;
     x: number;
     y: number;
     description?: string | null;

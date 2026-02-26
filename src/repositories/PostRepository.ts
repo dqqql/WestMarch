@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma';
+import type { PostTag } from '@prisma/client';
 
 export class PostRepository {
   async findAll() {
@@ -29,7 +30,7 @@ export class PostRepository {
     });
   }
 
-  async create(data: { title: string; content: string; tag: string; authorId: string; characterId?: string }) {
+  async create(data: { title: string; content: string; tag: PostTag; authorId: string; characterId?: string | null }) {
     return prisma.post.create({
       data,
       include: {
@@ -43,7 +44,7 @@ export class PostRepository {
     });
   }
 
-  async update(id: string, data: { title?: string; content?: string; tag?: string; characterId?: string }) {
+  async update(id: string, data: { title?: string; content?: string; tag?: PostTag; characterId?: string | null }) {
     return prisma.post.update({
       where: { id },
       data,
