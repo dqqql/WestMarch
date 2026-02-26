@@ -68,6 +68,13 @@
   }
 }
 
+@layer utilities {
+  .font-medieval {
+    font-family: 'Times New Roman', serif;
+    letter-spacing: 0.05em;
+  }
+}
+
 .dark {
   color-scheme: dark;
 }

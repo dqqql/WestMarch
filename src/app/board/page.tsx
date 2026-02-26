@@ -4,12 +4,9 @@ import { useState, useEffect, useMemo } from "react";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Plus, ArrowLeft, Tag, X, Edit2, Trash2, Send, Search, Clock, Trash } from "lucide-react";
+import { MessageSquare, Plus, ArrowLeft, Tag, X, Edit2, Trash2, Search, Clock, Trash } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useApp } from "@/contexts/AppContext";
@@ -19,19 +16,30 @@ interface Post {
   id: string;
   title: string;
   content: string;
-  tag: "DM悬赏" | "寻找队伍" | "跑团战报";
+  tag: "DM悬赏" | "杂谈" | "跑团战报" | "寻找队伍";
   authorId: string;
   author: { id: string; username: string; nickname: string | null };
   characterId: string | null;
   character: { id: string; name: string } | null;
   createdAt: string;
   updatedAt: string;
+  rewards?: {
+    honor: number;
+    gold: number;
+    reputation: number;
+  };
 }
 
 const tagColors = {
   "DM悬赏": "bg-red-900/50 text-red-300 border-red-800",
   "寻找队伍": "bg-blue-900/50 text-blue-300 border-blue-800",
+  "杂谈": "bg-blue-900/50 text-blue-300 border-blue-800",
   "跑团战报": "bg-amber-900/50 text-amber-300 border-amber-800",
+};
+
+const getDisplayTag = (tag: string) => {
+  if (tag === "寻找队伍") return "杂谈";
+  return tag;
 };
 
 export default function BoardPage() {
@@ -41,7 +49,7 @@ export default function BoardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
-  const [newPost, setNewPost] = useState({ title: "", content: "", tag: "寻找队伍" as "DM悬赏" | "寻找队伍" | "跑团战报" });
+  const [newPost, setNewPost] = useState({ title: "", content: "", tag: "杂谈" as "DM悬赏" | "杂谈" | "跑团战报" });
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchHistory, setSearchHistory] = useState<string[]>(() => {
@@ -84,7 +92,7 @@ export default function BoardPage() {
       if (response.ok) {
         const createdPost = await response.json();
         setPosts([createdPost, ...posts]);
-        setNewPost({ title: "", content: "", tag: "寻找队伍" });
+        setNewPost({ title: "", content: "", tag: "杂谈" });
         setShowCreateModal(false);
       }
     } catch (error) {
@@ -110,7 +118,7 @@ export default function BoardPage() {
         const updatedPost = await response.json();
         setPosts(posts.map(p => p.id === editingPost.id ? updatedPost : p));
         setEditingPost(null);
-        setNewPost({ title: "", content: "", tag: "寻找队伍" });
+        setNewPost({ title: "", content: "", tag: "杂谈" });
       }
     } catch (error) {
       console.error("Failed to edit post:", error);
@@ -135,7 +143,8 @@ export default function BoardPage() {
 
   const openEditModal = (post: Post) => {
     setEditingPost(post);
-    setNewPost({ title: post.title, content: post.content, tag: post.tag });
+    const displayTag = getDisplayTag(post.tag);
+    setNewPost({ title: post.title, content: post.content, tag: displayTag as any });
   };
 
   const isPostOwner = (post: Post) => {
@@ -180,7 +189,10 @@ export default function BoardPage() {
     let result = sortedPosts;
     
     if (selectedTag) {
-      result = result.filter(post => post.tag === selectedTag);
+      result = result.filter(post => {
+        const displayTag = getDisplayTag(post.tag);
+        return displayTag === selectedTag;
+      });
     }
     
     if (searchQuery.trim()) {
@@ -245,7 +257,7 @@ export default function BoardPage() {
                   value={newPost.tag}
                   onChange={(e) => setNewPost({ ...newPost, tag: e.target.value as any })}
                 >
-                  <option value="寻找队伍">寻找队伍</option>
+                  <option value="杂谈">杂谈</option>
                   <option value="跑团战报">跑团战报</option>
                   <option value="DM悬赏">DM悬赏</option>
                 </select>
@@ -297,7 +309,7 @@ export default function BoardPage() {
                   value={newPost.tag}
                   onChange={(e) => setNewPost({ ...newPost, tag: e.target.value as any })}
                 >
-                  <option value="寻找队伍">寻找队伍</option>
+                  <option value="杂谈">杂谈</option>
                   <option value="跑团战报">跑团战报</option>
                   <option value="DM悬赏">DM悬赏</option>
                 </select>
@@ -403,7 +415,7 @@ export default function BoardPage() {
             >
               全部
             </Button>
-            {["DM悬赏", "寻找队伍", "跑团战报"].map((tag) => (
+            {["DM悬赏", "杂谈", "跑团战报"].map((tag) => (
               <Button
                 key={tag}
                 variant={selectedTag === tag ? "default" : "secondary"}
@@ -424,54 +436,63 @@ export default function BoardPage() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
               {filteredPosts.map((post) => {
                 const authorName = post.author.nickname || post.author.username;
+                const displayTag = getDisplayTag(post.tag);
                 return (
-                  <Card
+                  <div
                     key={post.id}
-                    className="bg-zinc-900 border-zinc-800 hover:border-amber-500/50 transition-colors flex flex-col"
+                    className="bg-zinc-900 border border-zinc-800 hover:border-amber-500/50 transition-colors rounded-lg overflow-hidden"
                   >
-                    <CardHeader>
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="space-y-2 flex-1">
+                    <Link href={`/board/${post.id}`} className="block hover:bg-zinc-800/50 transition-colors">
+                      <div className="p-4">
+                        <div className="flex items-center justify-between gap-4">
                           <div className="flex items-center gap-3">
                             <span
                               className={`px-2 py-1 rounded text-xs font-medium border ${tagColors[post.tag]}`}
                             >
                               <Tag className="h-3 w-3 inline mr-1" />
-                              {post.tag}
+                              {displayTag}
                             </span>
+                            {displayTag === "DM悬赏" && (
+                              <div className="flex items-center gap-2">
+                                <span className="px-2 py-1 bg-amber-900/50 text-amber-300 border border-amber-800 rounded text-xs font-medium">
+                                  奖励: 荣誉 {post.rewards?.honor || 0} | 金币 {post.rewards?.gold || 0} | 声望 {post.rewards?.reputation || 0}
+                                </span>
+                              </div>
+                            )}
                           </div>
-                          <CardTitle className="text-xl">
-                            {searchQuery ? highlightText(post.title, searchQuery) : post.title}
-                          </CardTitle>
-                          <CardDescription className="flex items-center gap-2">
-                            <span>作者: {searchQuery ? highlightText(authorName, searchQuery) : authorName}</span>
-                            {post.character && <span>• 角色: {post.character.name}</span>}
-                            <span className="text-zinc-600">
-                              • {new Date(post.createdAt).toLocaleString("zh-CN")}
-                            </span>
-                          </CardDescription>
+                          {isPostOwner(post) && (
+                            <div className="flex gap-2">
+                              <Button variant="ghost" size="icon" onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                openEditModal(post);
+                              }}>
+                                <Edit2 className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleDeletePost(post.id);
+                              }}>
+                                <Trash2 className="h-4 w-4 text-red-400" />
+                              </Button>
+                            </div>
+                          )}
                         </div>
-                        {isPostOwner(post) && (
-                          <div className="flex gap-2">
-                            <Button variant="ghost" size="icon" onClick={() => openEditModal(post)}>
-                              <Edit2 className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleDeletePost(post.id)}>
-                              <Trash2 className="h-4 w-4 text-red-400" />
-                            </Button>
-                          </div>
-                        )}
+                        <h3 className="text-xl font-bold mt-3 mb-2 text-zinc-100">
+                          {searchQuery ? highlightText(post.title, searchQuery) : post.title}
+                        </h3>
+                        <div className="flex items-center gap-4 text-zinc-400 text-sm">
+                          <span>作者: {searchQuery ? highlightText(authorName, searchQuery) : authorName}</span>
+                          {post.character && <span>角色: {post.character.name}</span>}
+                          <span>{new Date(post.createdAt).toLocaleString("zh-CN")}</span>
+                        </div>
                       </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4 flex-1">
-                      <p className="text-zinc-300">
-                        {searchQuery ? highlightText(post.content, searchQuery) : post.content}
-                      </p>
-                    </CardContent>
-                  </Card>
+                    </Link>
+                  </div>
                 );
               })}
             </div>

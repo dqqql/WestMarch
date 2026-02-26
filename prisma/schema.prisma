@@ -10,6 +10,7 @@ datasource db {
 enum PostTag {
   DM悬赏
   寻找队伍
+  杂谈
   跑团战报
 }
 
