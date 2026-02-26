@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FolderOpen, Upload, Trash2, X, Image, User, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { useApp, type ImageCategory } from "@/contexts/AppContext";
+import { useResources, type ImageCategory } from "@/contexts/AppContext";
 
 const categoryLabels: Record<ImageCategory, string> = {
   characterAvatar: "角色头像",
@@ -16,7 +16,7 @@ const categoryIcons: Record<ImageCategory, React.ReactNode> = {
 };
 
 export default function ResourcesPage() {
-  const { resources, addResource, deleteResource, isLoading, loadResources } = useApp();
+  const { resources, addResource, deleteResource, isLoading, loadResources } = useResources();
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploadName, setUploadName] = useState("");
   const [uploadUrl, setUploadUrl] = useState("");

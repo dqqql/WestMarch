@@ -13,6 +13,7 @@ import { MessageSquare, Plus, ArrowLeft, Tag, X, Edit2, Trash2, Send, Search, Cl
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useApp } from "@/contexts/AppContext";
+import { storage } from "@/services/storage";
 
 interface Post {
   id: string;
@@ -44,11 +45,7 @@ export default function BoardPage() {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchHistory, setSearchHistory] = useState<string[]>(() => {
-    try {
-      const saved = localStorage.getItem("wm-search-history");
-      if (saved) return JSON.parse(saved);
-    } catch {}
-    return [];
+    return storage.getSearchHistory();
   });
 
   useEffect(() => {
@@ -150,17 +147,13 @@ export default function BoardPage() {
     if (query.trim() && !searchHistory.includes(query)) {
       const newHistory = [query, ...searchHistory].slice(0, 10);
       setSearchHistory(newHistory);
-      try {
-        localStorage.setItem("wm-search-history", JSON.stringify(newHistory));
-      } catch {}
+      storage.setSearchHistory(newHistory);
     }
   };
 
   const clearSearchHistory = () => {
     setSearchHistory([]);
-    try {
-      localStorage.removeItem("wm-search-history");
-    } catch {}
+    storage.setSearchHistory([]);
   };
 
   const highlightText = (text: string, query: string) => {

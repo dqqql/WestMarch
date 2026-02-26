@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Users, Upload, ArrowLeft, User, Sword, Shield, Zap, Heart, Lock, LogIn, Edit2, Trash2, X, Plus, Image, FolderOpen, Eye } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { useApp } from "@/contexts/AppContext";
+import { useResources } from "@/contexts/AppContext";
 
 interface Character {
   id: string;
@@ -44,7 +44,7 @@ const abilityNames = {
 
 export default function CharactersPage() {
   const { user } = useAuth();
-  const { resources } = useApp();
+  const { resources } = useResources();
   const [characters, setCharacters] = useState<Character[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
@@ -65,7 +65,7 @@ export default function CharactersPage() {
     cha: 10,
   });
 
-  const avatarResources = resources.filter((r) => r.category === "characterAvatar");
+  const avatarResources = resources.filter((r: any) => r.category === "characterAvatar");
 
   useEffect(() => {
     if (user) {
@@ -243,7 +243,7 @@ export default function CharactersPage() {
                 使用默认头像
               </Button>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {avatarResources.map((img) => (
+                {avatarResources.map((img: any) => (
                   <div
                     key={img.id}
                     className="relative group cursor-pointer"

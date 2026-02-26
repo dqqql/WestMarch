@@ -14,7 +14,7 @@ import {
   Save,
 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useApp, Document } from "@/contexts/AppContext";
+import { useApp, useDocuments, type Document } from "@/contexts/AppContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import Markdown from "react-markdown";
@@ -25,13 +25,13 @@ export default function DocsLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const { isClient } = useApp();
   const {
     documents,
     addDocument,
     updateDocument,
     deleteDocument,
-    isClient,
-  } = useApp();
+  } = useDocuments();
   const { user } = useAuth();
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -57,7 +57,7 @@ export default function DocsLayout({
     return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
   });
 
-  const categories = Array.from(new Set(documents.map((d) => d.category)));
+  const categories = Array.from(new Set(documents.map((d: any) => d.category)));
 
   const handleCreateDoc = () => {
     if (!newDoc.title || !newDoc.content) return;
@@ -182,7 +182,7 @@ export default function DocsLayout({
                   list="categoryList"
                 />
                 <datalist id="categoryList">
-                  {categories.map((c) => (
+                  {categories.map((c: string) => (
                     <option key={c} value={c} />
                   ))}
                 </datalist>

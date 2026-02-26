@@ -1,6 +1,8 @@
-const DB_NAME = "WestMarchDB";
-const DB_VERSION = 1;
-const STORE_NAME = "resources";
+import { indexedDBConfig } from '@/config';
+
+const DB_NAME = indexedDBConfig.dbName;
+const DB_VERSION = indexedDBConfig.dbVersion;
+const STORE_NAME = indexedDBConfig.storeName;
 
 interface StoredResource {
   id: string;

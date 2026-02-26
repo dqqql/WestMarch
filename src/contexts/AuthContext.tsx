@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { storage } from "@/services/storage";
 
 interface User {
   id: string;
@@ -24,13 +25,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("westmarch_user");
+    const storedUser = storage.getUser();
     if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch {
-        localStorage.removeItem("westmarch_user");
-      }
+      setUser(storedUser);
     }
     setIsLoading(false);
   }, []);
@@ -52,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await response.json();
       const userData = data.user;
       setUser(userData);
-      localStorage.setItem("westmarch_user", JSON.stringify(userData));
+      storage.setUser(userData);
       return true;
     } catch (error) {
       console.error("Login error:", error);
@@ -62,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem("westmarch_user");
+    storage.removeUser();
   };
 
   return (

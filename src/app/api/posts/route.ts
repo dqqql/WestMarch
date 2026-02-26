@@ -1,19 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import prisma from '@/lib/prisma'
+import { repositories } from '@/repositories'
 
 export async function GET(request: NextRequest) {
   try {
-    const posts = await prisma.post.findMany({
-      orderBy: { createdAt: 'desc' },
-      include: {
-        author: {
-          select: { id: true, username: true, nickname: true }
-        },
-        character: {
-          select: { id: true, name: true }
-        }
-      }
-    })
+    const posts = await repositories.post.findAll()
     return NextResponse.json(posts)
   } catch (error) {
     console.error('Get posts error:', error)
@@ -29,29 +19,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '缺少必要参数' }, { status: 400 })
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: authorId }
-    })
+    const user = await repositories.user.findById(authorId)
     if (!user) {
       return NextResponse.json({ error: '用户不存在' }, { status: 400 })
     }
 
-    const post = await prisma.post.create({
-      data: {
-        title,
-        content,
-        tag: tag as any,
-        authorId,
-        characterId
-      },
-      include: {
-        author: {
-          select: { id: true, username: true, nickname: true }
-        },
-        character: {
-          select: { id: true, name: true }
-        }
-      }
+    const post = await repositories.post.create({
+      title,
+      content,
+      tag,
+      authorId,
+      characterId
     })
 
     return NextResponse.json(post)

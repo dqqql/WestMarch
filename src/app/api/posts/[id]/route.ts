@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import prisma from '@/lib/prisma'
+import { repositories } from '@/repositories'
 
 export async function GET(
   request: NextRequest,
@@ -7,17 +7,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    const post = await prisma.post.findUnique({
-      where: { id },
-      include: {
-        author: {
-          select: { id: true, username: true, nickname: true }
-        },
-        character: {
-          select: { id: true, name: true }
-        }
-      }
-    })
+    const post = await repositories.post.findById(id)
     if (!post) {
       return NextResponse.json({ error: '帖子不存在' }, { status: 404 })
     }
@@ -36,22 +26,11 @@ export async function PUT(
     const { id } = await params
     const { title, content, tag, characterId } = await request.json()
 
-    const post = await prisma.post.update({
-      where: { id },
-      data: {
-        title,
-        content,
-        tag: tag as any,
-        characterId
-      },
-      include: {
-        author: {
-          select: { id: true, username: true, nickname: true }
-        },
-        character: {
-          select: { id: true, name: true }
-        }
-      }
+    const post = await repositories.post.update(id, {
+      title,
+      content,
+      tag,
+      characterId
     })
 
     return NextResponse.json(post)
@@ -67,11 +46,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
-
-    await prisma.post.delete({
-      where: { id }
-    })
-
+    await repositories.post.delete(id)
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Delete post error:', error)

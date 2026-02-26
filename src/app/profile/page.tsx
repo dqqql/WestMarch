@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { User, Upload, ArrowLeft, Sword, Shield, Zap, Heart, Lock, LogIn, Edit2, Trash2, X, Plus, Image, FolderOpen, Eye, Settings } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { useApp } from "@/contexts/AppContext";
+import { useResources, useSettings } from "@/contexts/AppContext";
 
 interface Character {
   id: string;
@@ -44,7 +44,8 @@ const abilityNames = {
 
 export default function ProfilePage() {
   const { user } = useAuth();
-  const { resources, settings, updateSettings } = useApp();
+  const { resources } = useResources();
+  const { settings, updateSettings } = useSettings();
   
   const [characters, setCharacters] = useState<Character[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -71,7 +72,7 @@ export default function ProfilePage() {
     cha: 10,
   });
 
-  const avatarResources = resources.filter((r) => r.category === "characterAvatar");
+  const avatarResources = resources.filter((r: any) => r.category === "characterAvatar");
 
   useEffect(() => {
     if (user) {
@@ -290,7 +291,7 @@ export default function ProfilePage() {
                 使用默认头像
               </Button>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {avatarResources.map((img) => (
+                {avatarResources.map((img: any) => (
                   <div
                     key={img.id}
                     className="relative group cursor-pointer"
@@ -333,7 +334,7 @@ export default function ProfilePage() {
                 使用默认头像
               </Button>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {avatarResources.map((img) => (
+                {avatarResources.map((img: any) => (
                   <div
                     key={img.id}
                     className="relative group cursor-pointer"
@@ -635,7 +636,7 @@ export default function ProfilePage() {
                     <div>
                       <label className="block text-sm text-zinc-400 mb-2">跑团记录</label>
                       <div className="flex flex-wrap gap-2">
-                        {settings.sessionHistory.slice(0, 10).map((session, index) => (
+                        {settings.sessionHistory.slice(0, 10).map((session: string, index: number) => (
                           <div
                             key={index}
                             className={`px-3 py-1 rounded-full text-sm border cursor-pointer hover:opacity-80 ${sessionColors[index % sessionColors.length]}`}
