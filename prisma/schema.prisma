@@ -15,9 +15,9 @@ enum PostTag {
 }
 
 enum MapNodeType {
-  城镇
-  地点
-  事件
+  据点
+  地城
+  区域
 }
 
 model User {
@@ -79,23 +79,69 @@ model MapNode {
   id          String     @id @default(cuid())
   label       String
   type        MapNodeType
-  x           Float
-  y           Float
+  hexQ        Int        // 蜂巢格轴坐标 Q
+  hexR        Int        // 蜂巢格轴坐标 R
+  hexS        Int        // 蜂巢格轴坐标 S (计算用)
   description String?
+  events      MapEvent[]
+  characters  MapCharacter[]
+  facilities  MapFacility[]
   edgesAsSource MapEdge[] @relation("source")
   edgesAsTarget MapEdge[] @relation("target")
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
+
+  @@unique([hexQ, hexR])
 }
 
 model MapEdge {
-  id       String   @id @default(cuid())
-  sourceId String
-  source   MapNode  @relation("source", fields: [sourceId], references: [id], onDelete: Cascade)
-  targetId String
-  target   MapNode  @relation("target", fields: [targetId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
+  sourceId  String
+  source    MapNode  @relation("source", fields: [sourceId], references: [id], onDelete: Cascade)
+  targetId  String
+  target    MapNode  @relation("target", fields: [targetId], references: [id], onDelete: Cascade)
+  pathStyle String   @default("车辙") // 通路样式：车辙、石板路、桥梁等
+  color     String?  // 通路颜色
+  width     Int      @default(2) // 通路宽度
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model MapEvent {
+  id          String   @id @default(cuid())
+  nodeId      String
+  node        MapNode  @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  tags        String?  // 逗号分隔的标签
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model MapCharacter {
+  id          String   @id @default(cuid())
+  nodeId      String
+  node        MapNode  @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  role        String?  // 角色：NPC、商人、守卫等
+  avatar      String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model MapFacility {
+  id          String   @id @default(cuid())
+  nodeId      String
+  node        MapNode  @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  type        String?  // 设施类型：商店、酒馆、教堂等
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model ResourceImage {

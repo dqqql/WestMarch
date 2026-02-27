@@ -3,17 +3,18 @@ import { repositories } from '@/repositories'
 
 export async function POST(request: NextRequest) {
   try {
-    const { label, type, x, y, description } = await request.json()
+    const { label, type, hexQ, hexR, hexS, description } = await request.json()
 
-    if (!label || !type || x === undefined || y === undefined) {
+    if (!label || !type || hexQ === undefined || hexR === undefined || hexS === undefined) {
       return NextResponse.json({ error: '缺少必要参数' }, { status: 400 })
     }
 
     const node = await repositories.map.createNode({
       label,
       type,
-      x,
-      y,
+      hexQ,
+      hexR,
+      hexS,
       description
     })
 
