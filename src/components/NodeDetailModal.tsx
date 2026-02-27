@@ -157,96 +157,8 @@ export default function NodeDetailModal({
 
           {viewMode === "details" ? (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="bg-zinc-800 border-zinc-700">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">基本信息</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <span className="text-zinc-400 text-sm">坐标:</span>
-                      <span className="ml-2 text-white">
-                        ({node.hexQ}, {node.hexR}, {node.hexS})
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-zinc-400 text-sm mb-2">描述:</p>
-                      <p className="text-zinc-300">{node.description || "暂无描述"}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-zinc-800 border-zinc-700">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">内容统计</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center gap-3 p-3 bg-green-900/20 rounded-lg border border-green-800">
-                      <Calendar className="h-5 w-5 text-green-400" />
-                      <div>
-                        <p className="text-sm text-zinc-400">事件</p>
-                        <p className="text-2xl font-bold text-green-400">{node.events?.length || 0}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 bg-blue-900/20 rounded-lg border border-blue-800">
-                      <Users className="h-5 w-5 text-blue-400" />
-                      <div>
-                        <p className="text-sm text-zinc-400">人物</p>
-                        <p className="text-2xl font-bold text-blue-400">{node.characters?.length || 0}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 bg-purple-900/20 rounded-lg border border-purple-800">
-                      <Building2 className="h-5 w-5 text-purple-400" />
-                      <div>
-                        <p className="text-sm text-zinc-400">设施</p>
-                        <p className="text-2xl font-bold text-purple-400">{node.facilities?.length || 0}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {isEditMode && (
-                <div className="flex gap-3 pt-4 border-t border-zinc-700">
-                  <Button
-                    variant="secondary"
-                    onClick={() => setIsEditingNode(true)}
-                    className="flex-1"
-                  >
-                    <Edit className="h-4 w-4 mr-2" />
-                    编辑节点
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    onClick={onStartConnecting}
-                    className={`flex-1 ${connectingFrom ? "bg-amber-600/20 text-amber-400" : ""}`}
-                  >
-                    <Move className="h-4 w-4 mr-2" />
-                    {connectingFrom ? "取消连接" : "连接节点"}
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    onClick={onStartMigrating}
-                    className={`flex-1 ${migratingFrom ? "bg-blue-600/20 text-blue-400" : ""}`}
-                  >
-                    <ArrowRight className="h-4 w-4 mr-2" />
-                    {migratingFrom ? "取消迁移" : "迁移节点"}
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    onClick={onDelete}
-                    className="flex-1"
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    删除节点
-                  </Button>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div>
               {isEditingNode ? (
-                <Card className="bg-zinc-800 border-zinc-700 mb-6">
+                <Card className="bg-zinc-800 border-zinc-700">
                   <CardHeader>
                     <CardTitle>编辑节点信息</CardTitle>
                   </CardHeader>
@@ -289,17 +201,97 @@ export default function NodeDetailModal({
                   </CardContent>
                 </Card>
               ) : (
-                isEditMode && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Card className="bg-zinc-800 border-zinc-700">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-lg">基本信息</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <span className="text-zinc-400 text-sm">坐标:</span>
+                        <span className="ml-2 text-white">
+                          ({node.hexQ}, {node.hexR}, {node.hexS})
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-zinc-400 text-sm mb-2">描述:</p>
+                        <p className="text-zinc-300">{node.description || "暂无描述"}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-zinc-800 border-zinc-700">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-lg">内容统计</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center gap-3 p-3 bg-green-900/20 rounded-lg border border-green-800">
+                        <Calendar className="h-5 w-5 text-green-400" />
+                        <div>
+                          <p className="text-sm text-zinc-400">事件</p>
+                          <p className="text-2xl font-bold text-green-400">{node.events?.length || 0}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 p-3 bg-blue-900/20 rounded-lg border border-blue-800">
+                        <Users className="h-5 w-5 text-blue-400" />
+                        <div>
+                          <p className="text-sm text-zinc-400">人物</p>
+                          <p className="text-2xl font-bold text-blue-400">{node.characters?.length || 0}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 p-3 bg-purple-900/20 rounded-lg border border-purple-800">
+                        <Building2 className="h-5 w-5 text-purple-400" />
+                        <div>
+                          <p className="text-sm text-zinc-400">设施</p>
+                          <p className="text-2xl font-bold text-purple-400">{node.facilities?.length || 0}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {isEditMode && (
+                <div className="flex gap-3 pt-4 border-t border-zinc-700">
+                  {!isEditingNode && (
+                    <Button
+                      variant="secondary"
+                      onClick={() => setIsEditingNode(true)}
+                      className="flex-1"
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      编辑节点
+                    </Button>
+                  )}
                   <Button
                     variant="secondary"
-                    onClick={() => setIsEditingNode(true)}
-                    className="mb-6"
+                    onClick={onStartConnecting}
+                    className={`flex-1 ${connectingFrom ? "bg-amber-600/20 text-amber-400" : ""}`}
                   >
-                    <Edit className="h-4 w-4 mr-2" />
-                    编辑节点信息
+                    <Move className="h-4 w-4 mr-2" />
+                    {connectingFrom ? "取消连接" : "连接节点"}
                   </Button>
-                )
+                  <Button
+                    variant="secondary"
+                    onClick={onStartMigrating}
+                    className={`flex-1 ${migratingFrom ? "bg-blue-600/20 text-blue-400" : ""}`}
+                  >
+                    <ArrowRight className="h-4 w-4 mr-2" />
+                    {migratingFrom ? "取消迁移" : "迁移节点"}
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={onDelete}
+                    className="flex-1"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    删除节点
+                  </Button>
+                </div>
               )}
+            </div>
+          ) : (
+            <div>
               <NodeEditor
                 nodeId={node.id}
                 events={node.events || []}
