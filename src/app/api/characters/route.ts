@@ -16,14 +16,20 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, race, class: charClass, img, str, dex, con, int, wis, cha, bio, fullBio, userId } = await request.json()
+    const body = await request.json()
+    console.log('Received request body:', body)
+    
+    const { name, race, class: charClass, img, str, dex, con, int, wis, cha, bio, fullBio, userId } = body
 
     if (!name || !race || !charClass || !userId) {
-      return NextResponse.json({ error: '缺少必要参数' }, { status: 400 })
+      console.log('Missing required fields:', { name, race, charClass, userId })
+      return NextResponse.json({ error: '缺少必要参数', details: { name, race, charClass, userId } }, { status: 400 })
     }
 
+    console.log('Looking for user with id:', userId)
     const user = await repositories.user.findById(userId)
     if (!user) {
+      console.log('User not found:', userId)
       return NextResponse.json({ error: '用户不存在' }, { status: 400 })
     }
 
@@ -43,9 +49,10 @@ export async function POST(request: NextRequest) {
       userId
     })
 
+    console.log('Character created:', character)
     return NextResponse.json(character)
   } catch (error) {
     console.error('Add character error:', error)
-    return NextResponse.json({ error: '添加角色失败' }, { status: 500 })
+    return NextResponse.json({ error: '添加角色失败', details: String(error) }, { status: 500 })
   }
 }

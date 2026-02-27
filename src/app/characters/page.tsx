@@ -134,24 +134,28 @@ export default function CharactersPage() {
           ));
         }
       } else {
+        const requestData = {
+          name: formData.name,
+          race: formData.race,
+          class: formData.class,
+          img: formData.img,
+          str: formData.str,
+          dex: formData.dex,
+          con: formData.con,
+          int: formData.int,
+          wis: formData.wis,
+          cha: formData.cha,
+          bio: formData.bio,
+          fullBio: formData.fullBio,
+          userId: user.id,
+        };
+        console.log('Sending character data:', requestData);
+        console.log('User object:', user);
+        
         const response = await fetch("/api/characters", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: formData.name,
-            race: formData.race,
-            class: formData.class,
-            img: formData.img,
-            str: formData.str,
-            dex: formData.dex,
-            con: formData.con,
-            int: formData.int,
-            wis: formData.wis,
-            cha: formData.cha,
-            bio: formData.bio,
-            fullBio: formData.fullBio,
-            userId: user.id,
-          }),
+          body: JSON.stringify(requestData),
         });
         if (response.ok) {
           const newChar = await response.json();
