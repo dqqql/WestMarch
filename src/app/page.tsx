@@ -45,7 +45,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 relative overflow-hidden">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 relative overflow-hidden flex flex-col">
       {isClient && (
         <div className="fixed inset-0 z-0 pointer-events-none">
           <img 
@@ -114,43 +114,40 @@ export default function Home() {
       )}
 
       <header className="border-b border-zinc-800/50 bg-zinc-900/40 backdrop-blur-2xl sticky top-0 z-40">
-        <div className="container mx-auto px-6 py-5 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl flex items-center justify-center shadow-xl shadow-amber-500/30">
-                <Sword className="h-7 w-7 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-amber-200 via-amber-100 to-amber-200 bg-clip-text text-transparent">
-                  不冻港的西征世界
-                </h1>
-                <p className="text-xs text-zinc-500">D&amp;D Campaign Portal</p>
-              </div>
+        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/30">
+              <Sword className="h-5 w-5 text-white" />
             </div>
-            <DateDisplay />
+            <div>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-amber-200 via-amber-100 to-amber-200 bg-clip-text text-transparent">
+                不冻港的西征世界
+              </h1>
+              <p className="text-xs text-zinc-500">D&amp;D Campaign Portal</p>
+            </div>
           </div>
           <div className="flex items-center gap-4">
             {user ? (
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
                 <Link href="/profile">
                   <Button variant="ghost" size="sm">
                     <User className="h-4 w-4 mr-2" />
                     个人中心
                   </Button>
                 </Link>
-                <div className="flex items-center gap-3 bg-zinc-800/50 px-4 py-2 rounded-2xl border border-zinc-700/50">
-                  <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-amber-600 rounded-full flex items-center justify-center">
-                    <span className="text-sm font-bold text-white">{user.username[0]}</span>
+                <div className="flex items-center gap-2 bg-zinc-800/50 px-3 py-1.5 rounded-xl border border-zinc-700/50">
+                  <div className="w-6 h-6 bg-gradient-to-br from-amber-500 to-amber-600 rounded-full flex items-center justify-center">
+                    <span className="text-xs font-bold text-white">{user.username[0]}</span>
                   </div>
-                  <span className="text-amber-300 font-medium">{user.username}</span>
+                  <span className="text-amber-300 font-medium text-sm">{user.username}</span>
                 </div>
-                <Button variant="ghost" onClick={logout}>
+                <Button variant="ghost" onClick={logout} size="sm">
                   <LogOut className="h-4 w-4 mr-2" />
                   退出
                 </Button>
               </div>
             ) : (
-              <Button variant="ghost" onClick={() => setShowLoginModal(true)}>
+              <Button variant="ghost" onClick={() => setShowLoginModal(true)} size="sm">
                 {isLoading ? "加载中..." : "登录"}
               </Button>
             )}
@@ -158,9 +155,13 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="relative z-10 pb-20">
-        <div className="container mx-auto px-6 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-center">
+        <div className="container mx-auto px-6 py-8">
+          <div className="mb-8 flex justify-center">
+            <DateDisplay />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
             {[
               { title: "公会档案馆", description: "冒险规则与指南，房规，战报等各种文档的集中处", icon: BookOpen, color: "from-blue-500 to-blue-600", shadow: "shadow-blue-500/20", href: "/docs" },
               { title: "世界地图", description: "探索边境世界", icon: Map, color: "from-emerald-500 to-emerald-600", shadow: "shadow-emerald-500/20", href: "/map" },
@@ -171,39 +172,39 @@ export default function Home() {
               const CardContent = isDisabled ? (
                 <Card className="opacity-50 cursor-not-allowed bg-gradient-to-br from-zinc-900/80 to-zinc-950/80 border-zinc-700/50">
                   <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${item.color}`} />
-                  <CardHeader className="p-8">
-                    <div className="flex items-start justify-between gap-6">
-                      <div className="space-y-3 flex-1">
-                        <CardTitle className="text-xl font-bold flex items-center gap-2">
+                  <CardHeader className="p-5">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="space-y-2 flex-1">
+                        <CardTitle className="text-lg font-bold flex items-center gap-2">
                           {item.title}
                         </CardTitle>
-                        <CardDescription className="text-zinc-400 text-base leading-relaxed">
+                        <CardDescription className="text-zinc-400 text-sm leading-relaxed">
                           需要登录
                         </CardDescription>
                       </div>
-                      <div className={`p-4 rounded-2xl bg-gradient-to-br ${item.color} ${item.shadow} shadow-xl`}>
-                        <item.icon className="h-10 w-10 text-white" />
+                      <div className={`p-3 rounded-xl bg-gradient-to-br ${item.color} ${item.shadow} shadow-lg`}>
+                        <item.icon className="h-7 w-7 text-white" />
                       </div>
                     </div>
                   </CardHeader>
                 </Card>
               ) : (
                 <Link href={item.href}>
-                  <Card className="relative overflow-hidden bg-gradient-to-br from-zinc-900/80 to-zinc-950/80 border-zinc-700/50 hover:border-zinc-600/50 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl group cursor-pointer">
+                  <Card className="relative overflow-hidden bg-gradient-to-br from-zinc-900/80 to-zinc-950/80 border-zinc-700/50 hover:border-zinc-600/50 transition-all duration-500 hover:scale-[1.02] hover:shadow-xl group cursor-pointer">
                     <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${item.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-                    <CardHeader className="p-8">
-                      <div className="flex items-start justify-between gap-6">
-                        <div className="space-y-3 flex-1">
-                          <CardTitle className="text-xl font-bold group-hover:text-white transition-colors flex items-center gap-2">
+                    <CardHeader className="p-5">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="space-y-2 flex-1">
+                          <CardTitle className="text-lg font-bold group-hover:text-white transition-colors flex items-center gap-2">
                             {item.title}
-                            <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                            <ArrowRight className="h-3 w-3 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
                           </CardTitle>
-                          <CardDescription className="text-zinc-400 text-base leading-relaxed">
+                          <CardDescription className="text-zinc-400 text-sm leading-relaxed">
                             {item.description}
                           </CardDescription>
                         </div>
-                        <div className={`p-4 rounded-2xl bg-gradient-to-br ${item.color} ${item.shadow} shadow-xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-500`}>
-                          <item.icon className="h-10 w-10 text-white" />
+                        <div className={`p-3 rounded-xl bg-gradient-to-br ${item.color} ${item.shadow} shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-500`}>
+                          <item.icon className="h-7 w-7 text-white" />
                         </div>
                       </div>
                     </CardHeader>
@@ -216,14 +217,14 @@ export default function Home() {
         </div>
       </main>
 
-      <footer className="border-t border-zinc-800/50 bg-zinc-900/40 backdrop-blur-xl py-10 relative z-10">
+      <footer className="border-t border-zinc-800/50 bg-zinc-900/40 backdrop-blur-xl py-4 relative z-10 mt-auto">
         <div className="container mx-auto px-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-2">
             <div className="flex items-center gap-3">
-              <Sword className="h-5 w-5 text-amber-500" />
-              <span className="text-zinc-400">不冻港的西征世界</span>
+              <Sword className="h-4 w-4 text-amber-500" />
+              <span className="text-zinc-400 text-sm">不冻港的西征世界</span>
             </div>
-            <div className="flex items-center gap-2 text-zinc-500 text-sm">
+            <div className="flex items-center gap-2 text-zinc-500 text-xs">
               <span>&copy; 2025</span>
               <span className="w-1 h-1 rounded-full bg-zinc-700" />
               <span>UI 优化版</span>
