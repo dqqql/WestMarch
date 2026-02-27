@@ -521,95 +521,98 @@ export default function PartyPage() {
       </header>
 
       <main className="container mx-auto px-6 py-8 relative z-10">
-        <div className="max-w-4xl mx-auto space-y-6">
-          {parties.map((party) => {
-            const authorName = party.author.nickname || party.author.username;
-            const currentCount = party.members.length;
-            return (
-              <Card
-                key={party.id}
-                className="bg-gradient-to-br from-zinc-900/80 to-zinc-950/80 border-zinc-700/50 hover:border-rose-500/50 transition-all duration-300 overflow-hidden group"
-              >
-                <CardHeader className="pb-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-3">
-                        <span className="px-3 py-1 bg-rose-900/40 text-rose-300 border border-rose-800/50 rounded-xl text-sm font-medium">
-                          {currentCount}/{party.maxCount} 人
-                        </span>
-                        {party.nextSessionTime && (
-                          <span className="px-3 py-1 bg-amber-900/40 text-amber-300 border border-amber-800/50 rounded-xl text-sm font-medium flex items-center gap-2">
-                            <Calendar className="h-4 w-4" />
-                            {new Date(party.nextSessionTime).toLocaleString("zh-CN")}
-                          </span>
-                        )}
-                      </div>
-                      <CardTitle className="text-xl font-bold mb-2 text-zinc-100 group-hover:text-white transition-colors">
-                        {party.title}
-                      </CardTitle>
-                      <CardDescription className="text-zinc-400 mb-4 leading-relaxed">
-                        {party.content}
-                      </CardDescription>
-                      <div className="flex items-center gap-2 text-sm text-zinc-500 mb-4">
-                        <span>发起者: {authorName}</span>
-                      </div>
-                      {party.members.length > 0 && (
-                        <div className="space-y-2">
-                          <p className="text-sm text-zinc-400">队伍成员:</p>
-                          <div className="flex flex-wrap gap-2">
-                            {party.members.map((member) => (
-                              <div
-                                key={member.id}
-                                className="flex items-center gap-2 bg-zinc-800/60 px-3 py-2 rounded-xl border border-zinc-700/50 backdrop-blur-sm"
-                              >
-                                <div className="w-6 h-6 bg-gradient-to-br from-rose-500 to-rose-600 rounded-full flex items-center justify-center">
-                                  <span className="text-xs font-bold text-white">{member.character.name[0]}</span>
-                                </div>
-                                <div>
-                                  <p className="text-sm font-medium text-zinc-100">{member.character.name}</p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    {isPartyOwner(party) && (
-                      <div className="flex flex-col gap-2">
-                        <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-zinc-800/60 rounded-xl" onClick={() => {
-                          setEditingParty(party);
-                          setShowCreateModal(true);
-                        }}>
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-red-900/20 text-red-400 rounded-xl" onClick={() => handleDeleteParty(party.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  {currentCount < party.maxCount && (
-                    <Button 
-                      className="w-full bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white rounded-xl shadow-lg shadow-rose-500/30 transition-all"
-                      onClick={() => startJoinParty(party.id)}
-                    >
-                      <Users className="h-4 w-4 mr-2" />
-                      加入队伍
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
-          {parties.length === 0 && (
+        <div className="max-w-6xl mx-auto">
+          {parties.length === 0 ? (
             <div className="text-center py-16">
               <div className="w-20 h-20 bg-gradient-to-br from-rose-500/20 to-rose-600/20 rounded-3xl flex items-center justify-center mx-auto mb-6">
                 <Users className="h-10 w-10 text-rose-400" />
               </div>
               <h2 className="text-xl font-bold mb-2 text-zinc-400">暂无组队信息</h2>
               <p className="text-zinc-500">点击上方按钮发布第一个组队</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {parties.map((party) => {
+                const authorName = party.author.nickname || party.author.username;
+                const currentCount = party.members.length;
+                return (
+                  <Card
+                    key={party.id}
+                    className="bg-gradient-to-br from-zinc-900/80 to-zinc-950/80 border-zinc-700/50 hover:border-rose-500/50 transition-all duration-300 overflow-hidden group"
+                  >
+                    <CardHeader className="pb-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3 mb-3">
+                            <span className="px-3 py-1 bg-rose-900/40 text-rose-300 border border-rose-800/50 rounded-xl text-sm font-medium">
+                              {currentCount}/{party.maxCount} 人
+                            </span>
+                            {party.nextSessionTime && (
+                              <span className="px-3 py-1 bg-amber-900/40 text-amber-300 border border-amber-800/50 rounded-xl text-sm font-medium flex items-center gap-2">
+                                <Calendar className="h-4 w-4" />
+                                {new Date(party.nextSessionTime).toLocaleDateString("zh-CN")}
+                              </span>
+                            )}
+                          </div>
+                          <CardTitle className="text-lg font-bold mb-2 text-zinc-100 group-hover:text-white transition-colors">
+                            {party.title}
+                          </CardTitle>
+                          <CardDescription className="text-zinc-400 mb-4 leading-relaxed line-clamp-3">
+                            {party.content}
+                          </CardDescription>
+                          <div className="flex items-center gap-2 text-sm text-zinc-500 mb-4">
+                            <span>发起者: {authorName}</span>
+                          </div>
+                          {party.members.length > 0 && (
+                            <div className="space-y-2 mb-4">
+                              <p className="text-sm text-zinc-400">队伍成员:</p>
+                              <div className="flex flex-wrap gap-2">
+                                {party.members.map((member) => (
+                                  <div
+                                    key={member.id}
+                                    className="flex items-center gap-2 bg-zinc-800/60 px-3 py-2 rounded-xl border border-zinc-700/50 backdrop-blur-sm"
+                                  >
+                                    <div className="w-5 h-5 bg-gradient-to-br from-rose-500 to-rose-600 rounded-full flex items-center justify-center">
+                                      <span className="text-xs font-bold text-white">{member.character.name[0]}</span>
+                                    </div>
+                                    <div>
+                                      <p className="text-sm font-medium text-zinc-100">{member.character.name}</p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        {isPartyOwner(party) && (
+                          <div className="flex flex-col gap-2">
+                            <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-zinc-800/60 rounded-xl" onClick={() => {
+                              setEditingParty(party);
+                              setShowCreateModal(true);
+                            }}>
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-red-900/20 text-red-400 rounded-xl" onClick={() => handleDeleteParty(party.id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      {currentCount < party.maxCount && (
+                        <Button 
+                          className="w-full bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white rounded-xl shadow-lg shadow-rose-500/30 transition-all"
+                          onClick={() => startJoinParty(party.id)}
+                        >
+                          <Users className="h-4 w-4 mr-2" />
+                          加入队伍
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </div>

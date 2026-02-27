@@ -538,7 +538,7 @@ export default function BoardPage() {
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredPosts.map((post) => {
                 const authorName = post.author.nickname || post.author.username;
                 const displayTag = getDisplayTag(post.tag);
@@ -566,35 +566,34 @@ export default function BoardPage() {
                             )}
                           </div>
                           <Link href={`/board/${post.id}`} className="block hover:bg-zinc-800/50 transition-colors -mx-2 -my-2 px-2 py-2 rounded-xl">
-                            <h3 className="text-xl font-bold mb-2 text-zinc-100 group-hover:text-white transition-colors">
+                            <h3 className="text-lg font-bold mb-2 text-zinc-100 group-hover:text-white transition-colors">
                               {searchQuery ? highlightText(post.title, searchQuery) : post.title}
                             </h3>
-                            <p className="text-zinc-400 mb-4 line-clamp-2 leading-relaxed">
+                            <p className="text-zinc-400 mb-4 line-clamp-3 leading-relaxed">
                               {searchQuery ? highlightText(post.content, searchQuery) : post.content}
                             </p>
-                            <div className="flex items-center gap-4 text-sm text-zinc-500">
+                            <div className="flex items-center gap-3 text-sm text-zinc-500">
                               <span className="flex items-center gap-1">
                                 <User className="h-4 w-4" />
                                 {authorName}
                               </span>
-                              {post.character && <span>角色: {post.character.name}</span>}
                               <span className="flex items-center gap-1">
                                 <Clock className="h-4 w-4" />
-                                {new Date(post.createdAt).toLocaleString("zh-CN")}
+                                {new Date(post.createdAt).toLocaleDateString("zh-CN")}
                               </span>
                             </div>
                           </Link>
                         </div>
                         {isPostOwner(post) && (
-                          <div className="flex gap-2">
-                            <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-zinc-800/60 rounded-xl" onClick={(e) => {
+                          <div className="flex flex-col gap-2">
+                            <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-zinc-800/60 rounded-xl" onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
                               openEditModal(post);
                             }}>
                               <Edit2 className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-red-900/20 text-red-400 rounded-xl" onClick={(e) => {
+                            <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-red-900/20 text-red-400 rounded-xl" onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
                               handleDeletePost(post.id);

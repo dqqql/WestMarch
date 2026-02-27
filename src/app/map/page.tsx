@@ -56,8 +56,10 @@ const CustomNode = ({ data, selected }: { data: any; selected: boolean }) => {
       } ${selected ? "ring-2 ring-white/50" : ""}`}
     >
       <Handle type="target" position={Position.Top} className="w-3 h-3 bg-zinc-400" />
+      <Handle type="target" position={Position.Left} className="w-3 h-3 bg-zinc-400" />
       <div className="font-bold text-white">{data.label}</div>
       <div className="text-xs text-white/70">{data.type}</div>
+      <Handle type="source" position={Position.Right} className="w-3 h-3 bg-zinc-400" />
       <Handle type="source" position={Position.Bottom} className="w-3 h-3 bg-zinc-400" />
     </div>
   );
