@@ -126,14 +126,16 @@ export default function DocsLayout({
           <img
             src="/images/general-bg.png"
             alt="档案室背景"
-            className="w-full h-full object-cover opacity-30 blur-[2px]"
+            className="w-full h-full object-cover opacity-55 transition-opacity duration-1000"
           />
+          <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/60 via-zinc-950/40 to-zinc-950/80" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-500/10 via-transparent to-transparent" />
         </div>
       )}
 
       {(showCreateModal || editingDoc) && (
         <div
-          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-300"
           onClick={() => {
             setShowCreateModal(false);
             setEditingDoc(null);
@@ -141,48 +143,56 @@ export default function DocsLayout({
           }}
         >
           <div
-            className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto"
+            className="bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-700/50 rounded-3xl p-8 w-full max-w-2xl max-h-[80vh] overflow-y-auto shadow-2xl shadow-black/50 animate-in zoom-in-95 duration-300"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold">
-                {editingDoc ? "编辑文档" : "创建新文档"}
-              </h3>
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
+                  <FileText className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-zinc-100">
+                    {editingDoc ? "编辑文档" : "创建新文档"}
+                  </h3>
+                  <p className="text-zinc-500 text-sm">记录你的冒险知识</p>
+                </div>
+              </div>
               <button
                 onClick={() => {
                   setShowCreateModal(false);
                   setEditingDoc(null);
                 }}
-                className="text-zinc-400 hover:text-white"
+                className="text-zinc-500 hover:text-zinc-300 transition-colors p-2 hover:bg-zinc-800 rounded-xl"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div>
-                <label className="block text-sm text-zinc-400 mb-1">标题</label>
+                <label className="block text-sm text-zinc-400 mb-2">标题</label>
                 <input
                   type="text"
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white"
+                  className="w-full bg-zinc-800/60 border border-zinc-700/50 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 backdrop-blur-sm transition-all"
                   placeholder="文档标题"
                   value={newDoc.title}
                   onChange={(e) => setNewDoc({ ...newDoc, title: e.target.value })}
                 />
               </div>
               <div>
-                <label className="block text-sm text-zinc-400 mb-1">分类</label>
+                <label className="block text-sm text-zinc-400 mb-2">分类</label>
                 <input
                   type="text"
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white"
+                  className="w-full bg-zinc-800/60 border border-zinc-700/50 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 backdrop-blur-sm transition-all"
                   placeholder="分类名称"
                   value={newDoc.category}
                   onChange={(e) => setNewDoc({ ...newDoc, category: e.target.value })}
                 />
               </div>
               <div>
-                <label className="block text-sm text-zinc-400 mb-1">内容 (支持 Markdown)</label>
+                <label className="block text-sm text-zinc-400 mb-2">内容 (支持 Markdown)</label>
                 <textarea
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white h-64 font-mono text-sm"
+                  className="w-full bg-zinc-800/60 border border-zinc-700/50 rounded-xl px-4 py-3 text-white h-64 font-mono text-sm placeholder-zinc-500 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 backdrop-blur-sm transition-all resize-none"
                   placeholder="# 标题&#10;&#10;文档内容..."
                   value={newDoc.content}
                   onChange={(e) => setNewDoc({ ...newDoc, content: e.target.value })}
@@ -195,11 +205,12 @@ export default function DocsLayout({
                     setShowCreateModal(false);
                     setEditingDoc(null);
                   }}
+                  className="rounded-xl hover:bg-zinc-800/60"
                 >
                   取消
                 </Button>
                 <Button
-                  className="flex-1 bg-amber-600 hover:bg-amber-700"
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded-xl shadow-lg shadow-blue-500/30 transition-all"
                   onClick={editingDoc ? handleEditDoc : handleCreateDoc}
                 >
                   {editingDoc ? "保存" : "创建"}
@@ -210,27 +221,27 @@ export default function DocsLayout({
         </div>
       )}
 
-      <div className="w-16 bg-zinc-900 border-r border-zinc-800 flex flex-col items-center py-4 gap-4 relative z-10">
-        <Link href="/" className="hover:bg-zinc-800 p-2 rounded-lg transition-colors">
+      <div className="w-16 bg-zinc-900/80 border-r border-zinc-800/50 flex flex-col items-center py-4 gap-4 relative z-10 backdrop-blur-xl">
+        <Link href="/" className="hover:bg-zinc-800/60 p-2 rounded-xl transition-colors">
           <ArrowLeft className="h-6 w-6 text-zinc-400 hover:text-white" />
         </Link>
-        <div className="w-10 h-10 bg-amber-600 rounded-lg flex items-center justify-center">
+        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
           <BookOpen className="h-6 w-6 text-white" />
         </div>
       </div>
 
-      <div className="w-64 bg-zinc-900/95 border-r border-zinc-800 flex flex-col relative z-10">
-        <div className="p-4 border-b border-zinc-800">
-          <h2 className="font-bold text-lg">公会档案馆</h2>
+      <div className="w-72 bg-zinc-900/70 border-r border-zinc-800/50 flex flex-col relative z-10 backdrop-blur-xl">
+        <div className="p-4 border-b border-zinc-800/50">
+          <h2 className="font-bold text-lg text-zinc-100">公会档案馆</h2>
         </div>
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto p-2">
           {isMounted && sortedDocuments.map((doc) => (
             <button
               key={doc.id}
               onClick={() => setSelectedDoc(doc)}
-              className={`w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-zinc-800 transition-colors ${
-                selectedDoc?.id === doc.id ? "bg-zinc-800 text-white" : "text-zinc-400"
-              } ${doc.isPinned ? "border-l-4 border-amber-500 pl-2" : ""}`}
+              className={`w-full px-3 py-3 text-left text-sm flex items-center gap-3 hover:bg-zinc-800/60 transition-all duration-300 rounded-xl ${
+                selectedDoc?.id === doc.id ? "bg-zinc-800/60 text-zinc-100" : "text-zinc-400"
+              } ${doc.isPinned ? "border-l-4 border-amber-500" : ""}`}
             >
               {doc.isPinned ? (
                 <Pin className="h-4 w-4 text-amber-500 flex-shrink-0" />
@@ -238,18 +249,18 @@ export default function DocsLayout({
                 <FileText className="h-4 w-4 flex-shrink-0" />
               )}
               <div className="flex-1 min-w-0">
-                <p className="truncate">{doc.title}</p>
+                <p className="truncate font-medium">{doc.title}</p>
                 {doc.category && (
-                  <p className="text-xs text-zinc-600 truncate">{doc.category}</p>
+                  <p className="text-xs text-zinc-500 truncate">{doc.category}</p>
                 )}
               </div>
             </button>
           ))}
         </div>
         {user && (
-          <div className="p-4 border-t border-zinc-800">
+          <div className="p-4 border-t border-zinc-800/50">
             <Button
-              className="w-full bg-amber-600 hover:bg-amber-700"
+              className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded-xl shadow-lg shadow-blue-500/30 transition-all"
               onClick={() => setShowCreateModal(true)}
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -262,13 +273,13 @@ export default function DocsLayout({
       <div className="flex-1 flex flex-col relative z-10">
         {selectedDoc ? (
           <>
-            <div className="h-12 border-b border-zinc-800 bg-zinc-900/80 flex items-center px-4 gap-4">
+            <div className="h-14 border-b border-zinc-800/50 bg-zinc-900/60 backdrop-blur-xl flex items-center px-6 gap-4">
               <Hash className="h-5 w-5 text-zinc-400" />
               {isEditingTitle ? (
                 <div className="flex items-center gap-2 flex-1">
                   <input
                     type="text"
-                    className="bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-white flex-1 max-w-md"
+                    className="bg-zinc-800/60 border border-zinc-700/50 rounded-xl px-3 py-2 text-white flex-1 max-w-md backdrop-blur-sm transition-all focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20"
                     value={editTitle}
                     onChange={(e) => setEditTitle(e.target.value)}
                     onKeyDown={(e) => {
@@ -284,8 +295,9 @@ export default function DocsLayout({
                     variant="ghost"
                     size="sm"
                     onClick={handleSaveEditTitle}
+                    className="rounded-xl hover:bg-zinc-800/60"
                   >
-                    <Save className="h-4 w-4 text-amber-500" />
+                    <Save className="h-4 w-4 text-blue-400" />
                   </Button>
                   <Button
                     variant="ghost"
@@ -294,18 +306,20 @@ export default function DocsLayout({
                       setIsEditingTitle(false);
                       setEditTitle(selectedDoc?.title || '');
                     }}
+                    className="rounded-xl hover:bg-zinc-800/60"
                   >
                     <X className="h-4 w-4 text-zinc-400" />
                   </Button>
                 </div>
               ) : (
                 <div className="flex items-center gap-2 flex-1">
-                  <h2 className="font-semibold">{selectedDoc?.title}</h2>
+                  <h2 className="font-semibold text-zinc-100">{selectedDoc?.title}</h2>
                   {user && (
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={handleStartEditTitle}
+                      className="rounded-xl hover:bg-zinc-800/60"
                     >
                       <Edit2 className="h-4 w-4 text-zinc-500 hover:text-zinc-300" />
                     </Button>
@@ -320,6 +334,7 @@ export default function DocsLayout({
                       variant="ghost"
                       size="sm"
                       onClick={() => handleTogglePin(selectedDoc)}
+                      className="rounded-xl hover:bg-zinc-800/60"
                     >
                       <Pin className="h-4 w-4 text-amber-500" />
                     </Button>
@@ -328,6 +343,7 @@ export default function DocsLayout({
                       variant="ghost"
                       size="sm"
                       onClick={() => handleTogglePin(selectedDoc!)}
+                      className="rounded-xl hover:bg-zinc-800/60"
                     >
                       <Pin className="h-4 w-4 text-zinc-400" />
                     </Button>
@@ -341,31 +357,33 @@ export default function DocsLayout({
                         setSelectedDoc(null);
                       }
                     }}
+                    className="rounded-xl hover:bg-red-900/20 text-red-400"
                   >
-                    <Trash2 className="h-4 w-4 text-red-400" />
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               )}
             </div>
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-8">
               {isEditing ? (
-                <div className="space-y-4">
+                <div className="space-y-4 max-w-4xl mx-auto">
                   <textarea
-                    className="w-full h-full min-h-[500px] bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-3 text-white font-mono text-sm"
+                    className="w-full h-full min-h-[500px] bg-zinc-900/60 border border-zinc-700/50 rounded-xl px-4 py-4 text-white font-mono text-sm backdrop-blur-sm transition-all focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 resize-none"
                     value={editContent}
                     onChange={(e) => setEditContent(e.target.value)}
                   />
-                  <div className="flex gap-2">
+                  <div className="flex gap-3">
                     <Button
                       variant="ghost"
                       onClick={() => {
                         setIsEditing(false);
                         setEditContent(selectedDoc.content);
                       }}
+                      className="rounded-xl hover:bg-zinc-800/60"
                     >
                       取消
                     </Button>
-                    <Button className="bg-amber-600 hover:bg-amber-700" onClick={handleSaveEdit}>
+                    <Button className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded-xl shadow-lg shadow-blue-500/30 transition-all" onClick={handleSaveEdit}>
                       <Save className="h-4 w-4 mr-2" />
                       保存
                     </Button>
@@ -373,7 +391,7 @@ export default function DocsLayout({
                 </div>
               ) : (
                 <div
-                  className="prose prose-invert prose-zinc max-w-none"
+                  className="prose prose-invert prose-zinc max-w-4xl mx-auto"
                   onDoubleClick={() => {
                     if (user) {
                       setIsEditing(true);
@@ -382,7 +400,7 @@ export default function DocsLayout({
                   }}
                 >
                   <Markdown remarkPlugins={[remarkGfm]}>{selectedDoc.content}</Markdown>
-                  <div className="mt-8 pt-4 border-t border-zinc-800 text-sm text-zinc-500">
+                  <div className="mt-8 pt-4 border-t border-zinc-800/50 text-sm text-zinc-500">
                     <p>作者: {selectedDoc.author}</p>
                     <p>创建时间: {new Date(selectedDoc.createdAt).toLocaleString("zh-CN")}</p>
                     <p>最后更新: {new Date(selectedDoc.updatedAt).toLocaleString("zh-CN")}</p>
@@ -397,8 +415,10 @@ export default function DocsLayout({
         ) : (
           <div className="flex-1 flex items-center justify-center text-zinc-500">
             <div className="text-center">
-              <FileText className="h-16 w-16 mx-auto mb-4 opacity-50" />
-              <p>选择或创建一个文档</p>
+              <div className="w-20 h-20 bg-gradient-to-br from-blue-500/20 to-blue-600/20 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                <FileText className="h-10 w-10 text-blue-400" />
+              </div>
+              <p className="text-zinc-400">选择或创建一个文档</p>
             </div>
           </div>
         )}

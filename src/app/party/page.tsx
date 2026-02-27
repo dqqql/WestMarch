@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Users, User, Calendar, X, Plus, Edit2, Trash2, Tag } from "lucide-react";
+import { ArrowLeft, Users, User, X, Plus, Edit2, Trash2, Tag, Calendar } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useApp } from "@/contexts/AppContext";
@@ -207,28 +207,32 @@ export default function PartyPage() {
   if (!user) {
     return (
       <div className="min-h-screen bg-zinc-950 text-zinc-100">
-        <header className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm sticky top-0 z-50">
-          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link href="/" className="hover:text-amber-400 transition-colors">
+        <header className="border-b border-zinc-800/50 bg-zinc-900/40 backdrop-blur-2xl sticky top-0 z-50">
+          <div className="container mx-auto px-6 py-5 flex items-center justify-between">
+            <div className="flex items-center gap-6">
+              <Link href="/" className="hover:text-amber-400 transition-colors p-2 hover:bg-zinc-800/60 rounded-xl">
                 <ArrowLeft className="h-5 w-5" />
               </Link>
-              <div className="flex items-center gap-2">
-                <Users className="h-6 w-6 text-amber-500" />
-                <h1 className="text-xl font-bold">组队大厅</h1>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-rose-500 to-rose-600 rounded-xl flex items-center justify-center shadow-lg shadow-rose-500/30">
+                  <Users className="h-5 w-5 text-white" />
+                </div>
+                <h1 className="text-xl font-bold text-zinc-100">组队大厅</h1>
               </div>
             </div>
           </div>
         </header>
 
-        <main className="min-h-[calc(100vh-160px)] flex items-center justify-center px-4 py-8 relative z-10">
+        <main className="min-h-[calc(100vh-160px)] flex items-center justify-center px-6 py-8 relative z-10">
           <div className="text-center">
-            <Users className="h-16 w-16 text-zinc-600 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-2">需要登录</h2>
+            <div className="w-20 h-20 bg-gradient-to-br from-rose-500/20 to-rose-600/20 rounded-3xl flex items-center justify-center mx-auto mb-6">
+              <Users className="h-10 w-10 text-rose-400" />
+            </div>
+            <h2 className="text-2xl font-bold mb-2 text-zinc-100">需要登录</h2>
             <p className="text-zinc-400 mb-6">请先登录才能查看组队信息</p>
-            <div className="flex flex-col sm:flex-row gap-2 justify-center">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link href="/">
-                <Button className="bg-amber-600 hover:bg-amber-700">
+                <Button className="bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white rounded-xl shadow-lg shadow-rose-500/30 transition-all">
                   返回首页登录
                 </Button>
               </Link>
@@ -254,15 +258,35 @@ export default function PartyPage() {
           <img
             src="/images/general-bg.png"
             alt="组队背景"
-            className="w-full h-full object-cover opacity-30 blur-[2px]"
+            className="w-full h-full object-cover opacity-55 transition-opacity duration-1000"
           />
+          <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/60 via-zinc-950/40 to-zinc-950/80" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-rose-500/10 via-transparent to-transparent" />
         </div>
       )}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 overflow-y-auto py-8">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-lg mx-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold">{editingParty ? "编辑组队" : "发布新组队"}</h3>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 overflow-y-auto py-8 animate-in fade-in duration-300" onClick={() => {
+          setShowCreateModal(false);
+          setEditingParty(null);
+          setFormData({
+            title: "",
+            content: "",
+            character: null,
+            maxCount: 4,
+            nextSessionTime: "",
+          });
+        }}>
+          <div className="bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-700/50 rounded-3xl p-8 w-full max-w-lg mx-4 shadow-2xl shadow-black/50 animate-in zoom-in-95 duration-300" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-rose-500 to-rose-600 rounded-xl flex items-center justify-center shadow-lg shadow-rose-500/30">
+                  <Users className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-zinc-100">{editingParty ? "编辑组队" : "发布新组队"}</h3>
+                  <p className="text-zinc-500 text-sm">开始你的冒险</p>
+                </div>
+              </div>
               <button 
                 onClick={() => {
                   setShowCreateModal(false);
@@ -275,17 +299,17 @@ export default function PartyPage() {
                     nextSessionTime: "",
                   });
                 }} 
-                className="text-zinc-400 hover:text-white"
+                className="text-zinc-500 hover:text-zinc-300 transition-colors p-2 hover:bg-zinc-800 rounded-xl"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div>
-                <label className="block text-sm text-zinc-400 mb-1">标题</label>
+                <label className="block text-sm text-zinc-400 mb-2">标题</label>
                 <input 
                   type="text" 
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white" 
+                  className="w-full bg-zinc-800/60 border border-zinc-700/50 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-rose-500/50 focus:ring-2 focus:ring-rose-500/20 backdrop-blur-sm transition-all" 
                   placeholder="组队标题"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
@@ -293,22 +317,22 @@ export default function PartyPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-zinc-400 mb-1">队伍人数</label>
+                  <label className="block text-sm text-zinc-400 mb-2">队伍人数</label>
                   <input 
                     type="number" 
                     min="1" 
                     max="10" 
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white" 
+                    className="w-full bg-zinc-800/60 border border-zinc-700/50 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-rose-500/50 focus:ring-2 focus:ring-rose-500/20 backdrop-blur-sm transition-all" 
                     value={formData.maxCount}
                     onChange={(e) => setFormData({ ...formData, maxCount: parseInt(e.target.value) || 4 })}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-zinc-400 mb-1">使用角色</label>
+                  <label className="block text-sm text-zinc-400 mb-2">使用角色</label>
                   {formData.character ? (
                     <Button 
                       variant="ghost" 
-                      className="w-full bg-zinc-800 hover:bg-zinc-700 justify-start"
+                      className="w-full bg-zinc-800/60 hover:bg-zinc-700/60 justify-start rounded-xl border border-zinc-700/50 backdrop-blur-sm"
                       onClick={() => setShowCharacterSelector(true)}
                     >
                       <User className="h-4 w-4 mr-2" />
@@ -316,7 +340,7 @@ export default function PartyPage() {
                     </Button>
                   ) : (
                     <Button 
-                      className="w-full bg-zinc-800 hover:bg-zinc-700"
+                      className="w-full bg-zinc-800/60 hover:bg-zinc-700/60 rounded-xl border border-zinc-700/50 backdrop-blur-sm"
                       onClick={() => setShowCharacterSelector(true)}
                     >
                       <User className="h-4 w-4 mr-2" />
@@ -326,18 +350,18 @@ export default function PartyPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm text-zinc-400 mb-1">下次跑团时间</label>
+                <label className="block text-sm text-zinc-400 mb-2">下次跑团时间</label>
                 <input 
                   type="datetime-local" 
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white" 
+                  className="w-full bg-zinc-800/60 border border-zinc-700/50 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-rose-500/50 focus:ring-2 focus:ring-rose-500/20 backdrop-blur-sm transition-all" 
                   value={formData.nextSessionTime}
                   onChange={(e) => setFormData({ ...formData, nextSessionTime: e.target.value })}
                 />
               </div>
               <div>
-                <label className="block text-sm text-zinc-400 mb-1">内容</label>
+                <label className="block text-sm text-zinc-400 mb-2">内容</label>
                 <textarea 
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white h-32" 
+                  className="w-full bg-zinc-800/60 border border-zinc-700/50 rounded-xl px-4 py-3 text-white h-32 placeholder-zinc-500 focus:outline-none focus:border-rose-500/50 focus:ring-2 focus:ring-rose-500/20 backdrop-blur-sm transition-all resize-none" 
                   placeholder="组队内容"
                   value={formData.content}
                   onChange={(e) => setFormData({ ...formData, content: e.target.value })}
@@ -350,11 +374,12 @@ export default function PartyPage() {
                     setShowCreateModal(false);
                     setEditingParty(null);
                   }}
+                  className="rounded-xl hover:bg-zinc-800/60"
                 >
                   取消
                 </Button>
                 <Button 
-                  className="flex-1 bg-amber-600 hover:bg-amber-700" 
+                  className="flex-1 bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white rounded-xl shadow-lg shadow-rose-500/30 transition-all" 
                   onClick={editingParty ? handleEditParty : handleCreateParty}
                 >
                   {editingParty ? "保存" : "发布"}
@@ -366,14 +391,16 @@ export default function PartyPage() {
       )}
 
       {showCharacterSelector && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-2xl">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold flex items-center gap-2">
-                <User className="h-5 w-5" />
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-300" onClick={() => setShowCharacterSelector(false)}>
+          <div className="bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-700/50 rounded-3xl p-8 w-full max-w-2xl shadow-2xl shadow-black/50 animate-in zoom-in-95 duration-300" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold flex items-center gap-3 text-zinc-100">
+                <div className="w-8 h-8 bg-gradient-to-br from-rose-500 to-rose-600 rounded-xl flex items-center justify-center">
+                  <User className="h-4 w-4 text-white" />
+                </div>
                 选择角色
               </h3>
-              <button onClick={() => setShowCharacterSelector(false)} className="text-zinc-400 hover:text-white">
+              <button onClick={() => setShowCharacterSelector(false)} className="text-zinc-500 hover:text-zinc-300 transition-colors p-2 hover:bg-zinc-800 rounded-xl">
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -382,19 +409,19 @@ export default function PartyPage() {
                 {characters.map((char) => (
                   <div
                     key={char.id}
-                    className="bg-zinc-800 border border-zinc-700 rounded-lg p-4 cursor-pointer hover:border-amber-500/50 transition-colors"
+                    className="bg-zinc-800/60 border border-zinc-700/50 rounded-xl p-4 cursor-pointer hover:border-rose-500/50 transition-all duration-300 backdrop-blur-sm"
                     onClick={() => selectCharacter(char)}
                   >
                     <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 bg-zinc-900 rounded-lg flex items-center justify-center overflow-hidden">
+                      <div className="w-16 h-16 bg-gradient-to-br from-rose-500 to-rose-600 rounded-xl flex items-center justify-center overflow-hidden shadow-lg shadow-rose-500/20">
                         {char.img ? (
                           <img src={char.img} alt={char.name} className="w-full h-full object-cover" />
                         ) : (
-                          <User className="h-8 w-8 text-zinc-600" />
+                          <User className="h-8 w-8 text-white" />
                         )}
                       </div>
                       <div>
-                        <p className="font-medium">{char.name}</p>
+                        <p className="font-medium text-zinc-100">{char.name}</p>
                         <p className="text-sm text-zinc-400">{char.race} · {char.class}</p>
                       </div>
                     </div>
@@ -402,7 +429,10 @@ export default function PartyPage() {
                 ))}
               </div>
               {characters.length === 0 && (
-                <p className="text-zinc-500 text-center py-8">暂无角色，请先去角色卡册创建</p>
+                <div className="text-center py-12">
+                  <User className="h-12 w-12 text-zinc-600 mx-auto mb-4" />
+                  <p className="text-zinc-500">暂无角色，请先去角色卡册创建</p>
+                </div>
               )}
             </div>
           </div>
@@ -410,14 +440,16 @@ export default function PartyPage() {
       )}
 
       {showJoinCharacterSelector && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-2xl">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold flex items-center gap-2">
-                <User className="h-5 w-5" />
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-300" onClick={() => { setShowJoinCharacterSelector(false); setJoiningPartyId(null); }}>
+          <div className="bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-700/50 rounded-3xl p-8 w-full max-w-2xl shadow-2xl shadow-black/50 animate-in zoom-in-95 duration-300" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold flex items-center gap-3 text-zinc-100">
+                <div className="w-8 h-8 bg-gradient-to-br from-rose-500 to-rose-600 rounded-xl flex items-center justify-center">
+                  <User className="h-4 w-4 text-white" />
+                </div>
                 选择加入队伍的角色
               </h3>
-              <button onClick={() => { setShowJoinCharacterSelector(false); setJoiningPartyId(null); }} className="text-zinc-400 hover:text-white">
+              <button onClick={() => { setShowJoinCharacterSelector(false); setJoiningPartyId(null); }} className="text-zinc-500 hover:text-zinc-300 transition-colors p-2 hover:bg-zinc-800 rounded-xl">
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -429,21 +461,21 @@ export default function PartyPage() {
                   return (
                     <div
                       key={char.id}
-                      className={`bg-zinc-800 border border-zinc-700 rounded-lg p-4 cursor-pointer transition-colors ${alreadyJoined ? 'opacity-50 cursor-not-allowed' : 'hover:border-amber-500/50'}`}
+                      className={`bg-zinc-800/60 border border-zinc-700/50 rounded-xl p-4 cursor-pointer transition-all duration-300 backdrop-blur-sm ${alreadyJoined ? 'opacity-50 cursor-not-allowed' : 'hover:border-rose-500/50'}`}
                       onClick={() => !alreadyJoined && selectJoinCharacter(char)}
                     >
                       <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 bg-zinc-900 rounded-lg flex items-center justify-center overflow-hidden">
+                        <div className="w-16 h-16 bg-gradient-to-br from-rose-500 to-rose-600 rounded-xl flex items-center justify-center overflow-hidden shadow-lg shadow-rose-500/20">
                           {char.img ? (
                             <img src={char.img} alt={char.name} className="w-full h-full object-cover" />
                           ) : (
-                            <User className="h-8 w-8 text-zinc-600" />
+                            <User className="h-8 w-8 text-white" />
                           )}
                         </div>
                         <div>
-                          <p className="font-medium">{char.name}</p>
+                          <p className="font-medium text-zinc-100">{char.name}</p>
                           <p className="text-sm text-zinc-400">{char.race} · {char.class}</p>
-                          {alreadyJoined && <p className="text-xs text-amber-400 mt-1">已加入</p>}
+                          {alreadyJoined && <p className="text-xs text-rose-400 mt-1">已加入</p>}
                         </div>
                       </div>
                     </div>
@@ -451,28 +483,33 @@ export default function PartyPage() {
                 })}
               </div>
               {characters.length === 0 && (
-                <p className="text-zinc-500 text-center py-8">暂无角色，请先去角色卡册创建</p>
+                <div className="text-center py-12">
+                  <User className="h-12 w-12 text-zinc-600 mx-auto mb-4" />
+                  <p className="text-zinc-500">暂无角色，请先去角色卡册创建</p>
+                </div>
               )}
             </div>
           </div>
         </div>
       )}
 
-      <header className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="hover:text-amber-400 transition-colors">
+      <header className="border-b border-zinc-800/50 bg-zinc-900/40 backdrop-blur-2xl sticky top-0 z-50">
+        <div className="container mx-auto px-6 py-5 flex items-center justify-between">
+          <div className="flex items-center gap-6">
+            <Link href="/" className="hover:text-rose-400 transition-colors p-2 hover:bg-zinc-800/60 rounded-xl">
               <ArrowLeft className="h-5 w-5" />
             </Link>
-            <div className="flex items-center gap-2">
-              <Users className="h-6 w-6 text-amber-500" />
-              <h1 className="text-xl font-bold">组队大厅</h1>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-rose-500 to-rose-600 rounded-xl flex items-center justify-center shadow-lg shadow-rose-500/30">
+                <Users className="h-5 w-5 text-white" />
+              </div>
+              <h1 className="text-xl font-bold text-zinc-100">组队大厅</h1>
             </div>
           </div>
           <div className="flex items-center gap-2">
             {user && (
               <Button 
-                className="bg-amber-600 hover:bg-amber-700" 
+                className="bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white rounded-xl shadow-lg shadow-rose-500/30 transition-all"
                 onClick={() => setShowCreateModal(true)}
               >
                 <Plus className="h-4 w-4 mr-2" />
@@ -483,81 +520,79 @@ export default function PartyPage() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 relative z-10">
-        <div className="max-w-3xl mx-auto space-y-6">
+      <main className="container mx-auto px-6 py-8 relative z-10">
+        <div className="max-w-4xl mx-auto space-y-6">
           {parties.map((party) => {
             const authorName = party.author.nickname || party.author.username;
             const currentCount = party.members.length;
             return (
               <Card
                 key={party.id}
-                className="bg-zinc-900 border-zinc-800 hover:border-amber-500/50 transition-colors"
+                className="bg-gradient-to-br from-zinc-900/80 to-zinc-950/80 border-zinc-700/50 hover:border-rose-500/50 transition-all duration-300 overflow-hidden group"
               >
-                <CardHeader>
+                <CardHeader className="pb-4">
                   <div className="flex items-start justify-between gap-4">
-                    <div className="space-y-2 flex-1">
-                      <div className="flex items-center gap-3">
-                        <span className="px-2 py-1 rounded text-xs font-medium border bg-blue-900/50 text-blue-300 border-blue-800">
-                          <Tag className="h-3 w-3 inline mr-1" />
-                          {currentCount}/{party.maxCount}
-                        </span>
-                      </div>
-                      <CardTitle className="text-xl">{party.title}</CardTitle>
-                      <CardDescription className="flex items-center gap-2 flex-wrap">
-                        <span>发起者: {authorName}</span>
-                        {party.character && <span>• 角色: {party.character.name}</span>}
-                        <span className="text-zinc-600">
-                          • {new Date(party.createdAt).toLocaleString("zh-CN")}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-3">
+                        <span className="px-3 py-1 bg-rose-900/40 text-rose-300 border border-rose-800/50 rounded-xl text-sm font-medium">
+                          {currentCount}/{party.maxCount} 人
                         </span>
                         {party.nextSessionTime && (
-                          <span className="text-amber-400 flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            • {new Date(party.nextSessionTime).toLocaleString("zh-CN")}
+                          <span className="px-3 py-1 bg-amber-900/40 text-amber-300 border border-amber-800/50 rounded-xl text-sm font-medium flex items-center gap-2">
+                            <Calendar className="h-4 w-4" />
+                            {new Date(party.nextSessionTime).toLocaleString("zh-CN")}
                           </span>
                         )}
+                      </div>
+                      <CardTitle className="text-xl font-bold mb-2 text-zinc-100 group-hover:text-white transition-colors">
+                        {party.title}
+                      </CardTitle>
+                      <CardDescription className="text-zinc-400 mb-4 leading-relaxed">
+                        {party.content}
                       </CardDescription>
+                      <div className="flex items-center gap-2 text-sm text-zinc-500 mb-4">
+                        <span>发起者: {authorName}</span>
+                      </div>
+                      {party.members.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-sm text-zinc-400">队伍成员:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {party.members.map((member) => (
+                              <div
+                                key={member.id}
+                                className="flex items-center gap-2 bg-zinc-800/60 px-3 py-2 rounded-xl border border-zinc-700/50 backdrop-blur-sm"
+                              >
+                                <div className="w-6 h-6 bg-gradient-to-br from-rose-500 to-rose-600 rounded-full flex items-center justify-center">
+                                  <span className="text-xs font-bold text-white">{member.character.name[0]}</span>
+                                </div>
+                                <div>
+                                  <p className="text-sm font-medium text-zinc-100">{member.character.name}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                     {isPartyOwner(party) && (
-                      <div className="flex gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => {
+                      <div className="flex flex-col gap-2">
+                        <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-zinc-800/60 rounded-xl" onClick={() => {
                           setEditingParty(party);
                           setShowCreateModal(true);
                         }}>
                           <Edit2 className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDeleteParty(party.id)}>
-                          <Trash2 className="h-4 w-4 text-red-400" />
+                        <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-red-900/20 text-red-400 rounded-xl" onClick={() => handleDeleteParty(party.id)}>
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     )}
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-zinc-300">{party.content}</p>
-                  
-                  {party.members.length > 0 && (
-                    <div className="space-y-2">
-                      <p className="text-sm text-zinc-400">参与角色:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {party.members.map((member) => (
-                          <div key={member.id} className="flex items-center gap-2 bg-zinc-800 px-3 py-1 rounded-full border border-zinc-700">
-                            <div className="w-6 h-6 bg-zinc-900 rounded-full flex items-center justify-center overflow-hidden">
-                              {member.character.img ? (
-                                <img src={member.character.img} alt={member.character.name} className="w-full h-full object-cover" />
-                              ) : (
-                                <User className="h-3 w-3 text-zinc-600" />
-                              )}
-                            </div>
-                            <span className="text-sm">{member.character.name}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
+                <CardContent className="pt-0">
                   {currentCount < party.maxCount && (
                     <Button 
-                      className="w-full bg-blue-600 hover:bg-blue-700"
+                      className="w-full bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white rounded-xl shadow-lg shadow-rose-500/30 transition-all"
                       onClick={() => startJoinParty(party.id)}
                     >
                       <Users className="h-4 w-4 mr-2" />
@@ -569,8 +604,10 @@ export default function PartyPage() {
             );
           })}
           {parties.length === 0 && (
-            <div className="text-center py-12">
-              <Users className="h-16 w-16 text-zinc-600 mx-auto mb-4" />
+            <div className="text-center py-16">
+              <div className="w-20 h-20 bg-gradient-to-br from-rose-500/20 to-rose-600/20 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                <Users className="h-10 w-10 text-rose-400" />
+              </div>
               <h2 className="text-xl font-bold mb-2 text-zinc-400">暂无组队信息</h2>
               <p className="text-zinc-500">点击上方按钮发布第一个组队</p>
             </div>
