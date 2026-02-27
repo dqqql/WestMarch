@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Calendar, X } from "lucide-react";
+import { X } from "lucide-react";
 
 const SETTING_KEY_DATE = "game_date";
 const SETTING_KEY_ERA = "era_name";
@@ -150,7 +150,6 @@ export function DateDisplay() {
   if (isLoading || !currentDate) {
     return (
       <div className="flex items-center gap-2 text-zinc-400">
-        <Calendar className="h-6 w-6" />
         <span className="text-lg">加载中...</span>
       </div>
     );
@@ -166,7 +165,6 @@ export function DateDisplay() {
   if (isEditing) {
     return (
       <div className="flex items-center gap-3 bg-gradient-to-r from-amber-950/80 to-zinc-900/80 border border-amber-500/40 rounded-2xl p-4 backdrop-blur-xl shadow-2xl shadow-amber-500/10">
-        <Calendar className="h-6 w-6 text-amber-400" />
         <div className="flex items-center gap-2">
           <input
             type="number"
@@ -216,7 +214,6 @@ export function DateDisplay() {
 
   return (
     <div className="flex items-center gap-3 group">
-      <Calendar className="h-6 w-6 text-amber-400" />
       <div className="flex items-center gap-3">
         <div className="bg-gradient-to-r from-amber-950/70 to-zinc-900/70 border border-amber-500/30 rounded-2xl p-4 backdrop-blur-xl hover:border-amber-400/50 hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-500">
           <div className="flex items-center justify-between mb-2">

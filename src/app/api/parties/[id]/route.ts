@@ -31,7 +31,7 @@ export async function PUT(
       content,
       characterId,
       maxCount,
-      nextSessionTime
+      nextSessionTime: nextSessionTime ? new Date(nextSessionTime).toISOString() : null
     })
 
     return NextResponse.json(party)

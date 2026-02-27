@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
       authorId,
       characterId: characterId || null,
       maxCount: maxCount || 4,
-      nextSessionTime: nextSessionTime || null
+      nextSessionTime: nextSessionTime ? new Date(nextSessionTime).toISOString() : null
     })
 
     if (characterId) {
