@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Calendar, Edit2, X, Check } from "lucide-react";
+import { Calendar, X } from "lucide-react";
 
 const SETTING_KEY_DATE = "game_date";
 const SETTING_KEY_ERA = "era_name";
@@ -118,17 +118,13 @@ export function DateDisplay() {
     return () => clearTimeout(timeoutId);
   }, [currentDate]);
 
-  const handleEdit = () => {
-    setIsEditing(true);
-  };
-
+  const handleEdit = () => setIsEditing(true);
   const handleSave = async () => {
     const newDate = new Date(editYear, editMonth - 1, editDay);
     setCurrentDate(newDate);
     await saveSetting(SETTING_KEY_DATE, newDate.toISOString());
     setIsEditing(false);
   };
-
   const handleCancel = () => {
     if (currentDate) {
       setEditYear(currentDate.getFullYear());
@@ -137,18 +133,15 @@ export function DateDisplay() {
     }
     setIsEditing(false);
   };
-
   const handleEditEra = () => {
     setEditEraName(eraName);
     setIsEditingEra(true);
   };
-
   const handleSaveEra = async () => {
     setEraName(editEraName);
     await saveSetting(SETTING_KEY_ERA, editEraName);
     setIsEditingEra(false);
   };
-
   const handleCancelEra = () => {
     setEditEraName(eraName);
     setIsEditingEra(false);
@@ -168,13 +161,12 @@ export function DateDisplay() {
   const day = currentDate.getDate();
   const weekdays = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
   const weekday = weekdays[currentDate.getDay()];
-  
   const yearFrom1492 = year - 1492;
 
   if (isEditing) {
     return (
-      <div className="flex items-center gap-2 bg-zinc-800/80 border border-amber-500/30 rounded-lg p-3 backdrop-blur-sm">
-        <Calendar className="h-6 w-6 text-amber-500" />
+      <div className="flex items-center gap-3 bg-gradient-to-r from-amber-950/80 to-zinc-900/80 border border-amber-500/40 rounded-2xl p-4 backdrop-blur-xl shadow-2xl shadow-amber-500/10">
+        <Calendar className="h-6 w-6 text-amber-400" />
         <div className="flex items-center gap-2">
           <input
             type="number"
@@ -182,38 +174,38 @@ export function DateDisplay() {
             max="9999"
             value={editYear}
             onChange={(e) => setEditYear(parseInt(e.target.value) || 1492)}
-            className="w-16 bg-zinc-700 border border-zinc-600 rounded px-2 py-1 text-center text-amber-300 font-medieval"
+            className="w-20 bg-zinc-800/80 border border-amber-500/30 rounded-xl px-3 py-2 text-center text-amber-200 font-serif transition-all focus:border-amber-400 focus:ring-2 focus:ring-amber-500/30 outline-none"
           />
-          <span className="text-amber-300 font-medieval">年</span>
+          <span className="text-amber-200 font-serif">年</span>
           <input
             type="number"
             min="1"
             max="12"
             value={editMonth}
             onChange={(e) => setEditMonth(parseInt(e.target.value) || 1)}
-            className="w-10 bg-zinc-700 border border-zinc-600 rounded px-2 py-1 text-center text-amber-300 font-medieval"
+            className="w-14 bg-zinc-800/80 border border-amber-500/30 rounded-xl px-3 py-2 text-center text-amber-200 font-serif transition-all focus:border-amber-400 focus:ring-2 focus:ring-amber-500/30 outline-none"
           />
-          <span className="text-amber-300 font-medieval">月</span>
+          <span className="text-amber-200 font-serif">月</span>
           <input
             type="number"
             min="1"
             max="31"
             value={editDay}
             onChange={(e) => setEditDay(parseInt(e.target.value) || 1)}
-            className="w-10 bg-zinc-700 border border-zinc-600 rounded px-2 py-1 text-center text-amber-300 font-medieval"
+            className="w-14 bg-zinc-800/80 border border-amber-500/30 rounded-xl px-3 py-2 text-center text-amber-200 font-serif transition-all focus:border-amber-400 focus:ring-2 focus:ring-amber-500/30 outline-none"
           />
-          <span className="text-amber-300 font-medieval">日</span>
+          <span className="text-amber-200 font-serif">日</span>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={handleSave}
-            className="p-1 text-green-400 hover:text-green-300 transition-colors"
+            className="p-2 text-green-400 hover:text-green-300 hover:bg-green-500/10 rounded-xl transition-all"
           >
-            <Check className="h-5 w-5" />
+            <X className="h-5 w-5 rotate-45" />
           </button>
           <button
             onClick={handleCancel}
-            className="p-1 text-red-400 hover:text-red-300 transition-colors"
+            className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all"
           >
             <X className="h-5 w-5" />
           </button>
@@ -223,12 +215,12 @@ export function DateDisplay() {
   }
 
   return (
-    <div className="flex items-center gap-2 group">
-      <Calendar className="h-6 w-6 text-amber-500" />
-      <div className="flex items-center gap-2">
-        <div className="bg-zinc-800/80 border border-amber-500/30 rounded-lg p-3 backdrop-blur-sm hover:border-amber-500/60 transition-colors">
-          <div className="flex items-center justify-between mb-1">
-            <div className="text-right text-xs text-amber-400 font-medieval">
+    <div className="flex items-center gap-3 group">
+      <Calendar className="h-6 w-6 text-amber-400" />
+      <div className="flex items-center gap-3">
+        <div className="bg-gradient-to-r from-amber-950/70 to-zinc-900/70 border border-amber-500/30 rounded-2xl p-4 backdrop-blur-xl hover:border-amber-400/50 hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-500">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-right text-xs text-amber-300 font-serif tracking-wider">
               西元 {year}年 / 
               {isEditingEra ? (
                 <div className="inline-flex items-center gap-1">
@@ -236,13 +228,13 @@ export function DateDisplay() {
                     type="text"
                     value={editEraName}
                     onChange={(e) => setEditEraName(e.target.value)}
-                    className="bg-zinc-700 border border-zinc-600 rounded px-2 py-0.5 text-xs text-amber-300 font-medieval"
+                    className="bg-zinc-800/80 border border-amber-500/30 rounded-lg px-2 py-1 text-xs text-amber-200 font-serif outline-none"
                   />
                   <button
                     onClick={handleSaveEra}
                     className="p-0.5 text-green-400 hover:text-green-300 transition-colors"
                   >
-                    <Check className="h-3 w-3" />
+                    <X className="h-3 w-3 rotate-45" />
                   </button>
                   <button
                     onClick={handleCancelEra}
@@ -252,22 +244,16 @@ export function DateDisplay() {
                   </button>
                 </div>
               ) : (
-                <span className="cursor-pointer hover:underline" onClick={handleEditEra}>
+                <span className="cursor-pointer hover:text-amber-200 transition-colors" onClick={handleEditEra}>
                   {eraName} {yearFrom1492}年
                 </span>
               )}
             </div>
           </div>
-          <div className="text-xl font-bold text-amber-300 font-medieval cursor-pointer" onClick={handleEdit}>
+          <div className="text-2xl font-bold text-amber-100 font-serif cursor-pointer tracking-wide" onClick={handleEdit}>
             {month}月{day}日 {weekday}
           </div>
         </div>
-        <button
-          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-amber-400 hover:text-amber-300"
-          onClick={handleEdit}
-        >
-          <Edit2 className="h-5 w-5" />
-        </button>
       </div>
     </div>
   );
