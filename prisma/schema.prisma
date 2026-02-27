@@ -79,9 +79,9 @@ model MapNode {
   id          String     @id @default(cuid())
   label       String
   type        MapNodeType
-  hexQ        Int        @default(0) // 蜂巢格轴坐标 Q
-  hexR        Int        @default(0) // 蜂巢格轴坐标 R
-  hexS        Int        @default(0) // 蜂巢格轴坐标 S (计算用)
+  hexQ        Int?       // 蜂巢格轴坐标 Q
+  hexR        Int?       // 蜂巢格轴坐标 R
+  hexS        Int?       // 蜂巢格轴坐标 S (计算用)
   description String?
   events      MapEvent[]
   characters  MapCharacter[]
@@ -90,8 +90,6 @@ model MapNode {
   edgesAsTarget MapEdge[] @relation("target")
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
-
-  @@unique([hexQ, hexR])
 }
 
 model MapEdge {
