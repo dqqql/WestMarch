@@ -1,18 +1,15 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { HexGridUtils, type HexCoordinate } from "@/lib/hexGrid";
+import { HexGridUtils } from "@/lib/hexGrid";
 import { Button } from "@/components/ui/button";
-import { Map as MapIcon, ArrowLeft, Edit, Plus, Info, Trash2, X, Save, ZoomIn, ZoomOut, Move, Network, Users, Calendar, Building2 } from "lucide-react";
+import { Map as MapIcon, ArrowLeft, Edit, ZoomIn, ZoomOut, Plus, Minus } from "lucide-react";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { useApp } from "@/contexts/AppContext";
-import NodeEditor from "./NodeEditor";
+import NodeDetailModal from "./NodeDetailModal";
 
 const HEX_SIZE = 50;
-const GRID_RADIUS = 10;
+const INITIAL_GRID_RADIUS = 10;
 
 interface MapNodeData {
   id: string;
@@ -48,15 +45,15 @@ export default function HexGridMap() {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [viewBoxStart, setViewBoxStart] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
+  const [gridRadius, setGridRadius] = useState(INITIAL_GRID_RADIUS);
   const [isEditMode, setIsEditMode] = useState(false);
   const [nodes, setNodes] = useState<MapNodeData[]>([]);
   const [edges, setEdges] = useState<MapEdgeData[]>([]);
   const [selectedNode, setSelectedNode] = useState<MapNodeData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isEditingNode, setIsEditingNode] = useState(false);
-  const [editForm, setEditForm] = useState({ label: "", type: "区域" as "据点" | "地城" | "区域", description: "" });
   const [connectingFrom, setConnectingFrom] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"details" | "editor" | "mindmap">("details");
+  const [showModal, setShowModal] = useState(false);
+  const [migratingFrom, setMigratingFrom] = useState<string | null>(null);
 
   useEffect(() => {
     loadMap();
@@ -92,25 +89,42 @@ export default function HexGridMap() {
     }
   };
 
+  const getSVGPoint = (e: React.MouseEvent) => {
+    const svg = svgRef.current;
+    if (!svg) return { x: 0, y: 0 };
+
+    const rect = svg.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / zoom - viewBox.x;
+    const y = (e.clientY - rect.top) / zoom - viewBox.y;
+    return { x, y };
+  };
+
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.button !== 0) return;
+    if (migratingFrom || connectingFrom) return;
+    
     setIsDragging(true);
     setDragStart({ x: e.clientX, y: e.clientY });
     setViewBoxStart({ x: viewBox.x, y: viewBox.y });
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return;
-    const dx = (e.clientX - dragStart.x) / zoom;
-    const dy = (e.clientY - dragStart.y) / zoom;
-    setViewBox(prev => ({
-      ...prev,
-      x: viewBoxStart.x - dx,
-      y: viewBoxStart.y - dy
-    }));
+    if (isDragging) {
+      const dx = (e.clientX - dragStart.x) / zoom;
+      const dy = (e.clientY - dragStart.y) / zoom;
+      setViewBox(prev => ({
+        ...prev,
+        x: viewBoxStart.x - dx,
+        y: viewBoxStart.y - dy
+      }));
+    }
   };
 
   const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseLeave = () => {
     setIsDragging(false);
   };
 
@@ -124,47 +138,223 @@ export default function HexGridMap() {
   const getNodeTypeStyle = (type: string) => {
     switch (type) {
       case "据点":
-        return { fill: "#f59e0b", stroke: "#d97706", labelColor: "#fff" };
+        return { fill: "rgba(245, 158, 11, 0.7)", stroke: "#fbbf24", labelColor: "#fff", glowColor: "#f59e0b" };
       case "地城":
-        return { fill: "#8b5cf6", stroke: "#7c3aed", labelColor: "#fff" };
+        return { fill: "rgba(139, 92, 246, 0.7)", stroke: "#a78bfa", labelColor: "#fff", glowColor: "#8b5cf6" };
       case "区域":
-        return { fill: "#22c55e", stroke: "#16a34a", labelColor: "#fff" };
+        return { fill: "rgba(34, 197, 94, 0.7)", stroke: "#4ade80", labelColor: "#fff", glowColor: "#22c55e" };
       default:
-        return { fill: "#6b7280", stroke: "#4b5563", labelColor: "#fff" };
+        return { fill: "rgba(107, 114, 128, 0.7)", stroke: "#9ca3af", labelColor: "#fff", glowColor: "#6b7280" };
+    }
+  };
+
+  const getEdgePositions = useCallback(() => {
+    const edgePositions: { q: number; r: number }[] = [];
+    const occupiedPositions = new Set(nodes.map(n => `${n.hexQ},${n.hexR}`));
+    
+    nodes.forEach(node => {
+      const currentHex = HexGridUtils.create(node.hexQ, node.hexR);
+      const neighbors = HexGridUtils.neighbors(currentHex);
+      
+      neighbors.forEach(neighbor => {
+        const key = `${neighbor.q},${neighbor.r}`;
+        if (!occupiedPositions.has(key)) {
+          edgePositions.push({ q: neighbor.q, r: neighbor.r });
+          occupiedPositions.add(key);
+        }
+      });
+    });
+    
+    return edgePositions;
+  }, [nodes]);
+
+  const addNode = async (q: number, r: number) => {
+    try {
+      const response = await fetch("/api/map/nodes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          label: "新地点",
+          type: "区域",
+          hexQ: q,
+          hexR: r,
+          hexS: -q - r,
+          description: ""
+        }),
+      });
+      if (response.ok) {
+        const newNode = await response.json();
+        setNodes(prev => [...prev, newNode]);
+      }
+    } catch (error) {
+      console.error("Failed to create node:", error);
+    }
+  };
+
+  const migrateNode = async (nodeId: string, newQ: number, newR: number) => {
+    const originalNode = nodes.find(n => n.id === nodeId);
+    if (!originalNode) return;
+    
+    try {
+      const response = await fetch("/api/map/nodes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          label: originalNode.label,
+          type: originalNode.type,
+          hexQ: newQ,
+          hexR: newR,
+          hexS: -newQ - newR,
+          description: originalNode.description
+        }),
+      });
+      
+      if (response.ok) {
+        const newNode = await response.json();
+        
+        const deleteResponse = await fetch(`/api/map/nodes/${nodeId}`, {
+          method: "DELETE",
+        });
+        
+        if (deleteResponse.ok) {
+          setNodes(prev => [...prev.filter(n => n.id !== nodeId), newNode]);
+          setSelectedNode(newNode);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to migrate node:", error);
+    }
+  };
+
+  const createEdge = async (sourceId: string, targetId: string) => {
+    if (sourceId === targetId) return;
+    try {
+      const response = await fetch("/api/map/edges", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sourceId, targetId }),
+      });
+      if (response.ok) {
+        const newEdge = await response.json();
+        setEdges(prev => [...prev, newEdge]);
+      }
+    } catch (error) {
+      console.error("Failed to create edge:", error);
+    }
+  };
+
+  const deleteNode = async () => {
+    if (!selectedNode) return;
+    if (!confirm(`确定要删除节点"${selectedNode.label}"吗？`)) return;
+    try {
+      const response = await fetch(`/api/map/nodes/${selectedNode.id}`, {
+        method: "DELETE",
+      });
+      if (response.ok) {
+        setNodes(prev => prev.filter(n => n.id !== selectedNode.id));
+        setEdges(prev => prev.filter(e => e.sourceId !== selectedNode.id && e.targetId !== selectedNode.id));
+        setSelectedNode(null);
+        setShowModal(false);
+      }
+    } catch (error) {
+      console.error("Failed to delete node:", error);
+    }
+  };
+
+  const startConnecting = () => {
+    if (!selectedNode) return;
+    setConnectingFrom(selectedNode.id);
+    setShowModal(false);
+  };
+
+  const startMigrating = () => {
+    if (!selectedNode) return;
+    setMigratingFrom(selectedNode.id);
+    setShowModal(false);
+  };
+
+  const handleHexClick = (q: number, r: number, node: MapNodeData | undefined, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (migratingFrom && !node) {
+      migrateNode(migratingFrom, q, r);
+      setMigratingFrom(null);
+      return;
+    }
+    
+    if (migratingFrom && node) {
+      setMigratingFrom(null);
+      return;
+    }
+    
+    if (connectingFrom && node) {
+      createEdge(connectingFrom, node.id);
+      setConnectingFrom(null);
+      return;
+    }
+
+    if (node) {
+      setSelectedNode(node);
+    } else if (isEditMode) {
+      addNode(q, r);
+    }
+  };
+
+  const handleHexDoubleClick = (q: number, r: number, node: MapNodeData | undefined, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (node) {
+      setSelectedNode(node);
+      setShowModal(true);
     }
   };
 
   const renderGrid = () => {
     const hexagons: JSX.Element[] = [];
     const path = HexGridUtils.getHexPath(HEX_SIZE);
+    const renderedPositions = new Set<string>();
 
-    for (let q = -GRID_RADIUS; q <= GRID_RADIUS; q++) {
-      for (let r = -GRID_RADIUS; r <= GRID_RADIUS; r++) {
+    for (let q = -gridRadius; q <= gridRadius; q++) {
+      for (let r = -gridRadius; r <= gridRadius; r++) {
         const hex = HexGridUtils.create(q, r);
-        if (HexGridUtils.length(hex) > GRID_RADIUS) continue;
+        if (HexGridUtils.length(hex) > gridRadius) continue;
 
         const pixel = HexGridUtils.hexToPixel(hex, HEX_SIZE);
         const node = nodes.find(n => n.hexQ === q && n.hexR === r);
         const isSelected = selectedNode?.hexQ === q && selectedNode?.hexR === r;
+        const nodeStyle = node ? getNodeTypeStyle(node.type) : null;
+
+        renderedPositions.add(`${q},${r}`);
 
         hexagons.push(
           <g key={`${q},${r}`} transform={`translate(${pixel.x}, ${pixel.y})`}>
+            {node && isSelected && (
+              <path
+                d={path}
+                fill="none"
+                stroke={nodeStyle?.glowColor}
+                strokeWidth="8"
+                opacity="0.4"
+                filter="url(#glow)"
+              />
+            )}
             <path
               d={path}
-              fill={node ? getNodeTypeStyle(node.type).fill : "rgba(30, 41, 59, 0.5)"}
-              stroke={node ? getNodeTypeStyle(node.type).stroke : "#475569"}
-              strokeWidth={isSelected ? 3 : 1}
-              className={`cursor-pointer transition-all hover:brightness-110 ${isSelected ? "drop-shadow-lg" : ""}`}
-              onClick={() => handleHexClick(q, r, node)}
+              fill={node ? nodeStyle?.fill : "rgba(30, 41, 59, 0.3)"}
+              stroke={node ? nodeStyle?.stroke : "#475569"}
+              strokeWidth={isSelected ? 3 : 1.5}
+              className={`cursor-pointer transition-all duration-300 hover:brightness-125 hover:scale-105 ${isSelected ? "drop-shadow-xl" : "hover:drop-shadow-lg"}`}
+              onClick={(e) => handleHexClick(q, r, node, e)}
+              onDoubleClick={(e) => handleHexDoubleClick(q, r, node, e)}
             />
             {node && (
               <text
                 textAnchor="middle"
                 dy="0.35em"
-                fill={getNodeTypeStyle(node.type).labelColor}
-                fontSize="12"
-                fontWeight="bold"
-                className="pointer-events-none select-none"
+                fill={nodeStyle?.labelColor}
+                fontSize="13"
+                fontWeight="700"
+                className="pointer-events-none select-none drop-shadow-md"
+                style={{ textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}
               >
                 {node.label}
               </text>
@@ -173,7 +363,119 @@ export default function HexGridMap() {
         );
       }
     }
+
+    nodes.forEach(node => {
+      const key = `${node.hexQ},${node.hexR}`;
+      if (renderedPositions.has(key)) return;
+
+      const pixel = HexGridUtils.hexToPixel(HexGridUtils.create(node.hexQ, node.hexR), HEX_SIZE);
+      const isSelected = selectedNode?.id === node.id;
+      const nodeStyle = getNodeTypeStyle(node.type);
+
+      hexagons.push(
+        <g key={`node-${node.id}`} transform={`translate(${pixel.x}, ${pixel.y})`}>
+          {isSelected && (
+            <path
+              d={path}
+              fill="none"
+              stroke={nodeStyle.glowColor}
+              strokeWidth="8"
+              opacity="0.4"
+              filter="url(#glow)"
+            />
+          )}
+          <path
+            d={path}
+            fill={nodeStyle.fill}
+            stroke={nodeStyle.stroke}
+            strokeWidth={isSelected ? 3 : 1.5}
+            className={`cursor-pointer transition-all duration-300 hover:brightness-125 hover:scale-105 ${isSelected ? "drop-shadow-xl" : "hover:drop-shadow-lg"}`}
+            onClick={(e) => handleHexClick(node.hexQ, node.hexR, node, e)}
+            onDoubleClick={(e) => handleHexDoubleClick(node.hexQ, node.hexR, node, e)}
+          />
+          <text
+            textAnchor="middle"
+            dy="0.35em"
+            fill={nodeStyle.labelColor}
+            fontSize="13"
+            fontWeight="700"
+            className="pointer-events-none select-none drop-shadow-md"
+            style={{ textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}
+          >
+            {node.label}
+          </text>
+        </g>
+      );
+    });
+
     return hexagons;
+  };
+
+  const renderGridBoundary = () => {
+    const hexagons: JSX.Element[] = [];
+    const path = HexGridUtils.getHexPath(HEX_SIZE);
+
+    for (let q = -gridRadius; q <= gridRadius; q++) {
+      for (let r = -gridRadius; r <= gridRadius; r++) {
+        const hex = HexGridUtils.create(q, r);
+        if (HexGridUtils.length(hex) !== gridRadius) continue;
+
+        const pixel = HexGridUtils.hexToPixel(hex, HEX_SIZE);
+
+        hexagons.push(
+          <path
+            key={`boundary-${q},${r}`}
+            d={path}
+            transform={`translate(${pixel.x}, ${pixel.y})`}
+            fill="none"
+            stroke="#3b82f6"
+            strokeWidth="3"
+            strokeDasharray="8,4"
+            opacity="0.6"
+          />
+        );
+      }
+    }
+    return hexagons;
+  };
+
+  const renderEdgeButtons = () => {
+    if (!isEditMode || migratingFrom || connectingFrom) return null;
+    
+    const edgePositions = getEdgePositions();
+    const path = HexGridUtils.getHexPath(HEX_SIZE);
+    
+    return edgePositions.map(({ q, r }) => {
+      const pixel = HexGridUtils.hexToPixel(HexGridUtils.create(q, r), HEX_SIZE);
+      
+      return (
+        <g key={`edge-${q},${r}`} transform={`translate(${pixel.x}, ${pixel.y})`}>
+          <path
+            d={path}
+            fill="rgba(34, 197, 94, 0.3)"
+            stroke="#22c55e"
+            strokeWidth="2"
+            strokeDasharray="5,5"
+            className="cursor-pointer transition-all duration-300 hover:brightness-125"
+            onClick={(e) => {
+              e.stopPropagation();
+              addNode(q, r);
+            }}
+          />
+          <circle cx="0" cy="0" r="15" fill="rgba(34, 197, 94, 0.8)" className="pointer-events-none" />
+          <text
+            textAnchor="middle"
+            dy="0.35em"
+            fill="white"
+            fontSize="20"
+            fontWeight="bold"
+            className="pointer-events-none select-none"
+          >
+            +
+          </text>
+        </g>
+      );
+    });
   };
 
   const renderEdges = () => {
@@ -216,171 +518,6 @@ export default function HexGridMap() {
     });
   };
 
-  const handleHexClick = (q: number, r: number, node: MapNodeData | undefined) => {
-    if (connectingFrom && node) {
-      createEdge(connectingFrom, node.id);
-      setConnectingFrom(null);
-      return;
-    }
-
-    if (node) {
-      setSelectedNode(node);
-      setIsEditingNode(false);
-      setViewMode("details");
-    } else if (isEditMode) {
-      addNode(q, r);
-    }
-  };
-
-  const addNode = async (q: number, r: number) => {
-    try {
-      const response = await fetch("/api/map/nodes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          label: "新地点",
-          type: "区域",
-          hexQ: q,
-          hexR: r,
-          hexS: -q - r,
-          description: ""
-        }),
-      });
-      if (response.ok) {
-        const newNode = await response.json();
-        setNodes(prev => [...prev, newNode]);
-      }
-    } catch (error) {
-      console.error("Failed to create node:", error);
-    }
-  };
-
-  const createEdge = async (sourceId: string, targetId: string) => {
-    if (sourceId === targetId) return;
-    try {
-      const response = await fetch("/api/map/edges", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sourceId, targetId }),
-      });
-      if (response.ok) {
-        const newEdge = await response.json();
-        setEdges(prev => [...prev, newEdge]);
-      }
-    } catch (error) {
-      console.error("Failed to create edge:", error);
-    }
-  };
-
-  const saveNodeEdit = async () => {
-    if (!selectedNode) return;
-    try {
-      const response = await fetch(`/api/map/nodes/${selectedNode.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...selectedNode,
-          label: editForm.label,
-          type: editForm.type,
-          description: editForm.description
-        }),
-      });
-      if (response.ok) {
-        const updatedNode = await response.json();
-        setNodes(prev => prev.map(n => n.id === selectedNode.id ? updatedNode : n));
-        setSelectedNode(updatedNode);
-        setIsEditingNode(false);
-      }
-    } catch (error) {
-      console.error("Failed to update node:", error);
-    }
-  };
-
-  const deleteNode = async () => {
-    if (!selectedNode) return;
-    if (!confirm(`确定要删除节点"${selectedNode.label}"吗？`)) return;
-    try {
-      const response = await fetch(`/api/map/nodes/${selectedNode.id}`, {
-        method: "DELETE",
-      });
-      if (response.ok) {
-        setNodes(prev => prev.filter(n => n.id !== selectedNode.id));
-        setEdges(prev => prev.filter(e => e.sourceId !== selectedNode.id && e.targetId !== selectedNode.id));
-        setSelectedNode(null);
-      }
-    } catch (error) {
-      console.error("Failed to delete node:", error);
-    }
-  };
-
-  const startEditNode = () => {
-    if (!selectedNode) return;
-    setEditForm({
-      label: selectedNode.label,
-      type: selectedNode.type,
-      description: selectedNode.description || "",
-    });
-    setIsEditingNode(true);
-  };
-
-  const startConnecting = () => {
-    if (!selectedNode) return;
-    setConnectingFrom(selectedNode.id);
-  };
-
-  const renderMindMap = () => {
-    if (!selectedNode) return null;
-
-    const items = [
-      ...selectedNode.events.map(e => ({ ...e, type: "event" })),
-      ...selectedNode.characters.map(c => ({ ...c, type: "character" })),
-      ...selectedNode.facilities.map(f => ({ ...f, type: "facility" }))
-    ];
-
-    return (
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-amber-500 flex items-center gap-2">
-          <Network className="h-5 w-5" />
-          思维导图视图
-        </h3>
-        <div className="relative min-h-64">
-          <div className="absolute left-1/2 top-4 transform -translate-x-1/2">
-            <Card className="bg-amber-600/20 border-amber-600 min-w-32 text-center">
-              <CardContent className="p-4">
-                <p className="font-bold text-amber-400">{selectedNode.label}</p>
-              </CardContent>
-            </Card>
-          </div>
-          <div className="absolute left-1/2 top-24 w-px h-8 bg-zinc-600 transform -translate-x-1/2" />
-          <div className="absolute left-1/2 top-32 w-full transform -translate-x-1/2">
-            <div className="flex justify-center gap-4 flex-wrap">
-              {items.map((item, i) => (
-                <Card key={item.id} className={`
-                  ${item.type === "event" ? "bg-green-900/30 border-green-600" : ""}
-                  ${item.type === "character" ? "bg-blue-900/30 border-blue-600" : ""}
-                  ${item.type === "facility" ? "bg-purple-900/30 border-purple-600" : ""}
-                  min-w-28
-                `}>
-                  <CardContent className="p-3">
-                    <p className="text-sm font-semibold text-white">
-                      {item.title || item.name}
-                    </p>
-                    <p className="text-xs text-zinc-400 mt-1">
-                      {item.type === "event" ? "事件" : item.type === "character" ? "人物" : "设施"}
-                    </p>
-                  </CardContent>
-                </Card>
-              ))}
-              {items.length === 0 && (
-                <p className="text-zinc-500 text-sm">暂无内容</p>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center">
@@ -412,6 +549,27 @@ export default function HexGridMap() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 bg-zinc-800 rounded-lg px-2 py-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setGridRadius(r => Math.max(1, r - 1))}
+                className="h-8 px-2"
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
+              <span className="text-sm text-zinc-300 min-w-[40px] text-center">
+                半径: {gridRadius}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setGridRadius(r => r + 1)}
+                className="h-8 px-2"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
             <Button
               variant="secondary"
               size="sm"
@@ -431,6 +589,7 @@ export default function HexGridMap() {
               onClick={() => {
                 setIsEditMode(!isEditMode);
                 setConnectingFrom(null);
+                setMigratingFrom(null);
               }}
               className={isEditMode ? "bg-amber-600 hover:bg-amber-700" : "bg-zinc-800 hover:bg-zinc-700"}
             >
@@ -441,174 +600,56 @@ export default function HexGridMap() {
         </div>
       </header>
       <div className="flex-1 flex relative overflow-hidden">
-        <div className="flex-1 relative z-10 cursor-grab active:cursor-grabbing">
+        <div className={`flex-1 relative z-10 ${migratingFrom || connectingFrom ? "cursor-crosshair" : "cursor-grab active:cursor-grabbing"}`}>
           <svg
             ref={svgRef}
             className="w-full h-full"
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
+            onMouseLeave={handleMouseLeave}
             onWheel={handleWheel}
           >
+            <defs>
+              <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="5" result="coloredBlur" />
+                <feMerge>
+                  <feMergeNode in="coloredBlur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
             <g transform={`scale(${zoom}) translate(${-viewBox.x}, ${-viewBox.y})`}>
+              {renderGridBoundary()}
               {renderEdges()}
               {renderGrid()}
+              {renderEdgeButtons()}
             </g>
           </svg>
         </div>
-        {selectedNode && (
-          <div className="w-96 border-l border-zinc-800 bg-zinc-900 p-4 overflow-y-auto relative z-20">
-            <Card className="bg-zinc-800 border-zinc-700">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Info className="h-5 w-5 text-amber-500" />
-                  {selectedNode.label}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {!isEditingNode && (
-                  <div className="flex gap-2">
-                    <Button
-                      variant={viewMode === "details" ? "default" : "secondary"}
-                      size="sm"
-                      onClick={() => setViewMode("details")}
-                      className={viewMode === "details" ? "bg-amber-600" : ""}
-                    >
-                      <Info className="h-4 w-4 mr-1" />
-                      详情
-                    </Button>
-                    <Button
-                      variant={viewMode === "editor" ? "default" : "secondary"}
-                      size="sm"
-                      onClick={() => setViewMode("editor")}
-                      className={viewMode === "editor" ? "bg-amber-600" : ""}
-                    >
-                      <Edit className="h-4 w-4 mr-1" />
-                      编辑
-                    </Button>
-                    <Button
-                      variant={viewMode === "mindmap" ? "default" : "secondary"}
-                      size="sm"
-                      onClick={() => setViewMode("mindmap")}
-                      className={viewMode === "mindmap" ? "bg-amber-600" : ""}
-                    >
-                      <Network className="h-4 w-4 mr-1" />
-                      思维导图
-                    </Button>
-                  </div>
-                )}
-
-                {isEditingNode ? (
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm text-zinc-400 mb-1">名称</label>
-                      <Input
-                        value={editForm.label}
-                        onChange={(e) => setEditForm({ ...editForm, label: e.target.value })}
-                        className="bg-zinc-700 border-zinc-600"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm text-zinc-400 mb-1">类型</label>
-                      <select
-                        className="w-full bg-zinc-700 border border-zinc-600 rounded-lg px-3 py-2 text-white"
-                        value={editForm.type}
-                        onChange={(e) => setEditForm({ ...editForm, type: e.target.value as any })}
-                      >
-                        <option value="据点">据点</option>
-                        <option value="地城">地城</option>
-                        <option value="区域">区域</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm text-zinc-400 mb-1">描述</label>
-                      <Textarea
-                        className="bg-zinc-700 border-zinc-600 h-32"
-                        value={editForm.description}
-                        onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="ghost" onClick={() => setIsEditingNode(false)}>取消</Button>
-                      <Button className="flex-1 bg-amber-600 hover:bg-amber-700" onClick={saveNodeEdit}>
-                        <Save className="h-4 w-4 mr-2" />
-                        保存
-                      </Button>
-                    </div>
-                  </div>
-                ) : viewMode === "details" ? (
-                  <div className="space-y-4">
-                    <div>
-                      <span className="text-zinc-400 text-sm">类型:</span>
-                      <span className="ml-2 text-white">{selectedNode.type}</span>
-                    </div>
-                    <div>
-                      <span className="text-zinc-400 text-sm">坐标:</span>
-                      <span className="ml-2 text-white">
-                        ({selectedNode.hexQ}, {selectedNode.hexR}, {selectedNode.hexS})
-                      </span>
-                    </div>
-                    <div className="pt-4 border-t border-zinc-700">
-                      <p className="text-zinc-400 text-sm mb-2">描述:</p>
-                      <p className="text-zinc-300">{selectedNode.description || "暂无描述"}</p>
-                    </div>
-                    <div className="pt-4 border-t border-zinc-700">
-                      <p className="text-zinc-400 text-sm mb-2 flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        事件: {selectedNode.events?.length || 0}
-                      </p>
-                      <p className="text-zinc-400 text-sm mb-2 flex items-center gap-1">
-                        <Users className="h-4 w-4" />
-                        人物: {selectedNode.characters?.length || 0}
-                      </p>
-                      <p className="text-zinc-400 text-sm mb-2 flex items-center gap-1">
-                        <Building2 className="h-4 w-4" />
-                        设施: {selectedNode.facilities?.length || 0}
-                      </p>
-                    </div>
-                    {isEditMode && (
-                      <div className="flex flex-col gap-2 pt-4 border-t border-zinc-700">
-                        <Button variant="ghost" size="sm" onClick={startEditNode} className="w-full">
-                          <Edit className="h-4 w-4 mr-2" />
-                          编辑节点
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={startConnecting}
-                          className={`w-full ${connectingFrom ? "bg-amber-600/20 text-amber-400" : ""}`}
-                        >
-                          <Move className="h-4 w-4 mr-2" />
-                          {connectingFrom ? "取消连接" : "连接节点"}
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={deleteNode} className="w-full text-red-400 hover:text-red-300 hover:bg-red-900/20">
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          删除节点
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                ) : viewMode === "editor" ? (
-                  <NodeEditor
-                    nodeId={selectedNode.id}
-                    events={selectedNode.events || []}
-                    characters={selectedNode.characters || []}
-                    facilities={selectedNode.facilities || []}
-                    onUpdate={refreshNode}
-                  />
-                ) : (
-                  renderMindMap()
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        )}
       </div>
       {connectingFrom && (
         <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-amber-600 text-white px-6 py-3 rounded-lg shadow-lg z-50">
           点击另一个节点创建连接，或点击空白处取消
         </div>
+      )}
+      {migratingFrom && (
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg z-50">
+          点击目标位置迁移节点，或点击已有节点取消
+        </div>
+      )}
+      {showModal && selectedNode && (
+        <NodeDetailModal
+          node={selectedNode}
+          isEditMode={isEditMode}
+          onClose={() => setShowModal(false)}
+          onUpdate={refreshNode}
+          onDelete={deleteNode}
+          onStartConnecting={startConnecting}
+          onStartMigrating={startMigrating}
+          connectingFrom={connectingFrom}
+          migratingFrom={migratingFrom}
+        />
       )}
     </div>
   );

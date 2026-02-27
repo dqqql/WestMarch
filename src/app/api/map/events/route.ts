@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       nodeId,
       title,
       description,
-      tags: tags || [],
+      tags: tags || null,
       order: order || 0
     })
 

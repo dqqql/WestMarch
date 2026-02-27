@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { repositories } from '@/repositories'
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     const node = await repositories.map.findNodeById(id)
@@ -18,23 +15,11 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
-    const { label, type, hexQ, hexR, hexS, description } = await request.json()
-
-    const node = await repositories.map.updateNode(id, {
-      label,
-      type,
-      hexQ,
-      hexR,
-      hexS,
-      description
-    })
-
+    const data = await request.json()
+    const node = await repositories.map.updateNode(id, data)
     return NextResponse.json(node)
   } catch (error) {
     console.error('Update node error:', error)
@@ -42,10 +27,7 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     await repositories.map.deleteNode(id)

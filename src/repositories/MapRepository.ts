@@ -110,7 +110,7 @@ export class MapRepository {
     nodeId: string;
     title: string;
     description?: string | null;
-    tags?: string[];
+    tags?: string | null;
     order?: number;
   }) {
     return prisma.mapEvent.create({ data });

@@ -41,7 +41,6 @@ interface NodeEditorProps {
 }
 
 export default function NodeEditor({ nodeId, events, characters, facilities, onUpdate }: NodeEditorProps) {
-  const [activeTab, setActiveTab] = useState<"events" | "characters" | "facilities">("events");
   const [editingItem, setEditingItem] = useState<{ type: string; id?: string; data: any } | null>(null);
 
   const handleAddEvent = () => {
@@ -199,13 +198,6 @@ export default function NodeEditor({ nodeId, events, characters, facilities, onU
                 {event.description && (
                   <p className="text-sm text-zinc-400 mt-1">{event.description}</p>
                 )}
-                {event.tags && (
-                  <div className="flex gap-1 mt-2 flex-wrap">
-                    {event.tags.split(",").map((tag, i) => (
-                      <span key={i} className="text-xs bg-zinc-700 px-2 py-1 rounded">{tag.trim()}</span>
-                    ))}
-                  </div>
-                )}
               </div>
               <div className="flex gap-1 ml-2">
                 <Button variant="ghost" size="sm" onClick={() => handleEditEvent(event)}>
@@ -326,15 +318,6 @@ export default function NodeEditor({ nodeId, events, characters, facilities, onU
                   className="bg-zinc-700 border-zinc-600 h-24"
                 />
               </div>
-              <div>
-                <label className="block text-sm text-zinc-400 mb-1">标签 (逗号分隔)</label>
-                <Input
-                  value={editingItem.data.tags || ""}
-                  onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, tags: e.target.value } })}
-                  className="bg-zinc-700 border-zinc-600"
-                  placeholder="标签1, 标签2, 标签3"
-                />
-              </div>
             </>
           )}
           {isCharacter && (
@@ -408,64 +391,54 @@ export default function NodeEditor({ nodeId, events, characters, facilities, onU
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex gap-2 flex-wrap">
-        <Button
-          variant={activeTab === "events" ? "default" : "secondary"}
-          onClick={() => setActiveTab("events")}
-          className={activeTab === "events" ? "bg-amber-600" : ""}
-          size="sm"
-        >
-          <Calendar className="h-4 w-4 mr-2" />
-          事件 ({events.length})
-        </Button>
-        <Button
-          variant={activeTab === "characters" ? "default" : "secondary"}
-          onClick={() => setActiveTab("characters")}
-          className={activeTab === "characters" ? "bg-amber-600" : ""}
-          size="sm"
-        >
-          <Users className="h-4 w-4 mr-2" />
-          人物 ({characters.length})
-        </Button>
-        <Button
-          variant={activeTab === "facilities" ? "default" : "secondary"}
-          onClick={() => setActiveTab("facilities")}
-          className={activeTab === "facilities" ? "bg-amber-600" : ""}
-          size="sm"
-        >
-          <Building2 className="h-4 w-4 mr-2" />
-          设施 ({facilities.length})
-        </Button>
-      </div>
-
+    <div className="space-y-6">
       {renderEditForm()}
 
-      <div className="flex justify-end">
-        {activeTab === "events" && (
-          <Button onClick={handleAddEvent} className="bg-green-600 hover:bg-green-700" size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            添加事件
-          </Button>
-        )}
-        {activeTab === "characters" && (
-          <Button onClick={handleAddCharacter} className="bg-blue-600 hover:bg-blue-700" size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            添加人物
-          </Button>
-        )}
-        {activeTab === "facilities" && (
-          <Button onClick={handleAddFacility} className="bg-purple-600 hover:bg-purple-700" size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            添加设施
-          </Button>
-        )}
-      </div>
+      <div className="grid grid-cols-3 gap-4">
+        <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <h3 className="text-sm font-semibold text-green-400 flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              事件 ({events.length})
+            </h3>
+            <Button onClick={handleAddEvent} className="bg-green-600 hover:bg-green-700" size="sm">
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="max-h-60 overflow-y-auto space-y-2">
+            {renderEvents()}
+          </div>
+        </div>
 
-      <div className="mt-4 max-h-80 overflow-y-auto">
-        {activeTab === "events" && renderEvents()}
-        {activeTab === "characters" && renderCharacters()}
-        {activeTab === "facilities" && renderFacilities()}
+        <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <h3 className="text-sm font-semibold text-blue-400 flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              人物 ({characters.length})
+            </h3>
+            <Button onClick={handleAddCharacter} className="bg-blue-600 hover:bg-blue-700" size="sm">
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="max-h-60 overflow-y-auto space-y-2">
+            {renderCharacters()}
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <h3 className="text-sm font-semibold text-purple-400 flex items-center gap-2">
+              <Building2 className="h-4 w-4" />
+              设施 ({facilities.length})
+            </h3>
+            <Button onClick={handleAddFacility} className="bg-purple-600 hover:bg-purple-700" size="sm">
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="max-h-60 overflow-y-auto space-y-2">
+            {renderFacilities()}
+          </div>
+        </div>
       </div>
     </div>
   );
