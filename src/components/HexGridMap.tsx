@@ -3,12 +3,11 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { HexGridUtils, type HexCoordinate } from "@/lib/hexGrid";
 import { Button } from "@/components/ui/button";
-import { Map as MapIcon, ArrowLeft, Edit, Plus, Info, Trash2, X, Save, ZoomIn, ZoomOut, Move, MindMap, Users, Calendar, Building2 } from "lucide-react";
+import { Map as MapIcon, ArrowLeft, Edit, Plus, Info, Trash2, X, Save, ZoomIn, ZoomOut, Move, Network, Users, Calendar, Building2 } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useApp } from "@/contexts/AppContext";
 import NodeEditor from "./NodeEditor";
 
@@ -341,7 +340,7 @@ export default function HexGridMap() {
     return (
       <div className="space-y-4">
         <h3 className="text-lg font-semibold text-amber-500 flex items-center gap-2">
-          <MindMap className="h-5 w-5" />
+          <Network className="h-5 w-5" />
           思维导图视图
         </h3>
         <div className="relative min-h-64">
@@ -494,7 +493,7 @@ export default function HexGridMap() {
                       onClick={() => setViewMode("mindmap")}
                       className={viewMode === "mindmap" ? "bg-amber-600" : ""}
                     >
-                      <MindMap className="h-4 w-4 mr-1" />
+                      <Network className="h-4 w-4 mr-1" />
                       思维导图
                     </Button>
                   </div>
@@ -512,16 +511,15 @@ export default function HexGridMap() {
                     </div>
                     <div>
                       <label className="block text-sm text-zinc-400 mb-1">类型</label>
-                      <Select value={editForm.type} onValueChange={(value: any) => setEditForm({ ...editForm, type: value })}>
-                        <SelectTrigger className="bg-zinc-700 border-zinc-600">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-zinc-800 border-zinc-700">
-                          <SelectItem value="据点">据点</SelectItem>
-                          <SelectItem value="地城">地城</SelectItem>
-                          <SelectItem value="区域">区域</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <select
+                        className="w-full bg-zinc-700 border border-zinc-600 rounded-lg px-3 py-2 text-white"
+                        value={editForm.type}
+                        onChange={(e) => setEditForm({ ...editForm, type: e.target.value as any })}
+                      >
+                        <option value="据点">据点</option>
+                        <option value="地城">地城</option>
+                        <option value="区域">区域</option>
+                      </select>
                     </div>
                     <div>
                       <label className="block text-sm text-zinc-400 mb-1">描述</label>

@@ -142,14 +142,14 @@ export class HexGridUtils {
   }
 
   static hexToPixel(hex: HexCoordinate, size: number): PixelCoordinate {
-    const x = size * (3 / 2) * hex.q;
-    const y = size * (Math.sqrt(3) / 2) * hex.q + size * Math.sqrt(3) * hex.r;
+    const x = size * (Math.sqrt(3) * hex.q + Math.sqrt(3) / 2 * hex.r);
+    const y = size * (3 / 2) * hex.r;
     return { x, y };
   }
 
   static pixelToHex(pixel: PixelCoordinate, size: number): HexCoordinate {
-    const q = (2 / 3) * pixel.x / size;
-    const r = (-1 / 3) * pixel.x / size + (Math.sqrt(3) / 3) * pixel.y / size;
+    const q = (Math.sqrt(3) / 3 * pixel.x - 1 / 3 * pixel.y) / size;
+    const r = (2 / 3 * pixel.y) / size;
     return this.round({ q, r, s: -q - r });
   }
 

@@ -6,7 +6,6 @@ import { Plus, Edit2, Trash2, Save, X, Users, Calendar, Building2 } from "lucide
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface MapEvent {
   id: string;
@@ -195,20 +194,20 @@ export default function NodeEditor({ nodeId, events, characters, facilities, onU
         <Card key={event.id} className="bg-zinc-800 border-zinc-700">
           <CardContent className="p-4">
             <div className="flex justify-between items-start">
-              <div>
+              <div className="flex-1">
                 <h4 className="font-semibold text-white">{event.title}</h4>
                 {event.description && (
                   <p className="text-sm text-zinc-400 mt-1">{event.description}</p>
                 )}
                 {event.tags && (
-                  <div className="flex gap-1 mt-2">
+                  <div className="flex gap-1 mt-2 flex-wrap">
                     {event.tags.split(",").map((tag, i) => (
                       <span key={i} className="text-xs bg-zinc-700 px-2 py-1 rounded">{tag.trim()}</span>
                     ))}
                   </div>
                 )}
               </div>
-              <div className="flex gap-1">
+              <div className="flex gap-1 ml-2">
                 <Button variant="ghost" size="sm" onClick={() => handleEditEvent(event)}>
                   <Edit2 className="h-4 w-4" />
                 </Button>
@@ -229,7 +228,7 @@ export default function NodeEditor({ nodeId, events, characters, facilities, onU
         <Card key={character.id} className="bg-zinc-800 border-zinc-700">
           <CardContent className="p-4">
             <div className="flex justify-between items-start">
-              <div>
+              <div className="flex-1">
                 <h4 className="font-semibold text-white">{character.name}</h4>
                 {character.role && (
                   <p className="text-sm text-amber-400">{character.role}</p>
@@ -238,7 +237,7 @@ export default function NodeEditor({ nodeId, events, characters, facilities, onU
                   <p className="text-sm text-zinc-400 mt-1">{character.description}</p>
                 )}
               </div>
-              <div className="flex gap-1">
+              <div className="flex gap-1 ml-2">
                 <Button variant="ghost" size="sm" onClick={() => handleEditCharacter(character)}>
                   <Edit2 className="h-4 w-4" />
                 </Button>
@@ -259,7 +258,7 @@ export default function NodeEditor({ nodeId, events, characters, facilities, onU
         <Card key={facility.id} className="bg-zinc-800 border-zinc-700">
           <CardContent className="p-4">
             <div className="flex justify-between items-start">
-              <div>
+              <div className="flex-1">
                 <h4 className="font-semibold text-white">{facility.name}</h4>
                 {facility.type && (
                   <p className="text-sm text-blue-400">{facility.type}</p>
@@ -268,7 +267,7 @@ export default function NodeEditor({ nodeId, events, characters, facilities, onU
                   <p className="text-sm text-zinc-400 mt-1">{facility.description}</p>
                 )}
               </div>
-              <div className="flex gap-1">
+              <div className="flex gap-1 ml-2">
                 <Button variant="ghost" size="sm" onClick={() => handleEditFacility(facility)}>
                   <Edit2 className="h-4 w-4" />
                 </Button>
@@ -298,12 +297,12 @@ export default function NodeEditor({ nodeId, events, characters, facilities, onU
 
     return (
       <Card className="bg-zinc-800 border-zinc-700 mb-4">
-        <CardHeader>
-          <CardTitle className="flex justify-between items-center">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex justify-between items-center text-base">
             <span>
               {isEvent ? "编辑事件" : isCharacter ? "编辑人物" : "编辑设施"}
             </span>
-            <Button variant="ghost" size="sm" onClick={() => setEditingItem(null)}>
+            <Button variant="ghost" size="sm" onClick={() => setEditingItem(null)} className="h-8 w-8 p-0">
               <X className="h-4 w-4" />
             </Button>
           </CardTitle>
@@ -396,8 +395,8 @@ export default function NodeEditor({ nodeId, events, characters, facilities, onU
               </div>
             </>
           )}
-          <div className="flex gap-2">
-            <Button variant="ghost" onClick={() => setEditingItem(null)}>取消</Button>
+          <div className="flex gap-2 pt-2">
+            <Button variant="ghost" onClick={() => setEditingItem(null)} className="flex-1">取消</Button>
             <Button className="flex-1 bg-amber-600 hover:bg-amber-700" onClick={handleSave}>
               <Save className="h-4 w-4 mr-2" />
               保存
@@ -410,11 +409,12 @@ export default function NodeEditor({ nodeId, events, characters, facilities, onU
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
         <Button
           variant={activeTab === "events" ? "default" : "secondary"}
           onClick={() => setActiveTab("events")}
           className={activeTab === "events" ? "bg-amber-600" : ""}
+          size="sm"
         >
           <Calendar className="h-4 w-4 mr-2" />
           事件 ({events.length})
@@ -423,6 +423,7 @@ export default function NodeEditor({ nodeId, events, characters, facilities, onU
           variant={activeTab === "characters" ? "default" : "secondary"}
           onClick={() => setActiveTab("characters")}
           className={activeTab === "characters" ? "bg-amber-600" : ""}
+          size="sm"
         >
           <Users className="h-4 w-4 mr-2" />
           人物 ({characters.length})
@@ -431,6 +432,7 @@ export default function NodeEditor({ nodeId, events, characters, facilities, onU
           variant={activeTab === "facilities" ? "default" : "secondary"}
           onClick={() => setActiveTab("facilities")}
           className={activeTab === "facilities" ? "bg-amber-600" : ""}
+          size="sm"
         >
           <Building2 className="h-4 w-4 mr-2" />
           设施 ({facilities.length})
@@ -441,26 +443,26 @@ export default function NodeEditor({ nodeId, events, characters, facilities, onU
 
       <div className="flex justify-end">
         {activeTab === "events" && (
-          <Button onClick={handleAddEvent} className="bg-green-600 hover:bg-green-700">
+          <Button onClick={handleAddEvent} className="bg-green-600 hover:bg-green-700" size="sm">
             <Plus className="h-4 w-4 mr-2" />
             添加事件
           </Button>
         )}
         {activeTab === "characters" && (
-          <Button onClick={handleAddCharacter} className="bg-blue-600 hover:bg-blue-700">
+          <Button onClick={handleAddCharacter} className="bg-blue-600 hover:bg-blue-700" size="sm">
             <Plus className="h-4 w-4 mr-2" />
             添加人物
           </Button>
         )}
         {activeTab === "facilities" && (
-          <Button onClick={handleAddFacility} className="bg-purple-600 hover:bg-purple-700">
+          <Button onClick={handleAddFacility} className="bg-purple-600 hover:bg-purple-700" size="sm">
             <Plus className="h-4 w-4 mr-2" />
             添加设施
           </Button>
         )}
       </div>
 
-      <div className="mt-4 max-h-96 overflow-y-auto">
+      <div className="mt-4 max-h-80 overflow-y-auto">
         {activeTab === "events" && renderEvents()}
         {activeTab === "characters" && renderCharacters()}
         {activeTab === "facilities" && renderFacilities()}
