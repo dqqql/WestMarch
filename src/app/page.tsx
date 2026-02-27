@@ -163,14 +163,14 @@ export default function Home() {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
             {[
-              { title: "公会档案馆", description: "冒险规则与指南，房规，战报等各种文档的集中处", icon: BookOpen, color: "from-blue-500 to-blue-600", shadow: "shadow-blue-500/20", href: "/docs" },
-              { title: "世界地图", description: "探索边境世界", icon: Map, color: "from-emerald-500 to-emerald-600", shadow: "shadow-emerald-500/20", href: "/map" },
-              { title: "酒馆布告栏", description: "发布任务与战报", icon: MessageSquare, color: "from-purple-500 to-purple-600", shadow: "shadow-purple-500/20", href: "/board" },
-              { title: "组队界面", description: "寻找冒险伙伴", icon: Users, color: "from-rose-500 to-rose-600", shadow: "shadow-rose-500/20", href: "/party", requireLogin: true },
-            ].map((item, index) => {
+              { id: "docs", title: "公会档案馆", description: "冒险规则与指南，房规，战报等各种文档的集中处", icon: BookOpen, color: "from-blue-500 to-blue-600", shadow: "shadow-blue-500/20", href: "/docs" },
+              { id: "map", title: "世界地图", description: "探索边境世界", icon: Map, color: "from-emerald-500 to-emerald-600", shadow: "shadow-emerald-500/20", href: "/map" },
+              { id: "board", title: "酒馆布告栏", description: "发布任务与战报", icon: MessageSquare, color: "from-purple-500 to-purple-600", shadow: "shadow-purple-500/20", href: "/board" },
+              { id: "party", title: "组队界面", description: "寻找冒险伙伴", icon: Users, color: "from-rose-500 to-rose-600", shadow: "shadow-rose-500/20", href: "/party", requireLogin: true },
+            ].map((item) => {
               const isDisabled = item.requireLogin && !user;
               const CardContent = isDisabled ? (
-                <Card className="opacity-50 cursor-not-allowed bg-gradient-to-br from-zinc-900/80 to-zinc-950/80 border-zinc-700/50">
+                <Card key={item.id} className="opacity-50 cursor-not-allowed bg-gradient-to-br from-zinc-900/80 to-zinc-950/80 border-zinc-700/50">
                   <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${item.color}`} />
                   <CardHeader className="p-5">
                     <div className="flex items-start justify-between gap-4">
@@ -189,7 +189,7 @@ export default function Home() {
                   </CardHeader>
                 </Card>
               ) : (
-                <Link href={item.href}>
+                <Link key={item.id} href={item.href}>
                   <Card className="relative overflow-hidden bg-gradient-to-br from-zinc-900/80 to-zinc-950/80 border-zinc-700/50 hover:border-zinc-600/50 transition-all duration-500 hover:scale-[1.02] hover:shadow-xl group cursor-pointer">
                     <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${item.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
                     <CardHeader className="p-5">
