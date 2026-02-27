@@ -56,9 +56,10 @@ export class MapRepository {
   }
 
   async updateNode(id: string, data: any) {
+    const { events, characters, facilities, id: _, createdAt, updatedAt, ...cleanData } = data;
     return prisma.mapNode.update({
       where: { id },
-      data,
+      data: cleanData,
       include: {
         events: true,
         characters: true,
