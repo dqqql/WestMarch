@@ -300,9 +300,9 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
       {showAvatarSelector && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-60">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-4xl max-h-[80vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[60] p-4">
+          <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-4xl max-h-[85vh] overflow-y-auto relative">
+            <div className="flex justify-between items-center mb-4 sticky top-0 bg-zinc-900 py-2 z-10">
               <h3 className="text-xl font-bold flex items-center gap-2">
                 <User className="h-5 w-5" />
                 选择角色头像
@@ -323,17 +323,17 @@ export default function ProfilePage() {
                 <Eye className="h-4 w-4 mr-2" />
                 使用默认头像
               </Button>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                 {avatarResources.map((img: any) => (
                   <div
                     key={img.id}
                     className="relative group cursor-pointer"
                     onClick={() => avatarCharacterId ? selectCharacterAvatar(img.url) : selectAvatar(img.url)}
                   >
-                    <div className="aspect-square bg-zinc-800 rounded-lg overflow-hidden border border-zinc-700">
+                    <div className="aspect-square bg-zinc-800 rounded-lg overflow-hidden border border-zinc-700 hover:border-amber-500 transition-colors">
                       <img src={img.url} alt={img.name} className="w-full h-full object-cover" />
                     </div>
-                    <p className="text-sm text-zinc-400 mt-1 truncate">{img.name}</p>
+                    <p className="text-sm text-zinc-400 mt-1 truncate text-center">{img.name}</p>
                   </div>
                 ))}
               </div>
@@ -346,9 +346,9 @@ export default function ProfilePage() {
       )}
 
       {showUserAvatarSelector && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-4xl max-h-[80vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[55] p-4">
+          <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-4xl max-h-[85vh] overflow-y-auto relative">
+            <div className="flex justify-between items-center mb-4 sticky top-0 bg-zinc-900 py-2 z-10">
               <h3 className="text-xl font-bold flex items-center gap-2">
                 <User className="h-5 w-5" />
                 选择场外头像
@@ -366,17 +366,17 @@ export default function ProfilePage() {
                 <Eye className="h-4 w-4 mr-2" />
                 使用默认头像
               </Button>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                 {avatarResources.map((img: any) => (
                   <div
                     key={img.id}
                     className="relative group cursor-pointer"
                     onClick={() => selectUserAvatar(img.url)}
                   >
-                    <div className="aspect-square bg-zinc-800 rounded-lg overflow-hidden border border-zinc-700">
+                    <div className="aspect-square bg-zinc-800 rounded-lg overflow-hidden border border-zinc-700 hover:border-amber-500 transition-colors">
                       <img src={img.url} alt={img.name} className="w-full h-full object-cover" />
                     </div>
-                    <p className="text-sm text-zinc-400 mt-1 truncate">{img.name}</p>
+                    <p className="text-sm text-zinc-400 mt-1 truncate text-center">{img.name}</p>
                   </div>
                 ))}
               </div>
@@ -389,7 +389,7 @@ export default function ProfilePage() {
       )}
 
       {showSessionModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
           <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-md">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold flex items-center gap-2">
@@ -422,9 +422,9 @@ export default function ProfilePage() {
       )}
 
       {(editingCharacter || showCreateModal) && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 overflow-y-auto py-8">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-2xl mx-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-4">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 overflow-y-auto py-8 px-4">
+          <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-2xl relative" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-4 sticky top-0 bg-zinc-900 py-2 z-10">
               <h3 className="text-xl font-bold">{editingCharacter ? "编辑角色" : "创建新角色"}</h3>
               <button 
                 onClick={() => {
@@ -449,9 +449,9 @@ export default function ProfilePage() {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="space-y-4 max-h-[80vh] overflow-y-auto">
+            <div className="space-y-4 max-h-[70vh] overflow-y-auto">
               <div className="flex items-center gap-4">
-                <div className="relative">
+                <div className="relative shrink-0">
                   <div className="w-24 h-24 bg-zinc-800 rounded-lg flex items-center justify-center overflow-hidden border border-zinc-700">
                     {formData.img ? (
                       <img src={formData.img} alt="头像" className="w-full h-full object-cover" />
@@ -744,7 +744,7 @@ export default function ProfilePage() {
                   key={char.id}
                   className="bg-zinc-900 border-zinc-800 hover:border-amber-500/50 transition-colors overflow-hidden"
                 >
-                  <div className="h-32 bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center relative">
+                  <div className="aspect-[4/3] bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center relative overflow-hidden">
                     {char.img ? (
                       <img src={char.img} alt={char.name} className="w-full h-full object-cover" />
                     ) : (
@@ -754,7 +754,7 @@ export default function ProfilePage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 bg-zinc-900/80 hover:bg-zinc-800"
+                        className="h-8 w-8 bg-zinc-900/90 hover:bg-zinc-800 backdrop-blur-sm"
                         onClick={() => handleSelectCharacterAvatar(char.id)}
                       >
                         <Image className="h-4 w-4" />
@@ -762,7 +762,7 @@ export default function ProfilePage() {
                       <Button 
                         variant="ghost" 
                         size="icon" 
-                        className="h-8 w-8 bg-zinc-900/80 hover:bg-zinc-800"
+                        className="h-8 w-8 bg-zinc-900/90 hover:bg-zinc-800 backdrop-blur-sm"
                         onClick={() => handleEditCharacter(char)}
                       >
                         <Edit2 className="h-4 w-4" />
@@ -770,7 +770,7 @@ export default function ProfilePage() {
                       <Button 
                         variant="ghost" 
                         size="icon" 
-                        className="h-8 w-8 bg-zinc-900/80 hover:bg-red-900/50"
+                        className="h-8 w-8 bg-zinc-900/90 hover:bg-red-900/50 backdrop-blur-sm"
                         onClick={() => handleDeleteCharacter(char.id)}
                       >
                         <Trash2 className="h-4 w-4 text-red-400" />
