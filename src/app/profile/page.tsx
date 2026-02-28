@@ -55,6 +55,7 @@ export default function ProfilePage() {
   const [showAvatarSelector, setShowAvatarSelector] = useState(false);
   const [showUserAvatarSelector, setShowUserAvatarSelector] = useState(false);
   const [editingProfile, setEditingProfile] = useState(false);
+  const [avatarCharacterId, setAvatarCharacterId] = useState<string | null>(null);
   const [showSessionModal, setShowSessionModal] = useState(false);
   const [newSession, setNewSession] = useState("");
   const [nickname, setNickname] = useState(settings.userNickname || "");
@@ -208,6 +209,35 @@ export default function ProfilePage() {
     setShowAvatarSelector(false);
   };
 
+  const handleSelectCharacterAvatar = (characterId: string) => {
+    setAvatarCharacterId(characterId);
+    setShowAvatarSelector(true);
+  };
+
+  const selectCharacterAvatar = async (url: string | null) => {
+    if (!avatarCharacterId) return;
+    
+    try {
+      const response = await fetch(`/api/characters/${avatarCharacterId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ img: url }),
+      });
+      if (response.ok) {
+        const updatedChar = await response.json();
+        setCharacters(characters.map(c => 
+          c.id === avatarCharacterId ? updatedChar : c
+        ));
+      }
+    } catch (error) {
+      console.error("Failed to update character avatar:", error);
+      alert("更新头像失败");
+    }
+    
+    setShowAvatarSelector(false);
+    setAvatarCharacterId(null);
+  };
+
   const selectUserAvatar = (url: string | null) => {
     updateSettings({ userAvatar: url });
     setShowUserAvatarSelector(false);
@@ -270,14 +300,17 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
       {showAvatarSelector && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-60">
           <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-4xl max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold flex items-center gap-2">
                 <User className="h-5 w-5" />
                 选择角色头像
               </h3>
-              <button onClick={() => setShowAvatarSelector(false)} className="text-zinc-400 hover:text-white">
+              <button onClick={() => {
+                setShowAvatarSelector(false);
+                setAvatarCharacterId(null);
+              }} className="text-zinc-400 hover:text-white">
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -285,7 +318,7 @@ export default function ProfilePage() {
               <Button
                 variant="ghost"
                 className="w-full justify-start border border-zinc-700 bg-zinc-800"
-                onClick={() => selectAvatar(null)}
+                onClick={() => avatarCharacterId ? selectCharacterAvatar(null) : selectAvatar(null)}
               >
                 <Eye className="h-4 w-4 mr-2" />
                 使用默认头像
@@ -295,7 +328,7 @@ export default function ProfilePage() {
                   <div
                     key={img.id}
                     className="relative group cursor-pointer"
-                    onClick={() => selectAvatar(img.url)}
+                    onClick={() => avatarCharacterId ? selectCharacterAvatar(img.url) : selectAvatar(img.url)}
                   >
                     <div className="aspect-square bg-zinc-800 rounded-lg overflow-hidden border border-zinc-700">
                       <img src={img.url} alt={img.name} className="w-full h-full object-cover" />
@@ -718,6 +751,14 @@ export default function ProfilePage() {
                       <User className="h-16 w-16 text-zinc-600" />
                     )}
                     <div className="absolute top-2 right-2 flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 bg-zinc-900/80 hover:bg-zinc-800"
+                        onClick={() => handleSelectCharacterAvatar(char.id)}
+                      >
+                        <Image className="h-4 w-4" />
+                      </Button>
                       <Button 
                         variant="ghost" 
                         size="icon" 
