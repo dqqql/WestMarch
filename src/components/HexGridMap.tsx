@@ -3,7 +3,10 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { HexGridUtils } from "@/lib/hexGrid";
 import { Button } from "@/components/ui/button";
-import { Map as MapIcon, ArrowLeft, Edit, ZoomIn, ZoomOut, Plus, Minus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Modal } from "@/components/ui/modal";
+import { Map as MapIcon, ArrowLeft, Edit, ZoomIn, ZoomOut, Plus, Minus, Layers, PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { useApp } from "@/contexts/AppContext";
 import NodeDetailModal from "./NodeDetailModal";
@@ -37,6 +40,15 @@ interface MapEdgeData {
   updatedAt: string;
 }
 
+interface PlaneData {
+  id: string;
+  name: string;
+  radius: number;
+  creatorId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export default function HexGridMap() {
   const { isClient } = useApp();
   const svgRef = useRef<SVGSVGElement>(null);
@@ -54,15 +66,74 @@ export default function HexGridMap() {
   const [connectingFrom, setConnectingFrom] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [migratingFrom, setMigratingFrom] = useState<string | null>(null);
+  
+  const [planes, setPlanes] = useState<PlaneData[]>([]);
+  const [currentPlane, setCurrentPlane] = useState<PlaneData | null>(null);
+  const [showCreatePlaneModal, setShowCreatePlaneModal] = useState(false);
+  const [newPlaneName, setNewPlaneName] = useState("");
 
   useEffect(() => {
-    loadMap();
+    loadPlanes();
   }, []);
 
-  const loadMap = async () => {
+  useEffect(() => {
+    if (currentPlane) {
+      loadMap(currentPlane.id);
+      setGridRadius(currentPlane.radius);
+    }
+  }, [currentPlane]);
+
+  const loadPlanes = async () => {
+    try {
+      const response = await fetch("/api/map/planes");
+      if (response.ok) {
+        const data = await response.json();
+        setPlanes(data);
+        
+        if (data.length > 0) {
+          const selectionResponse = await fetch("/api/map/user-plane-selection");
+          if (selectionResponse.ok) {
+            const selection = await selectionResponse.json();
+            const selectedPlane = data.find((p: PlaneData) => p.id === selection?.planeId);
+            setCurrentPlane(selectedPlane || data[0]);
+          } else {
+            setCurrentPlane(data[0]);
+          }
+        } else {
+          const defaultPlane = await createDefaultPlane();
+          if (defaultPlane) {
+            setPlanes([defaultPlane]);
+            setCurrentPlane(defaultPlane);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Failed to load planes:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const createDefaultPlane = async () => {
+    try {
+      const response = await fetch("/api/map/planes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "主位面", radius: 10 }),
+      });
+      if (response.ok) {
+        return await response.json();
+      }
+    } catch (error) {
+      console.error("Failed to create default plane:", error);
+    }
+    return null;
+  };
+
+  const loadMap = async (planeId: string) => {
     try {
       setIsLoading(true);
-      const response = await fetch("/api/map");
+      const response = await fetch(`/api/map?planeId=${planeId}`);
       if (response.ok) {
         const data = await response.json();
         setNodes(data.nodes || []);
@@ -72,6 +143,39 @@ export default function HexGridMap() {
       console.error("Failed to load map:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const selectPlane = async (plane: PlaneData) => {
+    setCurrentPlane(plane);
+    try {
+      await fetch("/api/map/user-plane-selection", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planeId: plane.id }),
+      });
+    } catch (error) {
+      console.error("Failed to save plane selection:", error);
+    }
+  };
+
+  const createPlane = async () => {
+    if (!newPlaneName.trim()) return;
+    try {
+      const response = await fetch("/api/map/planes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newPlaneName.trim(), radius: 10 }),
+      });
+      if (response.ok) {
+        const newPlane = await response.json();
+        setPlanes(prev => [...prev, newPlane]);
+        setShowCreatePlaneModal(false);
+        setNewPlaneName("");
+        selectPlane(newPlane);
+      }
+    } catch (error) {
+      console.error("Failed to create plane:", error);
     }
   };
 
@@ -169,6 +273,7 @@ export default function HexGridMap() {
   }, [nodes]);
 
   const addNode = async (q: number, r: number) => {
+    if (!currentPlane) return;
     try {
       const response = await fetch("/api/map/nodes", {
         method: "POST",
@@ -179,7 +284,8 @@ export default function HexGridMap() {
           hexQ: q,
           hexR: r,
           hexS: -q - r,
-          description: ""
+          description: "",
+          planeId: currentPlane.id
         }),
       });
       if (response.ok) {
@@ -192,6 +298,7 @@ export default function HexGridMap() {
   };
 
   const migrateNode = async (nodeId: string, newQ: number, newR: number) => {
+    if (!currentPlane) return;
     const originalNode = nodes.find(n => n.id === nodeId);
     if (!originalNode) return;
     
@@ -205,7 +312,8 @@ export default function HexGridMap() {
           hexQ: newQ,
           hexR: newR,
           hexS: -newQ - newR,
-          description: originalNode.description
+          description: originalNode.description,
+          planeId: currentPlane.id
         }),
       });
       
@@ -227,12 +335,12 @@ export default function HexGridMap() {
   };
 
   const createEdge = async (sourceId: string, targetId: string) => {
-    if (sourceId === targetId) return;
+    if (!currentPlane || sourceId === targetId) return;
     try {
       const response = await fetch("/api/map/edges", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sourceId, targetId }),
+        body: JSON.stringify({ sourceId, targetId, planeId: currentPlane.id }),
       });
       if (response.ok) {
         const newEdge = await response.json();
@@ -518,7 +626,7 @@ export default function HexGridMap() {
     });
   };
 
-  if (isLoading) {
+  if (isLoading || !currentPlane) {
     return (
       <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center">
         <p className="text-zinc-400">加载中...</p>
@@ -538,7 +646,7 @@ export default function HexGridMap() {
         </div>
       )}
       <header className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-4">
             <Link href="/" className="hover:text-amber-400 transition-colors">
               <ArrowLeft className="h-5 w-5" />
@@ -548,7 +656,35 @@ export default function HexGridMap() {
               <h1 className="text-xl font-bold">蜂巢格地图</h1>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
+                <Layers className="h-4 w-4 text-zinc-400" />
+                <Select
+                  value={currentPlane?.id || ""}
+                  onChange={(e) => {
+                    const plane = planes.find(p => p.id === e.target.value);
+                    if (plane) selectPlane(plane);
+                  }}
+                  className="w-40 h-9 bg-zinc-800 border-zinc-700"
+                >
+                  {planes.map(plane => (
+                    <option key={plane.id} value={plane.id}>
+                      {plane.name}
+                    </option>
+                  ))}
+                </Select>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setShowCreatePlaneModal(true)}
+                  className="h-9 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700"
+                >
+                  <PlusCircle className="h-4 w-4 mr-1" />
+                  新位面
+                </Button>
+              </div>
+            </div>
             <div className="flex items-center gap-1 bg-zinc-800 rounded-lg px-2 py-1">
               <Button
                 variant="ghost"
@@ -651,6 +787,41 @@ export default function HexGridMap() {
           migratingFrom={migratingFrom}
         />
       )}
+      <Modal
+        open={showCreatePlaneModal}
+        onClose={() => setShowCreatePlaneModal(false)}
+        title="创建新的位面"
+        maxWidth="sm"
+      >
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-muted-foreground mb-2">位面名称</label>
+            <Input
+              type="text"
+              value={newPlaneName}
+              onChange={(e) => setNewPlaneName(e.target.value)}
+              placeholder="输入位面名称"
+              onKeyDown={(e) => e.key === 'Enter' && newPlaneName.trim() && createPlane()}
+              autoFocus
+            />
+          </div>
+          <div className="flex gap-3 justify-end">
+            <Button
+              variant="secondary"
+              onClick={() => setShowCreatePlaneModal(false)}
+            >
+              取消
+            </Button>
+            <Button
+              onClick={createPlane}
+              disabled={!newPlaneName.trim()}
+              className="bg-amber-600 hover:bg-amber-700"
+            >
+              创建
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

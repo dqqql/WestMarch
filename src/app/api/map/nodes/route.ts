@@ -3,9 +3,9 @@ import { repositories } from '@/repositories'
 
 export async function POST(request: NextRequest) {
   try {
-    const { label, type, hexQ, hexR, hexS, description } = await request.json()
+    const { label, type, hexQ, hexR, hexS, description, planeId } = await request.json()
 
-    if (!label || !type || hexQ === undefined || hexR === undefined || hexS === undefined) {
+    if (!label || !type || hexQ === undefined || hexR === undefined || hexS === undefined || !planeId) {
       return NextResponse.json({ error: '缺少必要参数' }, { status: 400 })
     }
 
@@ -15,7 +15,8 @@ export async function POST(request: NextRequest) {
       hexQ,
       hexR,
       hexS,
-      description
+      description,
+      planeId
     })
 
     return NextResponse.json(node)

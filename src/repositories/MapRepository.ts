@@ -2,16 +2,19 @@ import prisma from '@/lib/prisma';
 import type { MapNodeType } from '@prisma/client';
 
 export class MapRepository {
-  async getFullMap() {
+  async getFullMap(planeId: string) {
     const [nodes, edges] = await Promise.all([
       prisma.mapNode.findMany({
+        where: { planeId },
         include: {
           events: true,
           characters: true,
           facilities: true
         }
       }),
-      prisma.mapEdge.findMany()
+      prisma.mapEdge.findMany({
+        where: { planeId }
+      })
     ]);
     return { nodes, edges };
   }
@@ -44,6 +47,7 @@ export class MapRepository {
     hexR: number;
     hexS: number;
     description?: string | null;
+    planeId: string;
   }) {
     return prisma.mapNode.create({
       data,
@@ -90,6 +94,7 @@ export class MapRepository {
     pathStyle?: string;
     color?: string | null;
     width?: number;
+    planeId: string;
   }) {
     return prisma.mapEdge.create({ data });
   }
@@ -174,6 +179,53 @@ export class MapRepository {
   async deleteFacility(id: string) {
     return prisma.mapFacility.delete({
       where: { id }
+    });
+  }
+
+  async createPlane(data: {
+    name: string;
+    creatorId: string;
+    radius?: number;
+  }) {
+    return prisma.plane.create({ data });
+  }
+
+  async findAllPlanes() {
+    return prisma.plane.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+  }
+
+  async findPlaneById(id: string) {
+    return prisma.plane.findUnique({
+      where: { id }
+    });
+  }
+
+  async updatePlane(id: string, data: any) {
+    return prisma.plane.update({
+      where: { id },
+      data
+    });
+  }
+
+  async deletePlane(id: string) {
+    return prisma.plane.delete({
+      where: { id }
+    });
+  }
+
+  async getUserPlaneSelection(userId: string) {
+    return prisma.userPlaneSelection.findUnique({
+      where: { userId }
+    });
+  }
+
+  async setUserPlaneSelection(userId: string, planeId: string) {
+    return prisma.userPlaneSelection.upsert({
+      where: { userId },
+      update: { planeId },
+      create: { userId, planeId }
     });
   }
 }
