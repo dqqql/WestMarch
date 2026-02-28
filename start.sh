@@ -8,7 +8,7 @@ mkdir -p /app/data
 
 echo "[2/3] Running database migrations..."
 cd /app
-npx prisma db push --skip-generate --accept-data-loss
+npx prisma db push --skip-generate
 
 echo "[3/3] Starting server..."
 exec node server.js
