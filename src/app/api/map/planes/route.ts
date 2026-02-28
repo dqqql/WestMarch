@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { repositories } from '@/repositories'
+import prisma from '@/lib/prisma'
 
 async function getOrCreateDefaultUser() {
   let user = await repositories.user.findByUsername('default')
@@ -12,9 +13,35 @@ async function getOrCreateDefaultUser() {
   return user
 }
 
+async function migrateExistingData(planeId: string) {
+  await prisma.mapNode.updateMany({
+    where: { planeId: null },
+    data: { planeId }
+  })
+  await prisma.mapEdge.updateMany({
+    where: { planeId: null },
+    data: { planeId }
+  })
+}
+
 export async function GET() {
   try {
     const planes = await repositories.map.findAllPlanes()
+    
+    if (planes.length === 0) {
+      const user = await getOrCreateDefaultUser()
+      const defaultPlane = await repositories.map.createPlane({
+        name: '主位面',
+        creatorId: user.id,
+        radius: 10
+      })
+      
+      await migrateExistingData(defaultPlane.id)
+      
+      const allPlanes = await repositories.map.findAllPlanes()
+      return NextResponse.json(allPlanes)
+    }
+    
     return NextResponse.json(planes)
   } catch (error) {
     console.error('Get planes error:', error)

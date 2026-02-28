@@ -85,8 +85,8 @@ model MapNode {
   hexR        Int        @default(0) // 蜂巢格轴坐标 R
   hexS        Int        @default(0) // 蜂巢格轴坐标 S (计算用)
   description String?
-  planeId     String
-  plane       Plane      @relation(fields: [planeId], references: [id], onDelete: Cascade)
+  planeId     String?
+  plane       Plane?     @relation(fields: [planeId], references: [id], onDelete: Cascade)
   events      MapEvent[]
   characters  MapCharacter[]
   facilities  MapFacility[]
@@ -102,8 +102,8 @@ model MapEdge {
   source    MapNode  @relation("source", fields: [sourceId], references: [id], onDelete: Cascade)
   targetId  String
   target    MapNode  @relation("target", fields: [targetId], references: [id], onDelete: Cascade)
-  planeId   String
-  plane     Plane    @relation(fields: [planeId], references: [id], onDelete: Cascade)
+  planeId   String?
+  plane     Plane?    @relation(fields: [planeId], references: [id], onDelete: Cascade)
   pathStyle String   @default("车辙") // 通路样式：车辙、石板路、桥梁等
   color     String?  // 通路颜色
   width     Int      @default(2) // 通路宽度

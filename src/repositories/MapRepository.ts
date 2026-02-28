@@ -3,20 +3,34 @@ import type { MapNodeType } from '@prisma/client';
 
 export class MapRepository {
   async getFullMap(planeId: string) {
-    const [nodes, edges] = await Promise.all([
+    const [allNodes, allEdges] = await Promise.all([
       prisma.mapNode.findMany({
-        where: { planeId },
         include: {
           events: true,
           characters: true,
           facilities: true
         }
       }),
-      prisma.mapEdge.findMany({
-        where: { planeId }
-      })
+      prisma.mapEdge.findMany()
     ]);
-    return { nodes, edges };
+    
+    const filteredNodes = allNodes.filter(node => 
+      node.planeId === planeId || node.planeId === null || node.planeId === undefined
+    );
+    const filteredEdges = allEdges.filter(edge => 
+      edge.planeId === planeId || edge.planeId === null || edge.planeId === undefined
+    );
+    
+    const migratedNodes = filteredNodes.map(node => ({
+      ...node,
+      planeId: node.planeId || planeId
+    }));
+    const migratedEdges = filteredEdges.map(edge => ({
+      ...edge,
+      planeId: edge.planeId || planeId
+    }));
+    
+    return { nodes: migratedNodes, edges: migratedEdges };
   }
 
   async findAllNodes() {
