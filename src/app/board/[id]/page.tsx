@@ -326,7 +326,7 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
                   </div>
                 </div>
               </div>
-              <div className="prose prose-invert max-w-none">
+              <div className="prose prose-invert max-w-none [&>p]:my-2 [&>p]:leading-relaxed [&>h1]:mb-3 [&>h1]:mt-4 [&>h2]:mb-2 [&>h2]:mt-3 [&>h3]:mb-2 [&>h3]:mt-3 [&>ul]:my-2 [&>ol]:my-2 [&>li]:my-1 [&>blockquote]:my-3 [&>pre]:my-3">
                 <ReactMarkdown>
                   {post.content}
                 </ReactMarkdown>
