@@ -11,6 +11,7 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useApp } from "@/contexts/AppContext";
 import { storage } from "@/services/storage";
+import { markdownToPlainText } from "@/lib/utils";
 
 interface Post {
   id: string;
@@ -570,7 +571,7 @@ export default function BoardPage() {
                               {searchQuery ? highlightText(post.title, searchQuery) : post.title}
                             </h3>
                             <p className="text-zinc-400 mb-4 line-clamp-3 leading-relaxed">
-                              {searchQuery ? highlightText(post.content, searchQuery) : post.content}
+                              {searchQuery ? highlightText(markdownToPlainText(post.content, 200), searchQuery) : markdownToPlainText(post.content, 200)}
                             </p>
                             <div className="flex items-center gap-3 text-sm text-zinc-500">
                               <span className="flex items-center gap-1">
