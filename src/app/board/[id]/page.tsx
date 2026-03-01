@@ -2,11 +2,12 @@
 
 import { useState, useEffect, use } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Tag, Edit2, Trash2 } from "lucide-react";
+import { ArrowLeft, Tag, Edit2, Trash2, User } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useApp } from "@/contexts/AppContext";
 import ReactMarkdown from "react-markdown";
+import { CommentList } from "@/components/CommentList";
 
 interface Post {
   id: string;
@@ -14,7 +15,7 @@ interface Post {
   content: string;
   tag: "DM悬赏" | "杂谈" | "跑团战报" | "寻找队伍";
   authorId: string;
-  author: { id: string; username: string; nickname: string | null };
+  author: { id: string; username: string; nickname: string | null; avatar: string | null };
   characterId: string | null;
   character: { id: string; name: string } | null;
   createdAt: string;
@@ -298,13 +299,32 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
               <h1 className="text-2xl font-bold mb-4 text-zinc-100">
                 {post.title}
               </h1>
-              <div className="flex items-center gap-4 text-zinc-400 text-sm mb-6">
-                <span>作者: {authorName}</span>
-                {post.character && <span>角色: {post.character.name}</span>}
-                <span>发布时间: {new Date(post.createdAt).toLocaleString("zh-CN")}</span>
-                {post.updatedAt !== post.createdAt && (
-                  <span>更新时间: {new Date(post.updatedAt).toLocaleString("zh-CN")}</span>
-                )}
+              <div className="flex items-center gap-4 mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0">
+                    {post.author.avatar ? (
+                      <img
+                        src={post.author.avatar}
+                        alt={authorName}
+                        className="w-12 h-12 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-zinc-700 flex items-center justify-center">
+                        <User className="w-6 h-6 text-zinc-400" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-zinc-200 font-medium">{authorName}</span>
+                    <div className="flex items-center gap-3 text-zinc-400 text-sm">
+                      {post.character && <span>角色: {post.character.name}</span>}
+                      <span>发布时间: {new Date(post.createdAt).toLocaleString("zh-CN")}</span>
+                      {post.updatedAt !== post.createdAt && (
+                        <span>更新时间: {new Date(post.updatedAt).toLocaleString("zh-CN")}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
               <div className="prose prose-invert max-w-none">
                 <ReactMarkdown>
@@ -313,6 +333,8 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
               </div>
             </div>
           </div>
+          
+          <CommentList postId={post.id} />
         </div>
       </main>
     </div>

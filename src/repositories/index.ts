@@ -7,6 +7,7 @@ import { MapRepository } from './MapRepository';
 import { ResourceRepository } from './ResourceRepository';
 import { SettingsRepository } from './SettingsRepository';
 import { SystemSettingRepository } from './SystemSettingRepository';
+import { CommentRepository } from './CommentRepository';
 
 export const repositories = {
   user: new UserRepository(),
@@ -17,5 +18,6 @@ export const repositories = {
   map: new MapRepository(),
   resource: new ResourceRepository(),
   settings: new SettingsRepository(),
-  systemSetting: new SystemSettingRepository()
+  systemSetting: new SystemSettingRepository(),
+  comment: new CommentRepository()
 };
