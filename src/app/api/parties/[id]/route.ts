@@ -54,3 +54,24 @@ export async function DELETE(
     return NextResponse.json({ error: '删除组队失败' }, { status: 500 })
   }
 }
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params
+    const { action, characterId } = await request.json()
+
+    if (action === 'join') {
+      const party = await repositories.party.addMember(id, characterId)
+      const updatedParty = await repositories.party.findById(id)
+      return NextResponse.json(updatedParty)
+    }
+
+    return NextResponse.json({ error: '无效的操作' }, { status: 400 })
+  } catch (error) {
+    console.error('Patch party error:', error)
+    return NextResponse.json({ error: '操作失败' }, { status: 500 })
+  }
+}
