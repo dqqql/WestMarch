@@ -14,6 +14,7 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useApp } from "@/contexts/AppContext";
 import { DateDisplay } from "@/components/DateDisplay";
+import { WeatherDisplay } from "@/components/WeatherDisplay";
 
 export default function Home() {
   const { user, login, logout, isLoading } = useAuth();
@@ -158,7 +159,10 @@ export default function Home() {
       <main className="relative z-10 flex-1 flex flex-col items-center justify-center">
         <div className="container mx-auto px-6 py-8">
           <div className="mb-8 flex justify-center">
-            <DateDisplay />
+            <div className="flex flex-col md:flex-row items-center gap-4">
+              <DateDisplay />
+              <WeatherDisplay />
+            </div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">

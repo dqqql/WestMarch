@@ -254,3 +254,24 @@ model UserPlaneSelection {
   
   @@unique([userId])
 }
+
+enum WeatherType {
+  SUNNY
+  PARTLY_CLOUDY
+  CLOUDY
+  RAINY
+  SNOWSTORM
+  ACID_RAIN
+  FOG
+  SANDSTORM
+  THUNDERSTORM
+}
+
+model WeatherRecord {
+  id          String      @id @default(cuid())
+  date        String      @unique
+  weatherType WeatherType
+  description String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
