@@ -77,24 +77,45 @@ export const WEATHER_CONFIGS: Record<WeatherType, WeatherConfig> = {
 const BASIC_WEATHERS: WeatherType[] = ['SUNNY', 'PARTLY_CLOUDY', 'CLOUDY', 'RAINY']
 const SPECIAL_WEATHERS: WeatherType[] = ['SNOWSTORM', 'ACID_RAIN', 'FOG', 'SANDSTORM', 'THUNDERSTORM']
 
+const BASIC_WEATHER_WEIGHTS: Record<WeatherType, number> = {
+  SUNNY: 40,
+  PARTLY_CLOUDY: 30,
+  CLOUDY: 20,
+  RAINY: 10,
+  SNOWSTORM: 0,
+  ACID_RAIN: 0,
+  FOG: 0,
+  SANDSTORM: 0,
+  THUNDERSTORM: 0
+}
+
 const WEATHER_TRANSITIONS: Record<WeatherType, WeatherType[]> = {
-  SUNNY: ['PARTLY_CLOUDY', 'CLOUDY'],
-  PARTLY_CLOUDY: ['SUNNY', 'CLOUDY', 'RAINY'],
-  CLOUDY: ['PARTLY_CLOUDY', 'RAINY', 'FOG'],
-  RAINY: ['CLOUDY', 'PARTLY_CLOUDY', 'THUNDERSTORM'],
+  SUNNY: ['SUNNY', 'SUNNY', 'PARTLY_CLOUDY', 'CLOUDY'],
+  PARTLY_CLOUDY: ['SUNNY', 'SUNNY', 'CLOUDY', 'RAINY'],
+  CLOUDY: ['SUNNY', 'PARTLY_CLOUDY', 'RAINY', 'FOG'],
+  RAINY: ['CLOUDY', 'PARTLY_CLOUDY', 'SUNNY', 'THUNDERSTORM'],
   SNOWSTORM: ['CLOUDY', 'FOG'],
   ACID_RAIN: ['RAINY', 'CLOUDY'],
-  FOG: ['CLOUDY', 'PARTLY_CLOUDY'],
+  FOG: ['CLOUDY', 'PARTLY_CLOUDY', 'SUNNY'],
   SANDSTORM: ['CLOUDY', 'PARTLY_CLOUDY'],
-  THUNDERSTORM: ['RAINY', 'CLOUDY']
+  THUNDERSTORM: ['RAINY', 'CLOUDY', 'PARTLY_CLOUDY']
 }
 
 export function generateNextWeather(currentWeather?: WeatherType): WeatherType {
-  const specialChance = 0.15
+  const specialChance = 0.08
   const random = Math.random()
   
   if (!currentWeather) {
-    return BASIC_WEATHERS[Math.floor(Math.random() * BASIC_WEATHERS.length)]
+    const totalWeight = BASIC_WEATHERS.reduce((sum, w) => sum + BASIC_WEATHER_WEIGHTS[w], 0)
+    let randomValue = Math.random() * totalWeight
+    
+    for (const weather of BASIC_WEATHERS) {
+      randomValue -= BASIC_WEATHER_WEIGHTS[weather]
+      if (randomValue <= 0) {
+        return weather
+      }
+    }
+    return 'SUNNY'
   }
   
   if (random < specialChance && !WEATHER_CONFIGS[currentWeather].isSpecial) {
