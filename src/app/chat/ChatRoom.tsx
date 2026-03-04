@@ -93,11 +93,10 @@ export default function ChatRoom({ node, onBack }: ChatRoomProps) {
   const [showCharacterSelector, setShowCharacterSelector] = useState(false);
   const [showItemModal, setShowItemModal] = useState(false);
   const [showPartyModal, setShowPartyModal] = useState(false);
-  const [showItemsList, setShowItemsList] = useState(false);
-  const [showPartiesList, setShowPartiesList] = useState(false);
   const [itemForm, setItemForm] = useState({ name: "", description: "", price: "" });
   const [partyForm, setPartyForm] = useState({ title: "", description: "", maxCount: "4" });
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
+  const [joiningParty, setJoiningParty] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -431,179 +430,188 @@ export default function ChatRoom({ node, onBack }: ChatRoomProps) {
   );
 
   const renderTradingChannel = () => (
-    <div className="max-w-4xl">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-lg font-bold text-amber-900">玩家交易</h2>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setShowItemsList(!showItemsList)}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-200/60 hover:bg-amber-300/60 text-sm text-amber-900 transition-all"
-          >
-            <ShoppingCart className="h-4 w-4" />
-            {showItemsList ? "隐藏列表" : "查看所有物品"}
-          </button>
-          <button
-            onClick={() => setShowItemModal(true)}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white text-sm transition-all"
-          >
-            <Plus className="h-4 w-4" />
-            发布物品
-          </button>
-        </div>
-      </div>
-      {showItemsList ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          {items.length === 0 ? (
-            <div className="col-span-full text-center py-16">
-              <ShoppingCart className="h-12 w-12 text-amber-700/50 mx-auto mb-4" />
-              <p className="text-amber-800/60">暂无物品，发布第一个吧！</p>
-            </div>
-          ) : (
-            items.map((item) => (
-              <div key={item.id} className="bg-amber-100/60 border border-amber-300/60 rounded-xl p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-bold text-amber-900">{item.name}</h3>
-                  <div className="flex items-center gap-1 text-amber-600 font-bold">
-                    <Coins className="h-4 w-4" />
-                    <span>{Number(item.price).toFixed(2)}</span>
-                  </div>
-                </div>
-                <p className="text-sm text-amber-800/70 mb-4 line-clamp-3">{item.description}</p>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs text-amber-700/60">
-                    {item.character && (
-                      <span>{item.character.name}</span>
-                    )}
-                    <span>{formatDate(item.createdAt)}</span>
-                  </div>
-                  {isOwner(item.authorId) && (
-                    <button
-                      onClick={() => markItemSold(item.id)}
-                      className="flex items-center gap-1 px-2 py-1 rounded bg-green-200/60 text-green-800 text-xs hover:bg-green-300/60 transition-colors"
-                    >
-                      <CheckCircle2 className="h-3 w-3" />
-                      标记售出
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      ) : (
-        <div className="text-center py-16 mb-6">
-          <ShoppingCart className="h-12 w-12 text-amber-700/50 mx-auto mb-4" />
-          <p className="text-amber-800/60">点击"查看所有物品"浏览交易物品</p>
-        </div>
-      )}
+    <div className="flex-1">
       {renderMessages()}
     </div>
   );
 
   const renderPartyChannel = () => (
-    <div className="max-w-4xl">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-lg font-bold text-amber-900">寻找队友</h2>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setShowPartiesList(!showPartiesList)}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-200/60 hover:bg-amber-300/60 text-sm text-amber-900 transition-all"
-          >
-            <Users className="h-4 w-4" />
-            {showPartiesList ? "隐藏列表" : "查看所有组队"}
-          </button>
-          <button
-            onClick={() => setShowPartyModal(true)}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white text-sm transition-all"
-          >
-            <Plus className="h-4 w-4" />
-            发布组队
-          </button>
-        </div>
-      </div>
-      {showPartiesList ? (
-        <div className="space-y-4 mb-6">
-          {parties.length === 0 ? (
-            <div className="text-center py-16">
-              <Users className="h-12 w-12 text-amber-700/50 mx-auto mb-4" />
-              <p className="text-amber-800/60">暂无组队，发布第一个吧！</p>
-            </div>
-          ) : (
-            parties.map((party) => (
-              <div key={party.id} className="bg-amber-100/60 border border-amber-300/60 rounded-xl p-4">
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <h3 className="font-bold text-amber-900 mb-1">{party.title}</h3>
-                    <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 bg-amber-300/40 text-amber-800 text-xs rounded border border-amber-400/30">
-                        {party.members.length + 1}/{party.maxCount} 人
-                      </span>
-                      {party.isFull && (
-                        <span className="px-2 py-0.5 bg-red-200/40 text-red-800 text-xs rounded border border-red-400/30">
-                          已满
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  {isOwner(party.authorId) && (
-                    <button
-                      onClick={() => closeParty(party.id)}
-                      className="text-xs text-amber-700/60 hover:text-red-600"
-                    >
-                      关闭组队
-                    </button>
-                  )}
-                </div>
-                <p className="text-sm text-amber-800/70 mb-4">{party.description}</p>
-                {party.members.length > 0 && (
-                  <div className="mb-4">
-                    <p className="text-xs text-amber-700/60 mb-2">队伍成员:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {party.character && (
-                        <div className="flex items-center gap-2 bg-amber-200/60 px-3 py-1.5 rounded-lg border border-amber-300/60">
-                          <div className="w-5 h-5 bg-gradient-to-br from-amber-500 to-amber-600 rounded-full flex items-center justify-center">
-                            <span className="text-xs font-bold text-white">{party.character.name[0]}</span>
-                          </div>
-                          <span className="text-sm font-medium text-amber-900">{party.character.name}</span>
-                        </div>
-                      )}
-                      {party.members.map((member) => (
-                        <div key={member.id} className="flex items-center gap-2 bg-amber-200/60 px-3 py-1.5 rounded-lg border border-amber-300/60">
-                          <div className="w-5 h-5 bg-gradient-to-br from-amber-500 to-amber-600 rounded-full flex items-center justify-center">
-                            <span className="text-xs font-bold text-white">{member.character.name[0]}</span>
-                          </div>
-                          <span className="text-sm font-medium text-amber-900">{member.character.name}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                <div className="flex items-center justify-between">
-                  <div className="text-xs text-amber-700/60">
-                    {formatDate(party.createdAt)}
-                  </div>
-                  {!party.isFull && !isOwner(party.authorId) && (
-                    <button
-                      onClick={() => joinParty(party.id)}
-                      className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white text-sm transition-all"
-                    >
-                      加入队伍
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      ) : (
-        <div className="text-center py-16 mb-6">
-          <Users className="h-12 w-12 text-amber-700/50 mx-auto mb-4" />
-          <p className="text-amber-800/60">点击"查看所有组队"浏览组队信息</p>
-        </div>
-      )}
+    <div className="flex-1">
       {renderMessages()}
     </div>
   );
+
+  const renderRightSidebar = () => {
+    if (activeChannel === "玩家交易") {
+      return (
+        <aside className="w-1/4 bg-amber-100/60 border-l border-amber-200/60 flex flex-col">
+          <div className="p-4 border-b border-amber-200/60 flex justify-between items-center">
+            <p className="text-sm font-bold text-amber-900">物品列表</p>
+            <button
+              onClick={() => setShowItemModal(true)}
+              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white text-xs transition-all"
+            >
+              <Plus className="h-3 w-3" />
+              发布
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-3 space-y-3">
+            {items.length === 0 ? (
+              <div className="text-center py-8">
+                <ShoppingCart className="h-8 w-8 text-amber-700/40 mx-auto mb-2" />
+                <p className="text-xs text-amber-700/50">暂无物品</p>
+              </div>
+            ) : (
+              items.map((item) => (
+                <div key={item.id} className="bg-amber-50/80 border border-amber-300/60 rounded-xl p-3">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-bold text-amber-900 text-sm">{item.name}</h3>
+                    <div className="flex items-center gap-1 text-amber-600 font-bold text-xs">
+                      <Coins className="h-3 w-3" />
+                      <span>{Number(item.price).toFixed(2)}</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-amber-800/70 mb-3 line-clamp-2">{item.description}</p>
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs text-amber-700/60">
+                      {item.character && <span>{item.character.name}</span>}
+                    </div>
+                    {isOwner(item.authorId) && (
+                      <button
+                        onClick={() => markItemSold(item.id)}
+                        className="flex items-center gap-1 px-2 py-1 rounded bg-green-200/60 text-green-800 text-xs hover:bg-green-300/60 transition-colors"
+                      >
+                        <CheckCircle2 className="h-3 w-3" />
+                        售出
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </aside>
+      );
+    } else if (activeChannel === "寻找队友") {
+      return (
+        <aside className="w-1/4 bg-amber-100/60 border-l border-amber-200/60 flex flex-col">
+          <div className="p-4 border-b border-amber-200/60 flex justify-between items-center">
+            <p className="text-sm font-bold text-amber-900">组队列表</p>
+            <button
+              onClick={() => setShowPartyModal(true)}
+              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white text-xs transition-all"
+            >
+              <Plus className="h-3 w-3" />
+              发布
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-3 space-y-3">
+            {parties.length === 0 ? (
+              <div className="text-center py-8">
+                <Users className="h-8 w-8 text-amber-700/40 mx-auto mb-2" />
+                <p className="text-xs text-amber-700/50">暂无组队</p>
+              </div>
+            ) : (
+              parties.map((party) => (
+                <div key={party.id} className="bg-amber-50/80 border border-amber-300/60 rounded-xl p-3">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h3 className="font-bold text-amber-900 text-sm">{party.title}</h3>
+                      <div className="flex items-center gap-1 mt-1">
+                        <span className="px-1.5 py-0.5 bg-amber-300/40 text-amber-800 text-xs rounded">
+                          {party.members.length + 1}/{party.maxCount}
+                        </span>
+                        {party.isFull && (
+                          <span className="px-1.5 py-0.5 bg-red-200/40 text-red-800 text-xs rounded">
+                            已满
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {isOwner(party.authorId) && (
+                      <button
+                        onClick={() => closeParty(party.id)}
+                        className="text-xs text-amber-700/60 hover:text-red-600"
+                      >
+                        关闭
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-xs text-amber-800/70 mb-3 line-clamp-2">{party.description}</p>
+                  {party.members.length > 0 && (
+                    <div className="mb-3">
+                      <p className="text-xs text-amber-700/60 mb-1">成员:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {party.character && (
+                          <span className="px-2 py-0.5 bg-amber-200/60 text-amber-900 text-xs rounded">
+                            {party.character.name}
+                          </span>
+                        )}
+                        {party.members.map((member) => (
+                          <span key={member.id} className="px-2 py-0.5 bg-amber-200/60 text-amber-900 text-xs rounded">
+                            {member.character.name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {!party.isFull && !isOwner(party.authorId) && (
+                    <div>
+                      {joiningParty === party.id ? (
+                        <div className="space-y-2">
+                          <select
+                            className="w-full bg-amber-100/60 border border-amber-300/60 rounded-lg px-2 py-1.5 text-xs text-amber-900"
+                            onChange={(e) => {
+                              const char = characters.find(c => c.id === e.target.value);
+                              if (char) setSelectedCharacter(char);
+                            }}
+                            defaultValue={selectedCharacter?.id || ""}
+                          >
+                            <option value="">选择角色...</option>
+                            {characters.map(char => (
+                              <option key={char.id} value={char.id}>{char.name}</option>
+                            ))}
+                          </select>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => {
+                                if (selectedCharacter) {
+                                  joinParty(party.id);
+                                }
+                                setJoiningParty(null);
+                              }}
+                              disabled={!selectedCharacter}
+                              className="flex-1 px-2 py-1 rounded-lg bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 disabled:opacity-50 text-white text-xs transition-all"
+                            >
+                              确认加入
+                            </button>
+                            <button
+                              onClick={() => setJoiningParty(null)}
+                              className="px-2 py-1 rounded-lg bg-amber-200/60 hover:bg-amber-300/60 text-amber-800 text-xs transition-all"
+                            >
+                              取消
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setJoiningParty(party.id)}
+                          className="w-full px-2 py-1.5 rounded-lg bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white text-xs transition-all"
+                        >
+                          加入队伍
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </aside>
+      );
+    }
+    return null;
+  };
 
   return (
     <div className="min-h-screen bg-amber-50 text-amber-900 flex flex-col">
@@ -681,61 +689,64 @@ export default function ChatRoom({ node, onBack }: ChatRoomProps) {
           </div>
         </aside>
 
-        <main className="flex-1 flex flex-col bg-amber-50">
-          <div className="flex-1 overflow-y-auto p-4">
-            {isLoading ? (
-              <div className="flex items-center justify-center h-full">
-                <p className="text-amber-700/60">加载中...</p>
-              </div>
-            ) : activeChannel === "日常RP" ? (
-              renderMessages()
-            ) : activeChannel === "玩家交易" ? (
-              renderTradingChannel()
-            ) : (
-              renderPartyChannel()
-            )}
-          </div>
+        <main className="flex-1 flex bg-amber-50">
+          <div className="flex-1 flex flex-col">
+            <div className="flex-1 overflow-y-auto p-4">
+              {isLoading ? (
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-amber-700/60">加载中...</p>
+                </div>
+              ) : activeChannel === "日常RP" ? (
+                renderMessages()
+              ) : activeChannel === "玩家交易" ? (
+                renderTradingChannel()
+              ) : (
+                renderPartyChannel()
+              )}
+            </div>
 
-          <div className="border-t border-amber-200/60 p-4">
-            {replyingTo && (
-              <div className="mb-3 flex items-center gap-2 bg-amber-200/60 rounded-lg px-3 py-2">
-                <Reply className="h-4 w-4 text-amber-700/60" />
-                <span className="text-sm text-amber-800/70">
-                  回复 {replyingTo.character?.name || replyingTo.author.username}
-                </span>
+            <div className="border-t border-amber-200/60 p-4">
+              {replyingTo && (
+                <div className="mb-3 flex items-center gap-2 bg-amber-200/60 rounded-lg px-3 py-2">
+                  <Reply className="h-4 w-4 text-amber-700/60" />
+                  <span className="text-sm text-amber-800/70">
+                    回复 {replyingTo.character?.name || replyingTo.author.username}
+                  </span>
+                  <button
+                    onClick={() => setReplyingTo(null)}
+                    className="ml-auto text-amber-700/60 hover:text-amber-800"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+              <div className="flex gap-3">
+                <div className="flex-1 relative">
+                  <textarea
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        sendMessage();
+                      }
+                    }}
+                    placeholder={`在 #${activeChannel} 中发言...`}
+                    className="w-full bg-amber-100/60 border border-amber-300/60 rounded-xl px-4 py-3 text-amber-900 placeholder-amber-700/50 focus:outline-none focus:border-amber-500/60 focus:ring-2 focus:ring-amber-500/20 resize-none"
+                    rows={1}
+                  />
+                </div>
                 <button
-                  onClick={() => setReplyingTo(null)}
-                  className="ml-auto text-amber-700/60 hover:text-amber-800"
+                  onClick={sendMessage}
+                  disabled={!inputValue.trim()}
+                  className="px-4 py-3 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 disabled:opacity-50 disabled:cursor-not-allowed text-white transition-all"
                 >
-                  <X className="h-4 w-4" />
+                  <Send className="h-5 w-5" />
                 </button>
               </div>
-            )}
-            <div className="flex gap-3">
-              <div className="flex-1 relative">
-                <textarea
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      sendMessage();
-                    }
-                  }}
-                  placeholder={`在 #${activeChannel} 中发言...`}
-                  className="w-full bg-amber-100/60 border border-amber-300/60 rounded-xl px-4 py-3 text-amber-900 placeholder-amber-700/50 focus:outline-none focus:border-amber-500/60 focus:ring-2 focus:ring-amber-500/20 resize-none"
-                  rows={1}
-                />
-              </div>
-              <button
-                onClick={sendMessage}
-                disabled={!inputValue.trim()}
-                className="px-4 py-3 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 disabled:opacity-50 disabled:cursor-not-allowed text-white transition-all"
-              >
-                <Send className="h-5 w-5" />
-              </button>
             </div>
           </div>
+          {renderRightSidebar()}
         </main>
       </div>
 
