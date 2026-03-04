@@ -6,7 +6,7 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Plus, ArrowLeft, Tag, X, Edit2, Trash2, Search, Clock, Trash, Star, User } from "lucide-react";
+import { MessageSquare, Plus, ArrowLeft, Tag, X, Edit2, Trash2, Search, Clock, Trash, Star, User, MapPin } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useApp } from "@/contexts/AppContext";
@@ -22,11 +22,19 @@ interface Post {
   author: { id: string; username: string; nickname: string | null };
   characterId: string | null;
   character: { id: string; name: string } | null;
+  nodeId: string | null;
+  node: { id: string; label: string; type: string } | null;
   createdAt: string;
   updatedAt: string;
   honor: number;
   gold: number;
   reputation: number;
+}
+
+interface Stronghold {
+  id: string;
+  label: string;
+  type: string;
 }
 
 const tagColors = {
@@ -45,10 +53,11 @@ export default function BoardPage() {
   const { user } = useAuth();
   const { isClient } = useApp();
   const [posts, setPosts] = useState<Post[]>([]);
+  const [strongholds, setStrongholds] = useState<Stronghold[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
-  const [newPost, setNewPost] = useState({ title: "", content: "", tag: "杂谈" as "DM悬赏" | "杂谈" | "跑团战报", honor: 0, gold: 0, reputation: 0 });
+  const [newPost, setNewPost] = useState({ title: "", content: "", tag: "杂谈" as "DM悬赏" | "杂谈" | "跑团战报", honor: 0, gold: 0, reputation: 0, nodeId: "" });
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchHistory, setSearchHistory] = useState<string[]>(() => {
@@ -57,7 +66,20 @@ export default function BoardPage() {
 
   useEffect(() => {
     loadPosts();
+    loadStrongholds();
   }, []);
+
+  const loadStrongholds = async () => {
+    try {
+      const response = await fetch("/api/chat/strongholds");
+      if (response.ok) {
+        const data = await response.json();
+        setStrongholds(data);
+      }
+    } catch (error) {
+      console.error("Failed to load strongholds:", error);
+    }
+  };
 
   const loadPosts = async () => {
     try {
@@ -86,6 +108,7 @@ export default function BoardPage() {
           tag: newPost.tag,
           authorId: user.id,
           characterId: null,
+          nodeId: newPost.nodeId || null,
           honor: newPost.honor,
           gold: newPost.gold,
           reputation: newPost.reputation
@@ -94,7 +117,7 @@ export default function BoardPage() {
       if (response.ok) {
         const createdPost = await response.json();
         setPosts([createdPost, ...posts]);
-        setNewPost({ title: "", content: "", tag: "杂谈", honor: 0, gold: 0, reputation: 0 });
+        setNewPost({ title: "", content: "", tag: "杂谈", honor: 0, gold: 0, reputation: 0, nodeId: "" });
         setShowCreateModal(false);
       }
     } catch (error) {
@@ -114,6 +137,7 @@ export default function BoardPage() {
           content: newPost.content,
           tag: newPost.tag,
           characterId: null,
+          nodeId: newPost.nodeId || null,
           honor: newPost.honor,
           gold: newPost.gold,
           reputation: newPost.reputation
@@ -123,7 +147,7 @@ export default function BoardPage() {
         const updatedPost = await response.json();
         setPosts(posts.map(p => p.id === editingPost.id ? updatedPost : p));
         setEditingPost(null);
-        setNewPost({ title: "", content: "", tag: "杂谈", honor: 0, gold: 0, reputation: 0 });
+        setNewPost({ title: "", content: "", tag: "杂谈", honor: 0, gold: 0, reputation: 0, nodeId: "" });
       }
     } catch (error) {
       console.error("Failed to edit post:", error);
@@ -155,7 +179,8 @@ export default function BoardPage() {
       tag: displayTag as any,
       honor: post.honor || 0,
       gold: post.gold || 0,
-      reputation: post.reputation || 0
+      reputation: post.reputation || 0,
+      nodeId: post.nodeId || ""
     });
   };
 
@@ -312,6 +337,21 @@ export default function BoardPage() {
                       />
                     </div>
                   </div>
+                  <div className="mt-3">
+                    <label className="block text-xs text-zinc-400 mb-2">关联据点（可选）</label>
+                    <select 
+                      className="w-full bg-zinc-800/60 border border-zinc-700/50 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 backdrop-blur-sm transition-all"
+                      value={newPost.nodeId}
+                      onChange={(e) => setNewPost({ ...newPost, nodeId: e.target.value })}
+                    >
+                      <option value="">不关联据点</option>
+                      {strongholds.map((stronghold) => (
+                        <option key={stronghold.id} value={stronghold.id}>
+                          {stronghold.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               )}
               <div>
@@ -400,6 +440,21 @@ export default function BoardPage() {
                         onChange={(e) => setNewPost({ ...newPost, reputation: parseInt(e.target.value) || 0 })}
                       />
                     </div>
+                  </div>
+                  <div className="mt-3">
+                    <label className="block text-xs text-zinc-400 mb-2">关联据点（可选）</label>
+                    <select 
+                      className="w-full bg-zinc-800/60 border border-zinc-700/50 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 backdrop-blur-sm transition-all"
+                      value={newPost.nodeId}
+                      onChange={(e) => setNewPost({ ...newPost, nodeId: e.target.value })}
+                    >
+                      <option value="">不关联据点</option>
+                      {strongholds.map((stronghold) => (
+                        <option key={stronghold.id} value={stronghold.id}>
+                          {stronghold.label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               )}
@@ -552,7 +607,7 @@ export default function BoardPage() {
                     <CardContent className="p-6">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-3 mb-3">
+                          <div className="flex items-center gap-3 mb-3 flex-wrap">
                             <span
                               className={`px-3 py-1 rounded-xl text-xs font-medium border ${tagColors[post.tag]}`}
                             >
@@ -560,10 +615,18 @@ export default function BoardPage() {
                               {displayTag}
                             </span>
                             {displayTag === "DM悬赏" && (
-                              <span className="px-3 py-1 bg-amber-900/40 text-amber-300 border border-amber-800/50 rounded-xl text-xs font-medium flex items-center gap-2">
-                                <Star className="h-3 w-3" />
-                                奖励: 荣誉 {post.honor || 0} | 金币 {post.gold || 0} | 声望 {post.reputation || 0}
-                              </span>
+                              <>
+                                <span className="px-3 py-1 bg-amber-900/40 text-amber-300 border border-amber-800/50 rounded-xl text-xs font-medium flex items-center gap-2">
+                                  <Star className="h-3 w-3" />
+                                  奖励: 荣誉 {post.honor || 0} | 金币 {post.gold || 0} | 声望 {post.reputation || 0}
+                                </span>
+                                {post.node && (
+                                  <span className="px-3 py-1 bg-emerald-900/40 text-emerald-300 border border-emerald-800/50 rounded-xl text-xs font-medium flex items-center gap-2">
+                                    <MapPin className="h-3 w-3" />
+                                    {post.node.label}
+                                  </span>
+                                )}
+                              </>
                             )}
                           </div>
                           <Link href={`/board/${post.id}`} className="block hover:bg-zinc-800/50 transition-colors -mx-2 -my-2 px-2 py-2 rounded-xl">

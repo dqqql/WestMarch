@@ -27,6 +27,9 @@ export class PostRepository {
         },
         character: {
           select: { id: true, name: true }
+        },
+        node: {
+          select: { id: true, label: true, type: true }
         }
       }
     });
@@ -44,15 +47,22 @@ export class PostRepository {
         },
         character: {
           select: { id: true, name: true }
+        },
+        node: {
+          select: { id: true, label: true, type: true }
         }
       }
     });
     return post ? processPostWithAuthor(post) : null;
   }
 
-  async create(data: { title: string; content: string; tag: PostTag; authorId: string; characterId?: string | null; honor?: number; gold?: number; reputation?: number }) {
+  async create(data: { title: string; content: string; tag: PostTag; authorId: string; characterId?: string | null; nodeId?: string | null; honor?: number; gold?: number; reputation?: number }) {
+    const { nodeId, ...rest } = data;
     const post = await prisma.post.create({
-      data,
+      data: {
+        ...rest,
+        nodeId: nodeId || null
+      },
       include: {
         author: {
           include: {
@@ -61,16 +71,23 @@ export class PostRepository {
         },
         character: {
           select: { id: true, name: true }
+        },
+        node: {
+          select: { id: true, label: true, type: true }
         }
       }
     });
     return processPostWithAuthor(post);
   }
 
-  async update(id: string, data: { title?: string; content?: string; tag?: PostTag; characterId?: string | null; honor?: number; gold?: number; reputation?: number }) {
+  async update(id: string, data: { title?: string; content?: string; tag?: PostTag; characterId?: string | null; nodeId?: string | null; honor?: number; gold?: number; reputation?: number }) {
+    const { nodeId, ...rest } = data;
     const post = await prisma.post.update({
       where: { id },
-      data,
+      data: {
+        ...rest,
+        nodeId: nodeId === undefined ? undefined : (nodeId || null)
+      },
       include: {
         author: {
           include: {
@@ -79,6 +96,9 @@ export class PostRepository {
         },
         character: {
           select: { id: true, name: true }
+        },
+        node: {
+          select: { id: true, label: true, type: true }
         }
       }
     });

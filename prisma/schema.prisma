@@ -78,6 +78,8 @@ model Post {
   author      User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
   characterId String?
   character   Character? @relation(fields: [characterId], references: [id])
+  nodeId      String?
+  node        MapNode?   @relation(fields: [nodeId], references: [id], onDelete: SetNull)
   honor       Int        @default(0)
   gold        Int        @default(0)
   reputation  Int        @default(0)
@@ -115,6 +117,7 @@ model MapNode {
   chatMessages  ChatMessage[]
   itemCards     ItemCard[]
   partyCards    PartyCard[]
+  posts         Post[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 }

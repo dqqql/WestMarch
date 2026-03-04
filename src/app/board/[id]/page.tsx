@@ -2,7 +2,7 @@
 
 import { useState, useEffect, use } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Tag, Edit2, Trash2, User } from "lucide-react";
+import { ArrowLeft, Tag, Edit2, Trash2, User, MapPin } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useApp } from "@/contexts/AppContext";
@@ -18,6 +18,8 @@ interface Post {
   author: { id: string; username: string; nickname: string | null; avatar: string | null };
   characterId: string | null;
   character: { id: string; name: string } | null;
+  nodeId: string | null;
+  node: { id: string; label: string; type: string } | null;
   createdAt: string;
   updatedAt: string;
   honor: number;
@@ -42,6 +44,7 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
   const { isClient } = useApp();
   const { id } = use(params);
   const [post, setPost] = useState<Post | null>(null);
+  const [strongholds, setStrongholds] = useState<{ id: string; label: string; type: string }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState("");
@@ -50,10 +53,24 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
   const [editHonor, setEditHonor] = useState(0);
   const [editGold, setEditGold] = useState(0);
   const [editReputation, setEditReputation] = useState(0);
+  const [editNodeId, setEditNodeId] = useState("");
 
   useEffect(() => {
     loadPost();
+    loadStrongholds();
   }, [id]);
+
+  const loadStrongholds = async () => {
+    try {
+      const response = await fetch("/api/chat/strongholds");
+      if (response.ok) {
+        const data = await response.json();
+        setStrongholds(data);
+      }
+    } catch (error) {
+      console.error("Failed to load strongholds:", error);
+    }
+  };
 
   const loadPost = async () => {
     try {
@@ -69,6 +86,7 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
         setEditHonor(data.honor || 0);
         setEditGold(data.gold || 0);
         setEditReputation(data.reputation || 0);
+        setEditNodeId(data.nodeId || "");
       }
     } catch (error) {
       console.error("Failed to load post:", error);
@@ -88,6 +106,7 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
           content: editContent,
           tag: editTag,
           characterId: null,
+          nodeId: editNodeId || null,
           honor: editHonor,
           gold: editGold,
           reputation: editReputation
@@ -225,6 +244,21 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
                       />
                     </div>
                   </div>
+                  <div className="mt-3">
+                    <label className="block text-xs text-zinc-400 mb-1">关联据点（可选）</label>
+                    <select 
+                      className="w-full bg-zinc-700 border border-zinc-600 rounded px-3 py-2 text-white"
+                      value={editNodeId}
+                      onChange={(e) => setEditNodeId(e.target.value)}
+                    >
+                      <option value="">不关联据点</option>
+                      {strongholds.map((stronghold) => (
+                        <option key={stronghold.id} value={stronghold.id}>
+                          {stronghold.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               )}
               <div>
@@ -285,15 +319,23 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
         <div className="max-w-3xl mx-auto">
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
             <div className="p-6">
-              <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center gap-3 mb-4 flex-wrap">
                 <span className={`px-2 py-1 rounded text-xs font-medium border ${tagColors[post.tag]}`}>
                   <Tag className="h-3 w-3 inline mr-1" />
                   {displayTag}
                 </span>
                 {displayTag === "DM悬赏" && (
-                  <span className="px-2 py-1 bg-amber-900/50 text-amber-300 border border-amber-800 rounded text-xs font-medium">
-                    奖励: 荣誉 {post.honor || 0} | 金币 {post.gold || 0} | 声望 {post.reputation || 0}
-                  </span>
+                  <>
+                    <span className="px-2 py-1 bg-amber-900/50 text-amber-300 border border-amber-800 rounded text-xs font-medium">
+                      奖励: 荣誉 {post.honor || 0} | 金币 {post.gold || 0} | 声望 {post.reputation || 0}
+                    </span>
+                    {post.node && (
+                      <span className="px-2 py-1 bg-emerald-900/50 text-emerald-300 border border-emerald-800 rounded text-xs font-medium flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        {post.node.label}
+                      </span>
+                    )}
+                  </>
                 )}
               </div>
               <h1 className="text-2xl font-bold mb-4 text-zinc-100">
