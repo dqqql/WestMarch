@@ -21,62 +21,69 @@ enum MapNodeType {
 }
 
 model User {
-  id          String              @id @default(cuid())
-  username    String              @unique
-  password    String
-  isDM        Boolean             @default(false)
-  nickname    String?
-  avatar      String?
-  characters  Character[]
-  posts       Post[]
-  parties     Party[]
-  resources   ResourceImage[]
-  settings    UserSetting[]
-  planes      Plane[]
+  id             String              @id @default(cuid())
+  username       String              @unique
+  password       String
+  isDM           Boolean             @default(false)
+  nickname       String?
+  avatar         String?
+  characters     Character[]
+  posts          Post[]
+  parties        Party[]
+  resources      ResourceImage[]
+  settings       UserSetting[]
+  planes         Plane[]
   planeSelection UserPlaneSelection?
-  comments    Comment[]
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
+  comments       Comment[]
+  chatMessages   ChatMessage[]
+  itemCards      ItemCard[]
+  partyCards     PartyCard[]
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
 }
 
 model Character {
-  id             String        @id @default(cuid())
-  name           String
-  race           String
-  class          String
-  img            String?
-  str            Int?
-  dex            Int?
-  con            Int?
-  int            Int?
-  wis            Int?
-  cha            Int?
-  bio            String?
-  fullBio        String?
-  userId         String
-  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  posts          Post[]
-  parties        Party[]
-  partyMembers   PartyMember[]
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  id               String            @id @default(cuid())
+  name             String
+  race             String
+  class            String
+  img              String?
+  str              Int?
+  dex              Int?
+  con              Int?
+  int              Int?
+  wis              Int?
+  cha              Int?
+  bio              String?
+  fullBio          String?
+  userId           String
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  posts            Post[]
+  parties          Party[]
+  partyMembers     PartyMember[]
+  chatMessages     ChatMessage[]
+  itemCards        ItemCard[]
+  partyCards       PartyCard[]
+  partyCardMembers PartyCardMember[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 }
 
 model Post {
-  id          String    @id @default(cuid())
+  id          String     @id @default(cuid())
   title       String
   content     String
   tag         PostTag
   authorId    String
-  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  author      User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
   characterId String?
-  character   Character?  @relation(fields: [characterId], references: [id])
-  honor       Int       @default(0)
-  gold        Int       @default(0)
-  reputation  Int       @default(0)
+  character   Character? @relation(fields: [characterId], references: [id])
+  honor       Int        @default(0)
+  gold        Int        @default(0)
+  reputation  Int        @default(0)
   comments    Comment[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 }
 
 model Comment {
@@ -91,22 +98,25 @@ model Comment {
 }
 
 model MapNode {
-  id          String     @id @default(cuid())
-  label       String
-  type        MapNodeType
-  hexQ        Int        @default(0) // 蜂巢格轴坐标 Q
-  hexR        Int        @default(0) // 蜂巢格轴坐标 R
-  hexS        Int        @default(0) // 蜂巢格轴坐标 S (计算用)
-  description String?
-  planeId     String?
-  plane       Plane?     @relation(fields: [planeId], references: [id], onDelete: Cascade)
-  events      MapEvent[]
-  characters  MapCharacter[]
-  facilities  MapFacility[]
-  edgesAsSource MapEdge[] @relation("source")
-  edgesAsTarget MapEdge[] @relation("target")
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id            String         @id @default(cuid())
+  label         String
+  type          MapNodeType
+  hexQ          Int            @default(0) // 蜂巢格轴坐标 Q
+  hexR          Int            @default(0) // 蜂巢格轴坐标 R
+  hexS          Int            @default(0) // 蜂巢格轴坐标 S (计算用)
+  description   String?
+  planeId       String?
+  plane         Plane?         @relation(fields: [planeId], references: [id], onDelete: Cascade)
+  events        MapEvent[]
+  characters    MapCharacter[]
+  facilities    MapFacility[]
+  edgesAsSource MapEdge[]      @relation("source")
+  edgesAsTarget MapEdge[]      @relation("target")
+  chatMessages  ChatMessage[]
+  itemCards     ItemCard[]
+  partyCards    PartyCard[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 model MapEdge {
@@ -116,9 +126,9 @@ model MapEdge {
   targetId  String
   target    MapNode  @relation("target", fields: [targetId], references: [id], onDelete: Cascade)
   planeId   String?
-  plane     Plane?    @relation(fields: [planeId], references: [id], onDelete: Cascade)
+  plane     Plane?   @relation(fields: [planeId], references: [id], onDelete: Cascade)
   pathStyle String   @default("车辙") // 通路样式：车辙、石板路、桥梁等
-  color     String?  // 通路颜色
+  color     String? // 通路颜色
   width     Int      @default(2) // 通路宽度
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -130,7 +140,7 @@ model MapEvent {
   node        MapNode  @relation(fields: [nodeId], references: [id], onDelete: Cascade)
   title       String
   description String?
-  tags        String?  // 逗号分隔的标签
+  tags        String? // 逗号分隔的标签
   order       Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -142,7 +152,7 @@ model MapCharacter {
   node        MapNode  @relation(fields: [nodeId], references: [id], onDelete: Cascade)
   name        String
   description String?
-  role        String?  // 角色：NPC、商人、守卫等
+  role        String? // 角色：NPC、商人、守卫等
   avatar      String?
   order       Int      @default(0)
   createdAt   DateTime @default(now())
@@ -155,7 +165,7 @@ model MapFacility {
   node        MapNode  @relation(fields: [nodeId], references: [id], onDelete: Cascade)
   name        String
   description String?
-  type        String?  // 设施类型：商店、酒馆、教堂等
+  type        String? // 设施类型：商店、酒馆、教堂等
   order       Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -173,14 +183,14 @@ model ResourceImage {
 }
 
 model Document {
-  id          String   @id @default(cuid())
-  title       String
-  content     String
-  category    String
-  author      String
-  isPinned    Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  category  String
+  author    String
+  isPinned  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model UserSetting {
@@ -192,23 +202,23 @@ model UserSetting {
   sessionHistory Json?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
-  
+
   @@unique([userId])
 }
 
 model Party {
-  id               String        @id @default(cuid())
-  title            String
-  content          String
-  authorId         String
-  author           User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  characterId      String?
-  character        Character?    @relation(fields: [characterId], references: [id])
-  maxCount         Int           @default(4)
-  nextSessionTime  DateTime?
-  members          PartyMember[]
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  id              String        @id @default(cuid())
+  title           String
+  content         String
+  authorId        String
+  author          User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  characterId     String?
+  character       Character?    @relation(fields: [characterId], references: [id])
+  maxCount        Int           @default(4)
+  nextSessionTime DateTime?
+  members         PartyMember[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 }
 
 model PartyMember {
@@ -218,29 +228,29 @@ model PartyMember {
   characterId String
   character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
   joinedAt    DateTime  @default(now())
-  
+
   @@unique([partyId, characterId])
 }
 
 model SystemSetting {
-  id          String   @id @default(cuid())
-  key         String   @unique
-  value       String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Plane {
-  id                String               @id @default(cuid())
-  name              String
-  radius            Int                  @default(10)
-  creatorId         String
-  creator           User                 @relation(fields: [creatorId], references: [id], onDelete: Cascade)
-  nodes             MapNode[]
-  edges             MapEdge[]
-  userSelections    UserPlaneSelection[] @relation("UserPlaneSelection")
-  createdAt         DateTime             @default(now())
-  updatedAt         DateTime             @updatedAt
+  id             String               @id @default(cuid())
+  name           String
+  radius         Int                  @default(10)
+  creatorId      String
+  creator        User                 @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  nodes          MapNode[]
+  edges          MapEdge[]
+  userSelections UserPlaneSelection[] @relation("UserPlaneSelection")
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
 }
 
 model UserPlaneSelection {
@@ -251,7 +261,7 @@ model UserPlaneSelection {
   plane     Plane    @relation("UserPlaneSelection", fields: [planeId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@unique([userId])
 }
 
@@ -265,6 +275,84 @@ enum WeatherType {
   FOG
   SANDSTORM
   THUNDERSTORM
+}
+
+enum ChatChannelType {
+  日常RP
+  玩家交易
+  寻找队友
+}
+
+model ChatMessage {
+  id          String          @id @default(cuid())
+  nodeId      String
+  node        MapNode         @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  channelType ChatChannelType
+  content     String
+  authorId    String
+  author      User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  characterId String?
+  character   Character?      @relation(fields: [characterId], references: [id])
+  isDeleted   Boolean         @default(false)
+  deletedAt   DateTime?
+  replyToId   String?
+  replyTo     ChatMessage?    @relation("MessageReply", fields: [replyToId], references: [id])
+  replies     ChatMessage[]   @relation("MessageReply")
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([nodeId, channelType])
+}
+
+model ItemCard {
+  id          String     @id @default(cuid())
+  nodeId      String
+  node        MapNode    @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  name        String
+  description String
+  price       Decimal
+  authorId    String
+  author      User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  characterId String?
+  character   Character? @relation(fields: [characterId], references: [id])
+  isSold      Boolean    @default(false)
+  soldAt      DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([nodeId])
+}
+
+model PartyCard {
+  id          String            @id @default(cuid())
+  nodeId      String
+  node        MapNode           @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  title       String
+  description String
+  maxCount    Int               @default(4)
+  authorId    String
+  author      User              @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  characterId String?
+  character   Character?        @relation(fields: [characterId], references: [id])
+  members     PartyCardMember[]
+  isFull      Boolean           @default(false)
+  isClosed    Boolean           @default(false)
+  closedAt    DateTime?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([nodeId])
+}
+
+model PartyCardMember {
+  id          String    @id @default(cuid())
+  partyCardId String
+  partyCard   PartyCard @relation(fields: [partyCardId], references: [id], onDelete: Cascade)
+  characterId String
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  joinedAt    DateTime  @default(now())
+
+  @@unique([partyCardId, characterId])
 }
 
 model WeatherRecord {

@@ -9,6 +9,7 @@ import { SettingsRepository } from './SettingsRepository';
 import { SystemSettingRepository } from './SystemSettingRepository';
 import { CommentRepository } from './CommentRepository';
 import { WeatherRepository } from './WeatherRepository';
+import { ChatRepository } from './ChatRepository';
 
 export const repositories = {
   user: new UserRepository(),
@@ -21,5 +22,6 @@ export const repositories = {
   settings: new SettingsRepository(),
   systemSetting: new SystemSettingRepository(),
   comment: new CommentRepository(),
-  weather: new WeatherRepository()
+  weather: new WeatherRepository(),
+  chat: new ChatRepository()
 };
