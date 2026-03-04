@@ -94,7 +94,7 @@ export default function ChatRoom({ node, onBack }: ChatRoomProps) {
   const [showItemModal, setShowItemModal] = useState(false);
   const [showPartyModal, setShowPartyModal] = useState(false);
   const [itemForm, setItemForm] = useState({ name: "", description: "", price: "" });
-  const [partyForm, setPartyForm] = useState({ title: "", description: "", maxCount: "4" });
+  const [partyForm, setPartyForm] = useState({ title: "", description: "", maxCount: "4", characterId: "" });
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   const [joiningParty, setJoiningParty] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -273,7 +273,7 @@ export default function ChatRoom({ node, onBack }: ChatRoomProps) {
   };
 
   const createParty = async () => {
-    if (!partyForm.title || !partyForm.description || !partyForm.maxCount || !user) return;
+    if (!partyForm.title || !partyForm.description || !partyForm.maxCount || !partyForm.characterId || !user) return;
 
     try {
       const response = await fetch(`/api/chat/${node.id}/parties`, {
@@ -284,7 +284,7 @@ export default function ChatRoom({ node, onBack }: ChatRoomProps) {
           description: partyForm.description,
           maxCount: partyForm.maxCount,
           authorId: user.id,
-          characterId: selectedCharacter?.id || null
+          characterId: partyForm.characterId
         }),
       });
 
@@ -292,7 +292,7 @@ export default function ChatRoom({ node, onBack }: ChatRoomProps) {
         const newParty = await response.json();
         setParties([newParty, ...parties]);
         setShowPartyModal(false);
-        setPartyForm({ title: "", description: "", maxCount: "4" });
+        setPartyForm({ title: "", description: "", maxCount: "4", characterId: "" });
       }
     } catch (error) {
       console.error("Failed to create party:", error);
@@ -493,6 +493,11 @@ export default function ChatRoom({ node, onBack }: ChatRoomProps) {
         </aside>
       );
     } else if (activeChannel === "寻找队友") {
+      const isCharacterInParty = (party: PartyCard, charId: string) => {
+        if (party.character?.id === charId) return true;
+        return party.members.some(m => m.character.id === charId);
+      };
+
       return (
         <aside className="w-1/4 bg-amber-100/60 border-l border-amber-200/60 flex flex-col">
           <div className="p-4 border-b border-amber-200/60 flex justify-between items-center">
@@ -515,9 +520,9 @@ export default function ChatRoom({ node, onBack }: ChatRoomProps) {
               parties.map((party) => (
                 <div key={party.id} className="bg-amber-50/80 border border-amber-300/60 rounded-xl p-3">
                   <div className="flex justify-between items-start mb-2">
-                    <div>
+                    <div className="flex-1">
                       <h3 className="font-bold text-amber-900 text-sm">{party.title}</h3>
-                      <div className="flex items-center gap-1 mt-1">
+                      <div className="flex items-center gap-2 mt-1">
                         <span className="px-1.5 py-0.5 bg-amber-300/40 text-amber-800 text-xs rounded">
                           {party.members.length + 1}/{party.maxCount}
                         </span>
@@ -527,6 +532,11 @@ export default function ChatRoom({ node, onBack }: ChatRoomProps) {
                           </span>
                         )}
                       </div>
+                      {party.character && (
+                        <p className="text-xs text-amber-700/60 mt-1">
+                          发布人: {party.character.name}
+                        </p>
+                      )}
                     </div>
                     {isOwner(party.authorId) && (
                       <button
@@ -538,24 +548,22 @@ export default function ChatRoom({ node, onBack }: ChatRoomProps) {
                     )}
                   </div>
                   <p className="text-xs text-amber-800/70 mb-3 line-clamp-2">{party.description}</p>
-                  {party.members.length > 0 && (
-                    <div className="mb-3">
-                      <p className="text-xs text-amber-700/60 mb-1">成员:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {party.character && (
-                          <span className="px-2 py-0.5 bg-amber-200/60 text-amber-900 text-xs rounded">
-                            {party.character.name}
-                          </span>
-                        )}
-                        {party.members.map((member) => (
-                          <span key={member.id} className="px-2 py-0.5 bg-amber-200/60 text-amber-900 text-xs rounded">
-                            {member.character.name}
-                          </span>
-                        ))}
-                      </div>
+                  <div className="mb-3">
+                    <p className="text-xs text-amber-700/60 mb-1">成员:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {party.character && (
+                        <span className="px-2 py-0.5 bg-amber-200/60 text-amber-900 text-xs rounded">
+                          {party.character.name}
+                        </span>
+                      )}
+                      {party.members.map((member) => (
+                        <span key={member.id} className="px-2 py-0.5 bg-amber-200/60 text-amber-900 text-xs rounded">
+                          {member.character.name}
+                        </span>
+                      ))}
                     </div>
-                  )}
-                  {!party.isFull && !isOwner(party.authorId) && (
+                  </div>
+                  {!party.isFull && (
                     <div>
                       {joiningParty === party.id ? (
                         <div className="space-y-2">
@@ -565,22 +573,29 @@ export default function ChatRoom({ node, onBack }: ChatRoomProps) {
                               const char = characters.find(c => c.id === e.target.value);
                               if (char) setSelectedCharacter(char);
                             }}
-                            defaultValue={selectedCharacter?.id || ""}
+                            value={selectedCharacter?.id || ""}
                           >
                             <option value="">选择角色...</option>
                             {characters.map(char => (
-                              <option key={char.id} value={char.id}>{char.name}</option>
+                              <option 
+                                key={char.id} 
+                                value={char.id}
+                                disabled={isCharacterInParty(party, char.id)}
+                                className={isCharacterInParty(party, char.id) ? "text-gray-400" : ""}
+                              >
+                                {char.name} {isCharacterInParty(party, char.id) ? "(已加入)" : ""}
+                              </option>
                             ))}
                           </select>
                           <div className="flex gap-2">
                             <button
                               onClick={() => {
-                                if (selectedCharacter) {
+                                if (selectedCharacter && !isCharacterInParty(party, selectedCharacter.id)) {
                                   joinParty(party.id);
                                 }
                                 setJoiningParty(null);
                               }}
-                              disabled={!selectedCharacter}
+                              disabled={!selectedCharacter || isCharacterInParty(party, selectedCharacter?.id || "")}
                               className="flex-1 px-2 py-1 rounded-lg bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 disabled:opacity-50 text-white text-xs transition-all"
                             >
                               确认加入
@@ -893,6 +908,21 @@ export default function ChatRoom({ node, onBack }: ChatRoomProps) {
               </button>
             </div>
             <div className="space-y-5">
+              <div>
+                <label className="block text-sm text-amber-700/70 mb-2">选择角色 *</label>
+                <select 
+                  className="w-full bg-amber-100/60 border border-amber-300/60 rounded-xl px-4 py-3 text-amber-900 focus:outline-none focus:border-amber-500/60 focus:ring-2 focus:ring-amber-500/20 backdrop-blur-sm transition-all"
+                  value={partyForm.characterId}
+                  onChange={(e) => setPartyForm({ ...partyForm, characterId: e.target.value })}
+                >
+                  <option value="">请选择一个角色...</option>
+                  {characters.map(char => (
+                    <option key={char.id} value={char.id}>
+                      {char.name} ({char.race} · {char.class})
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div>
                 <label className="block text-sm text-amber-700/70 mb-2">组队标题 *</label>
                 <input 
