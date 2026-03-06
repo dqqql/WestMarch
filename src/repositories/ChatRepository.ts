@@ -173,15 +173,14 @@ export class ChatRepository {
         },
         characterId: true,
         character: {
-          select: { id: true, name: true, race: true, class: true, img: true }
+          select: { id: true, name: true, race: true, class: true }
         },
         members: {
           select: {
             id: true,
             characterId: true,
-            joinedAt: true,
             character: {
-              select: { id: true, name: true, race: true, class: true, img: true }
+              select: { id: true, name: true, race: true, class: true }
             }
           }
         },
@@ -219,14 +218,14 @@ export class ChatRepository {
         },
         characterId: true,
         character: {
-          select: { id: true, name: true, race: true, class: true, img: true }
+          select: { id: true, name: true, race: true, class: true }
         },
         members: {
           select: {
             id: true,
             characterId: true,
             character: {
-              select: { id: true, name: true, race: true, class: true, img: true }
+              select: { id: true, name: true, race: true, class: true }
             }
           }
         },
@@ -291,14 +290,14 @@ export class ChatRepository {
           },
           characterId: true,
           character: {
-            select: { id: true, name: true, race: true, class: true, img: true }
+            select: { id: true, name: true, race: true, class: true }
           },
           members: {
             select: {
               id: true,
               characterId: true,
               character: {
-                select: { id: true, name: true, race: true, class: true, img: true }
+                select: { id: true, name: true, race: true, class: true }
               }
             }
           },
@@ -331,14 +330,14 @@ export class ChatRepository {
         },
         characterId: true,
         character: {
-          select: { id: true, name: true, race: true, class: true, img: true }
+          select: { id: true, name: true, race: true, class: true }
         },
         members: {
           select: {
             id: true,
             characterId: true,
             character: {
-              select: { id: true, name: true, race: true, class: true, img: true }
+              select: { id: true, name: true, race: true, class: true }
             }
           }
         },
