@@ -44,7 +44,7 @@ const abilityNames = {
 
 export default function ProfilePage() {
   const { user } = useAuth();
-  const { resources } = useResources();
+  const { resources, loadResources } = useResources();
   const { settings, updateSettings } = useSettings();
   
   const [characters, setCharacters] = useState<Character[]>([]);
@@ -78,6 +78,7 @@ export default function ProfilePage() {
   useEffect(() => {
     if (user) {
       loadCharacters();
+      loadResources();
     }
   }, [user]);
 

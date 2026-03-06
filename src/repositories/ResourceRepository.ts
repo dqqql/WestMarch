@@ -2,7 +2,17 @@ import prisma from '@/lib/prisma';
 
 export class ResourceRepository {
   async findAll() {
-    return prisma.resourceImage.findMany();
+    return prisma.resourceImage.findMany({
+      select: {
+        id: true,
+        name: true,
+        url: true,
+        category: true,
+        userId: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    });
   }
 
   async findById(id: string) {
@@ -13,7 +23,15 @@ export class ResourceRepository {
 
   async findByUserId(userId: string) {
     return prisma.resourceImage.findMany({
-      where: { userId }
+      where: { userId },
+      select: {
+        id: true,
+        name: true,
+        url: true,
+        category: true,
+        createdAt: true,
+        updatedAt: true
+      }
     });
   }
 
