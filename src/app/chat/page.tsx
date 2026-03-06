@@ -1,11 +1,25 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { ArrowLeft, MapPin, MessageCircleMore, X } from "lucide-react";
-import Link from "next/link";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { 
+  MapPin, 
+  MessageCircle, 
+  ShoppingCart, 
+  Users, 
+  Send, 
+  User, 
+  Plus, 
+  Coins, 
+  X, 
+  Hash,
+  ArrowRight,
+  CheckCircle2
+} from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { useAuth } from "@/contexts/AuthContext";
 import { useApp } from "@/contexts/AppContext";
-import ChatRoom from "./ChatRoom";
+import { useRouter } from "next/navigation";
 
 interface MapNode {
   id: string;
@@ -14,162 +28,819 @@ interface MapNode {
   description: string | null;
 }
 
+interface Character {
+  id: string;
+  name: string;
+  race: string;
+  class: string;
+  img: string | null;
+}
+
+interface ChatMessage {
+  id: string;
+  content: string;
+  authorId: string;
+  author: { id: string; username: string };
+  characterId: string | null;
+  character: Character | null;
+  createdAt: string;
+}
+
+interface ItemCard {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  authorId: string;
+  author: { id: string; username: string };
+  characterId: string | null;
+  character: Character | null;
+  createdAt: string;
+}
+
+interface PartyCard {
+  id: string;
+  title: string;
+  description: string;
+  maxCount: number;
+  authorId: string;
+  author: { id: string; username: string };
+  characterId: string | null;
+  character: Character | null;
+  members: { id: string; character: Character }[];
+  isFull: boolean;
+  isClosed: boolean;
+  createdAt: string;
+}
+
+type ChannelType = "日常RP" | "玩家交易" | "寻找队友";
+
+interface CombinedCard {
+  id: string;
+  type: "item" | "party";
+  data: ItemCard | PartyCard;
+  createdAt: string;
+}
+
 export default function ChatPage() {
   const { user } = useAuth();
   const { isClient } = useApp();
+  const router = useRouter();
+
   const [strongholds, setStrongholds] = useState<MapNode[]>([]);
-  const [selectedNode, setSelectedNode] = useState<MapNode | null>(null);
+  const [selectedStronghold, setSelectedStronghold] = useState<MapNode | null>(null);
+  const [activeChannel, setActiveChannel] = useState<ChannelType>("日常RP");
+  const [characters, setCharacters] = useState<Character[]>([]);
+  const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [itemCards, setItemCards] = useState<ItemCard[]>([]);
+  const [partyCards, setPartyCards] = useState<PartyCard[]>([]);
+  const [inputValue, setInputValue] = useState("");
+  const [showCharacterSelector, setShowCharacterSelector] = useState(false);
+  const [showItemModal, setShowItemModal] = useState(false);
+  const [showPartyModal, setShowPartyModal] = useState(false);
+  const [itemForm, setItemForm] = useState({ name: "", description: "", price: "" });
+  const [partyForm, setPartyForm] = useState({ title: "", description: "", maxCount: "4", characterId: "" });
+  const [joiningParty, setJoiningParty] = useState<string | null>(null);
+  const [selectedJoinCharacter, setSelectedJoinCharacter] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
+  const [hasCheckedCharacters, setHasCheckedCharacters] = useState(false);
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (user) {
-      loadStrongholds();
+    if (!user) {
+      router.push("/");
+      return;
     }
+    initializePage();
   }, [user]);
 
-  const loadStrongholds = async () => {
+  const initializePage = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch("/api/chat/strongholds");
-      if (response.ok) {
-        setStrongholds(await response.json());
+      const [charRes, strongholdRes] = await Promise.all([
+        fetch(`/api/characters?userId=${user?.id}`),
+        fetch("/api/chat/strongholds")
+      ]);
+
+      if (charRes.ok) {
+        const chars = await charRes.json();
+        setCharacters(chars);
+        if (chars.length === 0) {
+          router.push("/");
+          return;
+        }
+        if (chars.length > 0) {
+          setSelectedCharacter(chars[0]);
+        }
       }
+
+      if (strongholdRes.ok) {
+        const nodes = await strongholdRes.json();
+        setStrongholds(nodes);
+        if (nodes.length > 0) {
+          setSelectedStronghold(nodes[0]);
+        }
+      }
+
+      setHasCheckedCharacters(true);
     } catch (error) {
-      console.error("Failed to load strongholds:", error);
+      console.error("Failed to initialize page:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-zinc-950 text-zinc-100">
-        <header className="border-b border-zinc-800/50 bg-zinc-900/40 backdrop-blur-2xl sticky top-0 z-50">
-          <div className="container mx-auto px-6 py-5 flex items-center justify-between">
-            <div className="flex items-center gap-6">
-              <Link href="/" className="hover:text-amber-400 transition-colors p-2 hover:bg-zinc-800/60 rounded-xl">
-                <ArrowLeft className="h-5 w-5" />
-              </Link>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/30">
-                  <MessageCircleMore className="h-5 w-5 text-white" />
-                </div>
-                <h1 className="text-xl font-bold text-zinc-100">逸闻趣事</h1>
-              </div>
-            </div>
-          </div>
-        </header>
+  useEffect(() => {
+    if (selectedStronghold && hasCheckedCharacters) {
+      loadChannelData();
+    }
+  }, [selectedStronghold, activeChannel, hasCheckedCharacters]);
 
-        <main className="min-h-[calc(100vh-160px)] flex items-center justify-center px-6 py-8 relative z-10">
-          <div className="text-center">
-            <div className="w-20 h-20 bg-gradient-to-br from-amber-500/20 to-amber-600/20 rounded-3xl flex items-center justify-center mx-auto mb-6">
-              <MessageCircleMore className="h-10 w-10 text-amber-400" />
-            </div>
-            <h2 className="text-2xl font-bold mb-2 text-zinc-100">需要登录</h2>
-            <p className="text-zinc-400 mb-6">请先登录才能访问据点聊天</p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link href="/">
-                <button className="bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white px-6 py-3 rounded-xl shadow-lg shadow-amber-500/30 transition-all">
-                  返回首页登录
-                </button>
-              </Link>
-            </div>
-          </div>
-        </main>
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const loadChannelData = useCallback(async () => {
+    if (!selectedStronghold) return;
+    try {
+      const requests = [
+        fetch(`/api/chat/${selectedStronghold.id}/messages?channelType=${activeChannel}`)
+      ];
+
+      const responses = await Promise.all(requests);
+
+      if (responses[0].ok) {
+        const msgs = await responses[0].json();
+        setMessages(msgs.reverse());
+      }
+
+      const [itemRes, partyRes] = await Promise.all([
+        fetch(`/api/chat/${selectedStronghold.id}/items`),
+        fetch(`/api/chat/${selectedStronghold.id}/parties`)
+      ]);
+
+      if (itemRes.ok) setItemCards(await itemRes.json());
+      if (partyRes.ok) setPartyCards(await partyRes.json());
+    } catch (error) {
+      console.error("Failed to load channel data:", error);
+    }
+  }, [selectedStronghold, activeChannel]);
+
+  const sendMessage = async () => {
+    if (!inputValue.trim() || !user || !selectedStronghold || !selectedCharacter) return;
+
+    try {
+      const response = await fetch(`/api/chat/${selectedStronghold.id}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          channelType: activeChannel,
+          content: inputValue,
+          authorId: user.id,
+          characterId: selectedCharacter.id
+        }),
+      });
+
+      if (response.ok) {
+        const newMessage = await response.json();
+        setMessages([...messages, newMessage]);
+        setInputValue("");
+      }
+    } catch (error) {
+      console.error("Failed to send message:", error);
+    }
+  };
+
+  const createItem = async () => {
+    if (!itemForm.name || !itemForm.description || !itemForm.price || !user || !selectedStronghold || !selectedCharacter) return;
+
+    try {
+      const response = await fetch(`/api/chat/${selectedStronghold.id}/items`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: itemForm.name,
+          description: itemForm.description,
+          price: itemForm.price,
+          authorId: user.id,
+          characterId: selectedCharacter.id
+        }),
+      });
+
+      if (response.ok) {
+        const newItem = await response.json();
+        setItemCards([newItem, ...itemCards]);
+        setShowItemModal(false);
+        setItemForm({ name: "", description: "", price: "" });
+      }
+    } catch (error) {
+      console.error("Failed to create item:", error);
+    }
+  };
+
+  const markItemSold = async (itemId: string) => {
+    if (!user || !selectedStronghold) return;
+
+    try {
+      const response = await fetch(`/api/chat/${selectedStronghold.id}/items/${itemId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ authorId: user.id }),
+      });
+
+      if (response.ok) {
+        setItemCards(itemCards.filter(i => i.id !== itemId));
+      }
+    } catch (error) {
+      console.error("Failed to mark item sold:", error);
+    }
+  };
+
+  const createParty = async () => {
+    if (!partyForm.title || !partyForm.description || !partyForm.maxCount || !partyForm.characterId || !user || !selectedStronghold) return;
+
+    try {
+      const response = await fetch(`/api/chat/${selectedStronghold.id}/parties`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: partyForm.title,
+          description: partyForm.description,
+          maxCount: partyForm.maxCount,
+          authorId: user.id,
+          characterId: partyForm.characterId
+        }),
+      });
+
+      if (response.ok) {
+        const newParty = await response.json();
+        setPartyCards([newParty, ...partyCards]);
+        setShowPartyModal(false);
+        setPartyForm({ title: "", description: "", maxCount: "4", characterId: "" });
+      }
+    } catch (error) {
+      console.error("Failed to create party:", error);
+    }
+  };
+
+  const joinParty = async (partyId: string) => {
+    if (!selectedJoinCharacter) return;
+
+    try {
+      const response = await fetch(`/api/chat/${selectedStronghold?.id}/parties/${partyId}/join`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ characterId: selectedJoinCharacter }),
+      });
+
+      if (response.ok) {
+        const updatedParty = await response.json();
+        setPartyCards(partyCards.map(p => p.id === partyId ? updatedParty : p));
+        setJoiningParty(null);
+        setSelectedJoinCharacter("");
+      }
+    } catch (error) {
+      console.error("Failed to join party:", error);
+    }
+  };
+
+  const closeParty = async (partyId: string) => {
+    if (!user || !selectedStronghold) return;
+
+    try {
+      const response = await fetch(`/api/chat/${selectedStronghold.id}/parties/${partyId}/close`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ authorId: user.id }),
+      });
+
+      if (response.ok) {
+        setPartyCards(partyCards.filter(p => p.id !== partyId));
+      }
+    } catch (error) {
+      console.error("Failed to close party:", error);
+    }
+  };
+
+  const isOwner = (authorId: string) => {
+    return user && authorId === user.id;
+  };
+
+  const isCharacterInParty = (party: PartyCard, charId: string) => {
+    if (party.character?.id === charId) return true;
+    return party.members.some(m => m.character.id === charId);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString("zh-CN", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  };
+
+  const combinedCards: CombinedCard[] = [
+    ...itemCards.map(item => ({ id: item.id, type: "item" as const, data: item, createdAt: item.createdAt })),
+    ...partyCards.map(party => ({ id: party.id, type: "party" as const, data: party, createdAt: party.createdAt }))
+  ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  const ChannelIcon = {
+    "日常RP": MessageCircle,
+    "玩家交易": ShoppingCart,
+    "寻找队友": Users
+  };
+
+  if (!user || isLoading) {
+    return (
+      <div className="h-screen bg-zinc-950 flex items-center justify-center">
+        <div className="text-zinc-400">加载中...</div>
       </div>
     );
   }
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center">
-        <p className="text-zinc-400">加载中...</p>
-      </div>
-    );
-  }
-
-  if (selectedNode) {
-    return (
-      <ChatRoom 
-        node={selectedNode} 
-        onBack={() => setSelectedNode(null)} 
-      />
-    );
+  if (!selectedCharacter && characters.length > 0 && hasCheckedCharacters) {
+    setShowCharacterSelector(true);
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      {isClient && (
-        <div className="fixed inset-0 z-0 pointer-events-none">
-          <img
-            src="/images/general-bg.png"
-            alt="背景"
-            className="w-full h-full object-cover opacity-55 transition-opacity duration-1000"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/60 via-zinc-950/40 to-zinc-950/80" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-500/10 via-transparent to-transparent" />
-        </div>
-      )}
-
-      <header className="border-b border-zinc-800/50 bg-zinc-900/40 backdrop-blur-2xl sticky top-0 z-50">
-        <div className="container mx-auto px-6 py-5 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link href="/" className="hover:text-amber-400 transition-colors p-2 hover:bg-zinc-800/60 rounded-xl">
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/30">
-                <MessageCircleMore className="h-5 w-5 text-white" />
-              </div>
-              <h1 className="text-xl font-bold text-zinc-100">逸闻趣事</h1>
-            </div>
+    <div className="h-screen bg-zinc-950 text-zinc-100 flex overflow-hidden">
+      <aside className="w-60 bg-zinc-900 border-r border-zinc-800 flex flex-col">
+        <div className="p-4 border-b border-zinc-800">
+          <div className="flex items-center gap-2">
+            <MapPin className="h-5 w-5 text-amber-400" />
+            <h2 className="font-bold text-sm text-zinc-200">据点</h2>
           </div>
         </div>
-      </header>
+        
+        <nav className="flex-1 overflow-y-auto p-2 space-y-1">
+          {strongholds.map((node) => (
+            <button
+              key={node.id}
+              onClick={() => setSelectedStronghold(node)}
+              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                selectedStronghold?.id === node.id
+                  ? "bg-zinc-800 text-white"
+                  : "text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200"
+              }`}
+            >
+              <Hash className="h-4 w-4" />
+              <span>{node.label}</span>
+            </button>
+          ))}
+        </nav>
 
-      <main className="container mx-auto px-6 py-8 relative z-10">
-        <div className="max-w-4xl mx-auto">
-          {strongholds.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="w-20 h-20 bg-gradient-to-br from-amber-500/20 to-amber-600/20 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                <MapPin className="h-10 w-10 text-amber-400" />
+        <div className="p-4 border-t border-zinc-800">
+          {selectedCharacter ? (
+            <button
+              onClick={() => setShowCharacterSelector(true)}
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors"
+            >
+              <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
+                {selectedCharacter.img ? (
+                  <img src={selectedCharacter.img} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <User className="h-4 w-4 text-white" />
+                )}
               </div>
-              <h2 className="text-xl font-bold mb-2 text-zinc-400">暂无据点</h2>
-              <p className="text-zinc-500">请先在世界地图中创建据点</p>
-            </div>
+              <div className="text-left overflow-hidden">
+                <p className="text-sm font-medium text-zinc-200 truncate">{selectedCharacter.name}</p>
+                <p className="text-xs text-zinc-500 truncate">{selectedCharacter.race} · {selectedCharacter.class}</p>
+              </div>
+            </button>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {strongholds.map((node) => (
-                <div
-                  key={node.id}
-                  className="bg-gradient-to-br from-zinc-900/80 to-zinc-950/80 border border-zinc-700/50 hover:border-amber-500/50 transition-all duration-300 rounded-2xl p-6 cursor-pointer hover:scale-[1.02] group"
-                  onClick={() => setSelectedNode(node)}
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/30 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                      <MapPin className="h-6 w-6 text-white" />
+            <button
+              onClick={() => setShowCharacterSelector(true)}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors text-sm text-zinc-400"
+            >
+              <User className="h-4 w-4" />
+              <span>选择角色</span>
+            </button>
+          )}
+        </div>
+      </aside>
+
+      <main className="flex-1 flex flex-col min-w-0">
+        <header className="h-12 border-b border-zinc-800 bg-zinc-900 flex items-center px-4 gap-3">
+          <Hash className="h-5 w-5 text-zinc-400" />
+          <div>
+            <h1 className="font-semibold text-sm">{activeChannel}</h1>
+            {selectedStronghold && (
+              <p className="text-xs text-zinc-500">{selectedStronghold.label}</p>
+            )}
+          </div>
+        </header>
+
+        <div className="flex-1 flex">
+          <div className="flex-1 flex flex-col min-w-0">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {messages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-zinc-500">
+                  <MessageCircle className="h-12 w-12 mb-4 opacity-50" />
+                  <p>暂无消息，开始聊天吧！</p>
+                </div>
+              ) : (
+                messages.map((message) => (
+                  <div key={message.id} className="flex gap-4 hover:bg-zinc-900/30 -mx-4 px-4 py-2 rounded-lg">
+                    <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      {message.character?.img ? (
+                        <img src={message.character.img} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="h-5 w-5 text-white" />
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-bold mb-2 text-zinc-100 group-hover:text-white transition-colors">
-                        {node.label}
-                      </h3>
-                      {node.description && (
-                        <p className="text-zinc-400 text-sm leading-relaxed">
-                          {node.description}
-                        </p>
-                      )}
-                      <div className="mt-4 flex items-center gap-2 text-amber-400 text-sm font-medium">
-                        <MessageCircleMore className="h-4 w-4" />
-                        <span>进入聊天室</span>
+                      <div className="flex items-baseline gap-2 mb-1">
+                        <span className="font-semibold text-amber-400">
+                          {message.character?.name || message.author.username}
+                        </span>
+                        <span className="text-xs text-zinc-500">{formatDate(message.createdAt)}</span>
+                      </div>
+                      <div className="text-zinc-200 prose prose-invert prose-sm max-w-none">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
+              <div ref={messagesEndRef} />
             </div>
-          )}
+
+            <div className="p-4 border-t border-zinc-800">
+              <div className="flex gap-3">
+                <div className="flex-1 relative">
+                  <textarea
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        sendMessage();
+                      }
+                    }}
+                    placeholder={`在 #${activeChannel} 中发言...`}
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/20 resize-none"
+                    rows={1}
+                  />
+                </div>
+                <button
+                  onClick={sendMessage}
+                  disabled={!inputValue.trim() || !selectedCharacter}
+                  className="px-4 py-3 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors"
+                >
+                  <Send className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <aside className="w-80 bg-zinc-900 border-l border-zinc-800 flex flex-col">
+            <div className="p-4 border-b border-zinc-800 flex justify-between items-center">
+              <h3 className="font-semibold text-sm text-zinc-200">活动</h3>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowItemModal(true)}
+                  className="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 transition-colors"
+                  title="发布物品"
+                >
+                  <ShoppingCart className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setShowPartyModal(true)}
+                  className="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 transition-colors"
+                  title="发布组队"
+                >
+                  <Users className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-3 space-y-3">
+              {combinedCards.length === 0 ? (
+                <div className="text-center py-8 text-zinc-500">
+                  <div className="w-12 h-12 bg-zinc-800 rounded-xl flex items-center justify-center mx-auto mb-3">
+                    <MessageCircle className="h-6 w-6" />
+                  </div>
+                  <p className="text-sm">暂无活动</p>
+                </div>
+              ) : (
+                combinedCards.map((card) => (
+                  <div key={card.id} className="bg-zinc-800/50 border border-zinc-700 rounded-xl p-3">
+                    {card.type === "item" ? (
+                      <div>
+                        <div className="flex justify-between items-start mb-2">
+                          <h4 className="font-semibold text-sm text-zinc-200">{(card.data as ItemCard).name}</h4>
+                          <div className="flex items-center gap-1 text-amber-400 font-bold text-xs">
+                            <Coins className="h-3 w-3" />
+                            <span>{Number((card.data as ItemCard).price).toFixed(2)}</span>
+                          </div>
+                        </div>
+                        <p className="text-xs text-zinc-400 mb-3 line-clamp-2">{(card.data as ItemCard).description}</p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-zinc-500">
+                            {(card.data as ItemCard).character?.name}
+                          </span>
+                          {isOwner((card.data as ItemCard).authorId) && (
+                            <button
+                              onClick={() => markItemSold(card.id)}
+                              className="flex items-center gap-1 px-2 py-1 rounded bg-green-900/30 text-green-400 text-xs hover:bg-green-900/50 transition-colors"
+                            >
+                              <CheckCircle2 className="h-3 w-3" />
+                              售出
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-sm text-zinc-200">{(card.data as PartyCard).title}</h4>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="px-1.5 py-0.5 bg-zinc-700 text-zinc-300 text-xs rounded">
+                                {(card.data as PartyCard).members.length + 1}/{(card.data as PartyCard).maxCount}
+                              </span>
+                              {(card.data as PartyCard).isFull && (
+                                <span className="px-1.5 py-0.5 bg-red-900/30 text-red-400 text-xs rounded">
+                                  已满
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          {isOwner((card.data as PartyCard).authorId) && (
+                            <button
+                              onClick={() => closeParty(card.id)}
+                              className="text-xs text-zinc-500 hover:text-red-400"
+                            >
+                              关闭
+                            </button>
+                          )}
+                        </div>
+                        <p className="text-xs text-zinc-400 mb-3 line-clamp-2">{(card.data as PartyCard).description}</p>
+                        <div className="mb-3">
+                          <p className="text-xs text-zinc-500 mb-1">成员:</p>
+                          <div className="flex flex-wrap gap-1">
+                            {(card.data as PartyCard).character && (
+                              <span className="px-2 py-0.5 bg-zinc-700 text-zinc-200 text-xs rounded">
+                                {(card.data as PartyCard).character.name}
+                              </span>
+                            )}
+                            {(card.data as PartyCard).members.map((member) => (
+                              <span key={member.id} className="px-2 py-0.5 bg-zinc-700 text-zinc-200 text-xs rounded">
+                                {member.character.name}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        {!(card.data as PartyCard).isFull && !(card.data as PartyCard).isClosed && (
+                          <div>
+                            {joiningParty === card.id ? (
+                              <div className="space-y-2">
+                                <select
+                                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-xs text-zinc-200"
+                                  onChange={(e) => setSelectedJoinCharacter(e.target.value)}
+                                  value={selectedJoinCharacter}
+                                >
+                                  <option value="">选择角色...</option>
+                                  {characters.map(char => (
+                                    <option 
+                                      key={char.id} 
+                                      value={char.id}
+                                      disabled={isCharacterInParty(card.data as PartyCard, char.id)}
+                                      className={isCharacterInParty(card.data as PartyCard, char.id) ? "text-zinc-600" : ""}
+                                    >
+                                      {char.name} {isCharacterInParty(card.data as PartyCard, char.id) ? "(已加入)" : ""}
+                                    </option>
+                                  ))}
+                                </select>
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => joinParty(card.id)}
+                                    disabled={!selectedJoinCharacter || isCharacterInParty(card.data as PartyCard, selectedJoinCharacter)}
+                                    className="flex-1 px-2 py-1 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white text-xs transition-colors"
+                                  >
+                                    确认加入
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setJoiningParty(null);
+                                      setSelectedJoinCharacter("");
+                                    }}
+                                    className="px-2 py-1 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-zinc-200 text-xs transition-colors"
+                                  >
+                                    取消
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setJoiningParty(card.id)}
+                                className="w-full px-2 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs transition-colors"
+                              >
+                                加入队伍
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </aside>
         </div>
       </main>
+
+      {showCharacterSelector && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setShowCharacterSelector(false)}>
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-w-2xl mx-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-bold">选择角色</h3>
+              <button onClick={() => setShowCharacterSelector(false)} className="text-zinc-500 hover:text-zinc-300">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {characters.map((char) => (
+                <button
+                  key={char.id}
+                  onClick={() => {
+                    setSelectedCharacter(char);
+                    setShowCharacterSelector(false);
+                  }}
+                  className={`p-4 rounded-xl border-2 text-left transition-colors ${
+                    selectedCharacter?.id === char.id
+                      ? "border-amber-500 bg-zinc-800"
+                      : "border-zinc-800 bg-zinc-800/50 hover:border-zinc-700"
+                  }`}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center overflow-hidden">
+                      {char.img ? (
+                        <img src={char.img} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="h-7 w-7 text-white" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium text-zinc-200">{char.name}</p>
+                      <p className="text-sm text-zinc-500">{char.race} · {char.class}</p>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showItemModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setShowItemModal(false)}>
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-w-lg mx-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-bold">发布物品</h3>
+              <button onClick={() => setShowItemModal(false)} className="text-zinc-500 hover:text-zinc-300">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-zinc-400 mb-2">物品名称</label>
+                <input 
+                  type="text" 
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-500/50"
+                  placeholder="物品名称"
+                  value={itemForm.name}
+                  onChange={(e) => setItemForm({ ...itemForm, name: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-zinc-400 mb-2">物品价格</label>
+                <div className="relative">
+                  <Coins className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+                  <input 
+                    type="number" 
+                    step="0.01"
+                    min="0"
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-xl pl-10 pr-4 py-3 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-500/50"
+                    placeholder="0.00"
+                    value={itemForm.price}
+                    onChange={(e) => setItemForm({ ...itemForm, price: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm text-zinc-400 mb-2">物品描述</label>
+                <textarea 
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-zinc-100 h-32 placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 resize-none"
+                  placeholder="描述你的物品..."
+                  value={itemForm.description}
+                  onChange={(e) => setItemForm({ ...itemForm, description: e.target.value })}
+                />
+              </div>
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setShowItemModal(false)}
+                  className="flex-1 px-4 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition-colors"
+                >
+                  取消
+                </button>
+                <button 
+                  onClick={createItem}
+                  className="flex-1 bg-amber-600 hover:bg-amber-500 text-white rounded-xl transition-colors"
+                >
+                  发布
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showPartyModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setShowPartyModal(false)}>
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-w-lg mx-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-bold">发布组队</h3>
+              <button onClick={() => setShowPartyModal(false)} className="text-zinc-500 hover:text-zinc-300">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-zinc-400 mb-2">选择角色</label>
+                <select 
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-zinc-100 focus:outline-none focus:border-amber-500/50"
+                  value={partyForm.characterId}
+                  onChange={(e) => setPartyForm({ ...partyForm, characterId: e.target.value })}
+                >
+                  <option value="">请选择一个角色...</option>
+                  {characters.map(char => (
+                    <option key={char.id} value={char.id}>
+                      {char.name} ({char.race} · {char.class})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm text-zinc-400 mb-2">组队标题</label>
+                <input 
+                  type="text" 
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-500/50"
+                  placeholder="组队标题"
+                  value={partyForm.title}
+                  onChange={(e) => setPartyForm({ ...partyForm, title: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-zinc-400 mb-2">队伍人数</label>
+                <div className="relative">
+                  <Users className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+                  <input 
+                    type="number" 
+                    min="1"
+                    max="10"
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-xl pl-10 pr-4 py-3 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-500/50"
+                    placeholder="4"
+                    value={partyForm.maxCount}
+                    onChange={(e) => setPartyForm({ ...partyForm, maxCount: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm text-zinc-400 mb-2">组队描述</label>
+                <textarea 
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-zinc-100 h-32 placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 resize-none"
+                  placeholder="描述你的组队需求..."
+                  value={partyForm.description}
+                  onChange={(e) => setPartyForm({ ...partyForm, description: e.target.value })}
+                />
+              </div>
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setShowPartyModal(false)}
+                  className="flex-1 px-4 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition-colors"
+                >
+                  取消
+                </button>
+                <button 
+                  onClick={createParty}
+                  className="flex-1 bg-amber-600 hover:bg-amber-500 text-white rounded-xl transition-colors"
+                >
+                  发布
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
