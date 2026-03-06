@@ -117,20 +117,37 @@ export default function ChatRoom({ node, onBack }: ChatRoomProps) {
   const loadData = async () => {
     try {
       setIsLoading(true);
-      const [charsRes] = await Promise.all([
-        fetch(`/api/characters?userId=${user?.id}`)
-      ]);
       
-      if (charsRes.ok) {
-        setCharacters(await charsRes.json());
+      const requests = [
+        fetch(`/api/characters?userId=${user?.id}`),
+        fetch(`/api/chat/${node.id}/messages?channelType=${activeChannel}`)
+      ];
+
+      if (activeChannel === "玩家交易") {
+        requests.push(fetch(`/api/chat/${node.id}/items`));
+      } else if (activeChannel === "寻找队友") {
+        requests.push(fetch(`/api/chat/${node.id}/parties`));
       }
 
-      await loadMessages();
+      const responses = await Promise.all(requests);
       
-      if (activeChannel === "玩家交易") {
-        await loadItems();
-      } else if (activeChannel === "寻找队友") {
-        await loadParties();
+      if (responses[0].ok) {
+        setCharacters(await responses[0].json());
+      }
+
+      if (responses[1].ok) {
+        const msgs = await responses[1].json();
+        setMessages(msgs.reverse());
+      }
+
+      if (responses[2]) {
+        if (responses[2].ok) {
+          if (activeChannel === "玩家交易") {
+            setItems(await responses[2].json());
+          } else if (activeChannel === "寻找队友") {
+            setParties(await responses[2].json());
+          }
+        }
       }
     } catch (error) {
       console.error("Failed to load data:", error);

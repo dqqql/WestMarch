@@ -13,7 +13,7 @@ export class ChatRepository {
     });
   }
 
-  async findMessagesByNodeAndChannel(nodeId: string, channelType: ChatChannelType) {
+  async findMessagesByNodeAndChannel(nodeId: string, channelType: ChatChannelType, limit: number = 100) {
     return prisma.chatMessage.findMany({
       where: {
         nodeId,
@@ -21,18 +21,27 @@ export class ChatRepository {
         isDeleted: false
       },
       include: {
-        author: true,
-        character: true,
+        author: {
+          select: { id: true, username: true, nickname: true, avatar: true }
+        },
+        character: {
+          select: { id: true, name: true, race: true, class: true, img: true }
+        },
         replyTo: {
           include: {
-            author: true,
-            character: true
+            author: {
+              select: { id: true, username: true, nickname: true }
+            },
+            character: {
+              select: { id: true, name: true }
+            }
           }
         }
       },
       orderBy: {
-        createdAt: 'asc'
-      }
+        createdAt: 'desc'
+      },
+      take: limit
     });
   }
 
@@ -90,9 +99,20 @@ export class ChatRepository {
         nodeId,
         isSold: false
       },
-      include: {
-        author: true,
-        character: true
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        price: true,
+        authorId: true,
+        author: {
+          select: { id: true, username: true, nickname: true }
+        },
+        characterId: true,
+        character: {
+          select: { id: true, name: true, race: true, class: true, img: true }
+        },
+        createdAt: true
       },
       orderBy: {
         createdAt: 'desc'
@@ -141,14 +161,31 @@ export class ChatRepository {
         nodeId,
         isClosed: false
       },
-      include: {
-        author: true,
-        character: true,
+      select: {
+        id: true,
+        nodeId: true,
+        title: true,
+        description: true,
+        maxCount: true,
+        authorId: true,
+        author: {
+          select: { id: true, username: true, nickname: true }
+        },
+        characterId: true,
+        character: {
+          select: { id: true, name: true, race: true, class: true, img: true }
+        },
         members: {
           include: {
-            character: true
+            character: {
+              select: { id: true, name: true, race: true, class: true, img: true }
+            }
           }
-        }
+        },
+        isFull: true,
+        isClosed: true,
+        createdAt: true,
+        updatedAt: true
       },
       orderBy: {
         createdAt: 'desc'

@@ -2,17 +2,39 @@ import prisma from '@/lib/prisma';
 
 export class UserRepository {
   async findAll() {
-    return prisma.user.findMany();
+    return prisma.user.findMany({
+      select: {
+        id: true,
+        username: true,
+        isDM: true,
+        nickname: true,
+        avatar: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    });
   }
 
   async findById(id: string) {
     return prisma.user.findUnique({
       where: { id },
-      include: {
-        characters: true,
-        posts: true,
-        parties: true,
-        resources: true,
+      select: {
+        id: true,
+        username: true,
+        isDM: true,
+        nickname: true,
+        avatar: true,
+        createdAt: true,
+        updatedAt: true,
+        characters: {
+          select: {
+            id: true,
+            name: true,
+            race: true,
+            class: true,
+            img: true
+          }
+        },
         settings: true
       }
     });

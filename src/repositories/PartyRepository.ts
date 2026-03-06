@@ -1,5 +1,13 @@
 import prisma from '@/lib/prisma';
 
+const characterSelect = {
+  id: true,
+  name: true,
+  race: true,
+  class: true,
+  img: true
+};
+
 export class PartyRepository {
   async findAll() {
     return prisma.party.findMany({
@@ -8,10 +16,14 @@ export class PartyRepository {
         author: {
           select: { id: true, username: true, nickname: true }
         },
-        character: true,
+        character: {
+          select: characterSelect
+        },
         members: {
           include: {
-            character: true
+            character: {
+              select: characterSelect
+            }
           }
         }
       }
@@ -25,10 +37,14 @@ export class PartyRepository {
         author: {
           select: { id: true, username: true, nickname: true }
         },
-        character: true,
+        character: {
+          select: characterSelect
+        },
         members: {
           include: {
-            character: true
+            character: {
+              select: characterSelect
+            }
           }
         }
       }
@@ -49,10 +65,14 @@ export class PartyRepository {
         author: {
           select: { id: true, username: true, nickname: true }
         },
-        character: true,
+        character: {
+          select: characterSelect
+        },
         members: {
           include: {
-            character: true
+            character: {
+              select: characterSelect
+            }
           }
         }
       }
@@ -67,10 +87,14 @@ export class PartyRepository {
         author: {
           select: { id: true, username: true, nickname: true }
         },
-        character: true,
+        character: {
+          select: characterSelect
+        },
         members: {
           include: {
-            character: true
+            character: {
+              select: characterSelect
+            }
           }
         }
       }
