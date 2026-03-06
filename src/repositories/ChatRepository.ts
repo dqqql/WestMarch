@@ -176,7 +176,10 @@ export class ChatRepository {
           select: { id: true, name: true, race: true, class: true, img: true }
         },
         members: {
-          include: {
+          select: {
+            id: true,
+            characterId: true,
+            joinedAt: true,
             character: {
               select: { id: true, name: true, race: true, class: true, img: true }
             }
@@ -189,7 +192,8 @@ export class ChatRepository {
       },
       orderBy: {
         createdAt: 'desc'
-      }
+      },
+      take: 50
     });
   }
 
@@ -203,14 +207,33 @@ export class ChatRepository {
   }) {
     return prisma.partyCard.create({
       data,
-      include: {
-        author: true,
-        character: true,
+      select: {
+        id: true,
+        nodeId: true,
+        title: true,
+        description: true,
+        maxCount: true,
+        authorId: true,
+        author: {
+          select: { id: true, username: true, nickname: true }
+        },
+        characterId: true,
+        character: {
+          select: { id: true, name: true, race: true, class: true, img: true }
+        },
         members: {
-          include: {
-            character: true
+          select: {
+            id: true,
+            characterId: true,
+            character: {
+              select: { id: true, name: true, race: true, class: true, img: true }
+            }
           }
-        }
+        },
+        isFull: true,
+        isClosed: true,
+        createdAt: true,
+        updatedAt: true
       }
     });
   }
@@ -218,8 +241,17 @@ export class ChatRepository {
   async joinPartyCard(partyCardId: string, characterId: string) {
     const partyCard = await prisma.partyCard.findUnique({
       where: { id: partyCardId },
-      include: {
-        members: true
+      select: {
+        id: true,
+        isClosed: true,
+        isFull: true,
+        maxCount: true,
+        members: {
+          select: {
+            id: true,
+            characterId: true
+          }
+        }
       }
     });
 
@@ -247,14 +279,33 @@ export class ChatRepository {
           },
           isFull: true
         },
-        include: {
-          author: true,
-          character: true,
+        select: {
+          id: true,
+          nodeId: true,
+          title: true,
+          description: true,
+          maxCount: true,
+          authorId: true,
+          author: {
+            select: { id: true, username: true, nickname: true }
+          },
+          characterId: true,
+          character: {
+            select: { id: true, name: true, race: true, class: true, img: true }
+          },
           members: {
-            include: {
-              character: true
+            select: {
+              id: true,
+              characterId: true,
+              character: {
+                select: { id: true, name: true, race: true, class: true, img: true }
+              }
             }
-          }
+          },
+          isFull: true,
+          isClosed: true,
+          createdAt: true,
+          updatedAt: true
         }
       });
     }
@@ -268,14 +319,33 @@ export class ChatRepository {
           }
         }
       },
-      include: {
-        author: true,
-        character: true,
+      select: {
+        id: true,
+        nodeId: true,
+        title: true,
+        description: true,
+        maxCount: true,
+        authorId: true,
+        author: {
+          select: { id: true, username: true, nickname: true }
+        },
+        characterId: true,
+        character: {
+          select: { id: true, name: true, race: true, class: true, img: true }
+        },
         members: {
-          include: {
-            character: true
+          select: {
+            id: true,
+            characterId: true,
+            character: {
+              select: { id: true, name: true, race: true, class: true, img: true }
+            }
           }
-        }
+        },
+        isFull: true,
+        isClosed: true,
+        createdAt: true,
+        updatedAt: true
       }
     });
   }
@@ -294,6 +364,11 @@ export class ChatRepository {
       data: {
         isClosed: true,
         closedAt: new Date()
+      },
+      select: {
+        id: true,
+        isClosed: true,
+        closedAt: true
       }
     });
   }
