@@ -194,6 +194,11 @@ export class ChatRepository {
       throw new Error('组队已关闭或已满');
     }
 
+    const alreadyJoined = partyCard.members.some(m => m.characterId === characterId);
+    if (alreadyJoined) {
+      throw new Error('该角色已加入此组队');
+    }
+
     if (partyCard.members.length >= partyCard.maxCount - 1) {
       return prisma.partyCard.update({
         where: { id: partyCardId },
