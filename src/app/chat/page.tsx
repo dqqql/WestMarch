@@ -106,6 +106,11 @@ export default function ChatPage() {
   const [selectedJoinCharacter, setSelectedJoinCharacter] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [hasCheckedCharacters, setHasCheckedCharacters] = useState(false);
+  const [showSwitchConfirm, setShowSwitchConfirm] = useState(false);
+  const [pendingSwitch, setPendingSwitch] = useState<{
+    type: "stronghold" | "channel";
+    target: MapNode | ChannelType;
+  } | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -329,6 +334,34 @@ export default function ChatPage() {
     }
   };
 
+  const handleStrongholdClick = (node: MapNode) => {
+    if (node.id === selectedStronghold?.id) return;
+    setPendingSwitch({ type: "stronghold", target: node });
+    setShowSwitchConfirm(true);
+  };
+
+  const handleChannelClick = (channel: ChannelType) => {
+    if (channel === activeChannel) return;
+    setPendingSwitch({ type: "channel", target: channel });
+    setShowSwitchConfirm(true);
+  };
+
+  const confirmSwitch = () => {
+    if (!pendingSwitch) return;
+    if (pendingSwitch.type === "stronghold") {
+      setSelectedStronghold(pendingSwitch.target as MapNode);
+    } else {
+      setActiveChannel(pendingSwitch.target as ChannelType);
+    }
+    setShowSwitchConfirm(false);
+    setPendingSwitch(null);
+  };
+
+  const cancelSwitch = () => {
+    setShowSwitchConfirm(false);
+    setPendingSwitch(null);
+  };
+
   const isOwner = (authorId: string) => {
     return user && authorId === user.id;
   };
@@ -389,7 +422,7 @@ export default function ChatPage() {
           {strongholds.map((node) => (
             <button
               key={node.id}
-              onClick={() => setSelectedStronghold(node)}
+              onClick={() => handleStrongholdClick(node)}
               className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
                 selectedStronghold?.id === node.id
                   ? "bg-amber-200 text-amber-900"
@@ -433,13 +466,34 @@ export default function ChatPage() {
       </aside>
 
       <main className="flex-1 flex flex-col min-w-0">
-        <header className="h-12 border-b border-amber-200 bg-amber-100 flex items-center px-4 gap-3">
-          <Hash className="h-5 w-5 text-amber-600" />
-          <div>
-            <h1 className="font-semibold text-sm text-amber-900">{activeChannel}</h1>
-            {selectedStronghold && (
-              <p className="text-xs text-amber-600">{selectedStronghold.label}</p>
-            )}
+        <header className="h-auto border-b border-amber-200 bg-amber-100 flex flex-col px-4 py-3 gap-3">
+          <div className="flex items-center gap-3">
+            <Hash className="h-5 w-5 text-amber-600" />
+            <div>
+              <h1 className="font-semibold text-sm text-amber-900">{activeChannel}</h1>
+              {selectedStronghold && (
+                <p className="text-xs text-amber-600">{selectedStronghold.label}</p>
+              )}
+            </div>
+          </div>
+          <div className="flex gap-2">
+            {(["日常RP", "玩家交易", "寻找队友"] as ChannelType[]).map((channel) => {
+              const Icon = ChannelIcon[channel];
+              return (
+                <button
+                  key={channel}
+                  onClick={() => handleChannelClick(channel)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    activeChannel === channel
+                      ? "bg-amber-200 text-amber-900"
+                      : "text-amber-700 hover:bg-amber-150 hover:text-amber-800"
+                  }`}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  <span>{channel}</span>
+                </button>
+              );
+            })}
           </div>
         </header>
 
@@ -843,6 +897,42 @@ export default function ChatPage() {
                   发布
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSwitchConfirm && pendingSwitch && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={cancelSwitch}>
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-bold text-amber-900">确认切换</h3>
+              <button onClick={cancelSwitch} className="text-amber-600 hover:text-amber-800">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="mb-6">
+              <p className="text-amber-800">
+                {pendingSwitch.type === "stronghold" 
+                  ? `确定要切换到据点 "${(pendingSwitch.target as MapNode).label}" 吗？`
+                  : `确定要切换到频道 "${pendingSwitch.target as ChannelType}" 吗？`
+                }
+              </p>
+              <p className="text-xs text-amber-600 mt-2">切换后将加载新的消息和活动卡片。</p>
+            </div>
+            <div className="flex gap-3">
+              <button 
+                onClick={cancelSwitch}
+                className="flex-1 px-4 py-3 rounded-xl bg-amber-200 hover:bg-amber-300 text-amber-900 transition-colors"
+              >
+                取消
+              </button>
+              <button 
+                onClick={confirmSwitch}
+                className="flex-1 bg-amber-600 hover:bg-amber-500 text-white rounded-xl transition-colors"
+              >
+                确认
+              </button>
             </div>
           </div>
         </div>
