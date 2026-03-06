@@ -12,9 +12,10 @@ import {
   Coins, 
   X, 
   Hash,
-  ArrowRight,
-  CheckCircle2
+  ArrowLeft,
+  CheckCircle2 
 } from "lucide-react";
+import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useAuth } from "@/contexts/AuthContext";
@@ -370,24 +371,29 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="h-screen bg-zinc-950 text-zinc-100 flex overflow-hidden">
-      <aside className="w-60 bg-zinc-900 border-r border-zinc-800 flex flex-col">
-        <div className="p-4 border-b border-zinc-800">
-          <div className="flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-amber-400" />
-            <h2 className="font-bold text-sm text-zinc-200">据点</h2>
+    <div className="h-screen bg-amber-50 text-amber-900 flex overflow-hidden min-h-0">
+      <aside className="w-60 bg-amber-100 border-r border-amber-200 flex flex-col min-h-0">
+        <div className="p-4 border-b border-amber-200 flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <Link href="/" className="hover:text-amber-600 transition-colors p-1.5 hover:bg-amber-200 rounded-lg">
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+            <div className="flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-amber-600" />
+              <h2 className="font-bold text-sm text-amber-800">据点</h2>
+            </div>
           </div>
         </div>
         
-        <nav className="flex-1 overflow-y-auto p-2 space-y-1">
+        <nav className="flex-1 overflow-y-auto p-2 space-y-1 min-h-0">
           {strongholds.map((node) => (
             <button
               key={node.id}
               onClick={() => setSelectedStronghold(node)}
               className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
                 selectedStronghold?.id === node.id
-                  ? "bg-zinc-800 text-white"
-                  : "text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200"
+                  ? "bg-amber-200 text-amber-900"
+                  : "text-amber-700 hover:bg-amber-150 hover:text-amber-800"
               }`}
             >
               <Hash className="h-4 w-4" />
@@ -396,11 +402,11 @@ export default function ChatPage() {
           ))}
         </nav>
 
-        <div className="p-4 border-t border-zinc-800">
+        <div className="p-4 border-t border-amber-200 flex-shrink-0">
           {selectedCharacter ? (
             <button
               onClick={() => setShowCharacterSelector(true)}
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors"
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-amber-200 hover:bg-amber-300 transition-colors"
             >
               <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
                 {selectedCharacter.img ? (
@@ -410,14 +416,14 @@ export default function ChatPage() {
                 )}
               </div>
               <div className="text-left overflow-hidden">
-                <p className="text-sm font-medium text-zinc-200 truncate">{selectedCharacter.name}</p>
-                <p className="text-xs text-zinc-500 truncate">{selectedCharacter.race} · {selectedCharacter.class}</p>
+                <p className="text-sm font-medium text-amber-900 truncate">{selectedCharacter.name}</p>
+                <p className="text-xs text-amber-600 truncate">{selectedCharacter.race} · {selectedCharacter.class}</p>
               </div>
             </button>
           ) : (
             <button
               onClick={() => setShowCharacterSelector(true)}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors text-sm text-zinc-400"
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-200 hover:bg-amber-300 transition-colors text-sm text-amber-700"
             >
               <User className="h-4 w-4" />
               <span>选择角色</span>
@@ -427,27 +433,27 @@ export default function ChatPage() {
       </aside>
 
       <main className="flex-1 flex flex-col min-w-0">
-        <header className="h-12 border-b border-zinc-800 bg-zinc-900 flex items-center px-4 gap-3">
-          <Hash className="h-5 w-5 text-zinc-400" />
+        <header className="h-12 border-b border-amber-200 bg-amber-100 flex items-center px-4 gap-3">
+          <Hash className="h-5 w-5 text-amber-600" />
           <div>
-            <h1 className="font-semibold text-sm">{activeChannel}</h1>
+            <h1 className="font-semibold text-sm text-amber-900">{activeChannel}</h1>
             {selectedStronghold && (
-              <p className="text-xs text-zinc-500">{selectedStronghold.label}</p>
+              <p className="text-xs text-amber-600">{selectedStronghold.label}</p>
             )}
           </div>
         </header>
 
-        <div className="flex-1 flex">
-          <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex min-h-0">
+          <div className="flex-1 flex flex-col min-w-0 bg-amber-50">
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {messages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-zinc-500">
+                <div className="flex flex-col items-center justify-center h-full text-amber-600">
                   <MessageCircle className="h-12 w-12 mb-4 opacity-50" />
                   <p>暂无消息，开始聊天吧！</p>
                 </div>
               ) : (
                 messages.map((message) => (
-                  <div key={message.id} className="flex gap-4 hover:bg-zinc-900/30 -mx-4 px-4 py-2 rounded-lg">
+                  <div key={message.id} className="flex gap-4 hover:bg-amber-100/50 -mx-4 px-4 py-2 rounded-lg">
                     <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
                       {message.character?.img ? (
                         <img src={message.character.img} alt="" className="w-full h-full object-cover" />
@@ -457,12 +463,12 @@ export default function ChatPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-2 mb-1">
-                        <span className="font-semibold text-amber-400">
+                        <span className="font-semibold text-amber-700">
                           {message.character?.name || message.author.username}
                         </span>
-                        <span className="text-xs text-zinc-500">{formatDate(message.createdAt)}</span>
+                        <span className="text-xs text-amber-500">{formatDate(message.createdAt)}</span>
                       </div>
-                      <div className="text-zinc-200 prose prose-invert prose-sm max-w-none">
+                      <div className="text-amber-900 prose prose-amber prose-sm max-w-none">
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
                       </div>
                     </div>
@@ -472,7 +478,7 @@ export default function ChatPage() {
               <div ref={messagesEndRef} />
             </div>
 
-            <div className="p-4 border-t border-zinc-800">
+            <div className="p-4 border-t border-amber-200 bg-amber-50 flex-shrink-0">
               <div className="flex gap-3">
                 <div className="flex-1 relative">
                   <textarea
@@ -485,14 +491,14 @@ export default function ChatPage() {
                       }
                     }}
                     placeholder={`在 #${activeChannel} 中发言...`}
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/20 resize-none"
+                    className="w-full bg-amber-100 border border-amber-300 rounded-xl px-4 py-3 text-amber-900 placeholder-amber-600 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 resize-none"
                     rows={1}
                   />
                 </div>
                 <button
                   onClick={sendMessage}
                   disabled={!inputValue.trim() || !selectedCharacter}
-                  className="px-4 py-3 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors"
+                  className="px-4 py-3 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors flex-shrink-0"
                 >
                   <Send className="h-5 w-5" />
                 </button>
@@ -500,20 +506,20 @@ export default function ChatPage() {
             </div>
           </div>
 
-          <aside className="w-80 bg-zinc-900 border-l border-zinc-800 flex flex-col">
-            <div className="p-4 border-b border-zinc-800 flex justify-between items-center">
-              <h3 className="font-semibold text-sm text-zinc-200">活动</h3>
+          <aside className="w-80 bg-amber-100 border-l border-amber-200 flex flex-col min-h-0">
+            <div className="p-4 border-b border-amber-200 flex justify-between items-center flex-shrink-0">
+              <h3 className="font-semibold text-sm text-amber-900">活动</h3>
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowItemModal(true)}
-                  className="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 transition-colors"
+                  className="p-2 rounded-lg hover:bg-amber-200 text-amber-600 hover:text-amber-800 transition-colors"
                   title="发布物品"
                 >
                   <ShoppingCart className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => setShowPartyModal(true)}
-                  className="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 transition-colors"
+                  className="p-2 rounded-lg hover:bg-amber-200 text-amber-600 hover:text-amber-800 transition-colors"
                   title="发布组队"
                 >
                   <Users className="h-4 w-4" />
@@ -521,35 +527,35 @@ export default function ChatPage() {
               </div>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-3 space-y-3">
+            <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-0">
               {combinedCards.length === 0 ? (
-                <div className="text-center py-8 text-zinc-500">
-                  <div className="w-12 h-12 bg-zinc-800 rounded-xl flex items-center justify-center mx-auto mb-3">
-                    <MessageCircle className="h-6 w-6" />
+                <div className="text-center py-8 text-amber-600">
+                  <div className="w-12 h-12 bg-amber-200 rounded-xl flex items-center justify-center mx-auto mb-3">
+                    <MessageCircle className="h-6 w-6 text-amber-600" />
                   </div>
                   <p className="text-sm">暂无活动</p>
                 </div>
               ) : (
                 combinedCards.map((card) => (
-                  <div key={card.id} className="bg-zinc-800/50 border border-zinc-700 rounded-xl p-3">
+                  <div key={card.id} className="bg-amber-50 border border-amber-200 rounded-xl p-3">
                     {card.type === "item" ? (
                       <div>
                         <div className="flex justify-between items-start mb-2">
-                          <h4 className="font-semibold text-sm text-zinc-200">{(card.data as ItemCard).name}</h4>
-                          <div className="flex items-center gap-1 text-amber-400 font-bold text-xs">
+                          <h4 className="font-semibold text-sm text-amber-900">{(card.data as ItemCard).name}</h4>
+                          <div className="flex items-center gap-1 text-amber-600 font-bold text-xs">
                             <Coins className="h-3 w-3" />
                             <span>{Number((card.data as ItemCard).price).toFixed(2)}</span>
                           </div>
                         </div>
-                        <p className="text-xs text-zinc-400 mb-3 line-clamp-2">{(card.data as ItemCard).description}</p>
+                        <p className="text-xs text-amber-700 mb-3 line-clamp-2">{(card.data as ItemCard).description}</p>
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-zinc-500">
+                          <span className="text-xs text-amber-600">
                             {(card.data as ItemCard).character?.name}
                           </span>
                           {isOwner((card.data as ItemCard).authorId) && (
                             <button
                               onClick={() => markItemSold(card.id)}
-                              className="flex items-center gap-1 px-2 py-1 rounded bg-green-900/30 text-green-400 text-xs hover:bg-green-900/50 transition-colors"
+                              className="flex items-center gap-1 px-2 py-1 rounded bg-green-200 text-green-800 text-xs hover:bg-green-300 transition-colors"
                             >
                               <CheckCircle2 className="h-3 w-3" />
                               售出
@@ -561,13 +567,13 @@ export default function ChatPage() {
                       <div>
                         <div className="flex justify-between items-start mb-2">
                           <div className="flex-1">
-                            <h4 className="font-semibold text-sm text-zinc-200">{(card.data as PartyCard).title}</h4>
+                            <h4 className="font-semibold text-sm text-amber-900">{(card.data as PartyCard).title}</h4>
                             <div className="flex items-center gap-2 mt-1">
-                              <span className="px-1.5 py-0.5 bg-zinc-700 text-zinc-300 text-xs rounded">
+                              <span className="px-1.5 py-0.5 bg-amber-200 text-amber-800 text-xs rounded">
                                 {(card.data as PartyCard).members.length + 1}/{(card.data as PartyCard).maxCount}
                               </span>
                               {(card.data as PartyCard).isFull && (
-                                <span className="px-1.5 py-0.5 bg-red-900/30 text-red-400 text-xs rounded">
+                                <span className="px-1.5 py-0.5 bg-red-200 text-red-800 text-xs rounded">
                                   已满
                                 </span>
                               )}
@@ -576,23 +582,23 @@ export default function ChatPage() {
                           {isOwner((card.data as PartyCard).authorId) && (
                             <button
                               onClick={() => closeParty(card.id)}
-                              className="text-xs text-zinc-500 hover:text-red-400"
+                              className="text-xs text-amber-600 hover:text-red-600"
                             >
                               关闭
                             </button>
                           )}
                         </div>
-                        <p className="text-xs text-zinc-400 mb-3 line-clamp-2">{(card.data as PartyCard).description}</p>
+                        <p className="text-xs text-amber-700 mb-3 line-clamp-2">{(card.data as PartyCard).description}</p>
                         <div className="mb-3">
-                          <p className="text-xs text-zinc-500 mb-1">成员:</p>
+                          <p className="text-xs text-amber-600 mb-1">成员:</p>
                           <div className="flex flex-wrap gap-1">
                             {(card.data as PartyCard).character && (
-                              <span className="px-2 py-0.5 bg-zinc-700 text-zinc-200 text-xs rounded">
-                                {(card.data as PartyCard).character.name}
+                              <span className="px-2 py-0.5 bg-amber-200 text-amber-900 text-xs rounded">
+                                {(card.data as PartyCard).character!.name}
                               </span>
                             )}
                             {(card.data as PartyCard).members.map((member) => (
-                              <span key={member.id} className="px-2 py-0.5 bg-zinc-700 text-zinc-200 text-xs rounded">
+                              <span key={member.id} className="px-2 py-0.5 bg-amber-200 text-amber-900 text-xs rounded">
                                 {member.character.name}
                               </span>
                             ))}
@@ -603,7 +609,7 @@ export default function ChatPage() {
                             {joiningParty === card.id ? (
                               <div className="space-y-2">
                                 <select
-                                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-xs text-zinc-200"
+                                  className="w-full bg-amber-100 border border-amber-300 rounded-lg px-2 py-1.5 text-xs text-amber-900"
                                   onChange={(e) => setSelectedJoinCharacter(e.target.value)}
                                   value={selectedJoinCharacter}
                                 >
@@ -613,7 +619,7 @@ export default function ChatPage() {
                                       key={char.id} 
                                       value={char.id}
                                       disabled={isCharacterInParty(card.data as PartyCard, char.id)}
-                                      className={isCharacterInParty(card.data as PartyCard, char.id) ? "text-zinc-600" : ""}
+                                      className={isCharacterInParty(card.data as PartyCard, char.id) ? "text-amber-400" : ""}
                                     >
                                       {char.name} {isCharacterInParty(card.data as PartyCard, char.id) ? "(已加入)" : ""}
                                     </option>
@@ -632,7 +638,7 @@ export default function ChatPage() {
                                       setJoiningParty(null);
                                       setSelectedJoinCharacter("");
                                     }}
-                                    className="px-2 py-1 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-zinc-200 text-xs transition-colors"
+                                    className="px-2 py-1 rounded-lg bg-amber-200 hover:bg-amber-300 text-amber-800 text-xs transition-colors"
                                   >
                                     取消
                                   </button>
@@ -660,10 +666,10 @@ export default function ChatPage() {
 
       {showCharacterSelector && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setShowCharacterSelector(false)}>
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-w-2xl mx-4" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 w-full max-w-2xl mx-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-bold">选择角色</h3>
-              <button onClick={() => setShowCharacterSelector(false)} className="text-zinc-500 hover:text-zinc-300">
+              <h3 className="text-lg font-bold text-amber-900">选择角色</h3>
+              <button onClick={() => setShowCharacterSelector(false)} className="text-amber-600 hover:text-amber-800">
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -677,8 +683,8 @@ export default function ChatPage() {
                   }}
                   className={`p-4 rounded-xl border-2 text-left transition-colors ${
                     selectedCharacter?.id === char.id
-                      ? "border-amber-500 bg-zinc-800"
-                      : "border-zinc-800 bg-zinc-800/50 hover:border-zinc-700"
+                      ? "border-amber-500 bg-amber-100"
+                      : "border-amber-200 bg-amber-50 hover:border-amber-300"
                   }`}
                 >
                   <div className="flex items-center gap-4">
@@ -690,8 +696,8 @@ export default function ChatPage() {
                       )}
                     </div>
                     <div>
-                      <p className="font-medium text-zinc-200">{char.name}</p>
-                      <p className="text-sm text-zinc-500">{char.race} · {char.class}</p>
+                      <p className="font-medium text-amber-900">{char.name}</p>
+                      <p className="text-sm text-amber-600">{char.race} · {char.class}</p>
                     </div>
                   </div>
                 </button>
@@ -703,33 +709,33 @@ export default function ChatPage() {
 
       {showItemModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setShowItemModal(false)}>
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-w-lg mx-4" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 w-full max-w-lg mx-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-bold">发布物品</h3>
-              <button onClick={() => setShowItemModal(false)} className="text-zinc-500 hover:text-zinc-300">
+              <h3 className="text-lg font-bold text-amber-900">发布物品</h3>
+              <button onClick={() => setShowItemModal(false)} className="text-amber-600 hover:text-amber-800">
                 <X className="h-5 w-5" />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-zinc-400 mb-2">物品名称</label>
+                <label className="block text-sm text-amber-700 mb-2">物品名称</label>
                 <input 
                   type="text" 
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-500/50"
+                  className="w-full bg-amber-100 border border-amber-300 rounded-xl px-4 py-3 text-amber-900 placeholder-amber-600 focus:outline-none focus:border-amber-500"
                   placeholder="物品名称"
                   value={itemForm.name}
                   onChange={(e) => setItemForm({ ...itemForm, name: e.target.value })}
                 />
               </div>
               <div>
-                <label className="block text-sm text-zinc-400 mb-2">物品价格</label>
+                <label className="block text-sm text-amber-700 mb-2">物品价格</label>
                 <div className="relative">
-                  <Coins className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+                  <Coins className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-600" />
                   <input 
                     type="number" 
                     step="0.01"
                     min="0"
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-xl pl-10 pr-4 py-3 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-500/50"
+                    className="w-full bg-amber-100 border border-amber-300 rounded-xl pl-10 pr-4 py-3 text-amber-900 placeholder-amber-600 focus:outline-none focus:border-amber-500"
                     placeholder="0.00"
                     value={itemForm.price}
                     onChange={(e) => setItemForm({ ...itemForm, price: e.target.value })}
@@ -737,9 +743,9 @@ export default function ChatPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm text-zinc-400 mb-2">物品描述</label>
+                <label className="block text-sm text-amber-700 mb-2">物品描述</label>
                 <textarea 
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-zinc-100 h-32 placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 resize-none"
+                  className="w-full bg-amber-100 border border-amber-300 rounded-xl px-4 py-3 text-amber-900 h-32 placeholder-amber-600 focus:outline-none focus:border-amber-500 resize-none"
                   placeholder="描述你的物品..."
                   value={itemForm.description}
                   onChange={(e) => setItemForm({ ...itemForm, description: e.target.value })}
@@ -748,7 +754,7 @@ export default function ChatPage() {
               <div className="flex gap-3">
                 <button 
                   onClick={() => setShowItemModal(false)}
-                  className="flex-1 px-4 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition-colors"
+                  className="flex-1 px-4 py-3 rounded-xl bg-amber-200 hover:bg-amber-300 text-amber-900 transition-colors"
                 >
                   取消
                 </button>
@@ -766,18 +772,18 @@ export default function ChatPage() {
 
       {showPartyModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setShowPartyModal(false)}>
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-w-lg mx-4" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 w-full max-w-lg mx-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-bold">发布组队</h3>
-              <button onClick={() => setShowPartyModal(false)} className="text-zinc-500 hover:text-zinc-300">
+              <h3 className="text-lg font-bold text-amber-900">发布组队</h3>
+              <button onClick={() => setShowPartyModal(false)} className="text-amber-600 hover:text-amber-800">
                 <X className="h-5 w-5" />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-zinc-400 mb-2">选择角色</label>
+                <label className="block text-sm text-amber-700 mb-2">选择角色</label>
                 <select 
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-zinc-100 focus:outline-none focus:border-amber-500/50"
+                  className="w-full bg-amber-100 border border-amber-300 rounded-xl px-4 py-3 text-amber-900 focus:outline-none focus:border-amber-500"
                   value={partyForm.characterId}
                   onChange={(e) => setPartyForm({ ...partyForm, characterId: e.target.value })}
                 >
@@ -790,24 +796,24 @@ export default function ChatPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm text-zinc-400 mb-2">组队标题</label>
+                <label className="block text-sm text-amber-700 mb-2">组队标题</label>
                 <input 
                   type="text" 
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-500/50"
+                  className="w-full bg-amber-100 border border-amber-300 rounded-xl px-4 py-3 text-amber-900 placeholder-amber-600 focus:outline-none focus:border-amber-500"
                   placeholder="组队标题"
                   value={partyForm.title}
                   onChange={(e) => setPartyForm({ ...partyForm, title: e.target.value })}
                 />
               </div>
               <div>
-                <label className="block text-sm text-zinc-400 mb-2">队伍人数</label>
+                <label className="block text-sm text-amber-700 mb-2">队伍人数</label>
                 <div className="relative">
-                  <Users className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+                  <Users className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-600" />
                   <input 
                     type="number" 
                     min="1"
                     max="10"
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-xl pl-10 pr-4 py-3 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-500/50"
+                    className="w-full bg-amber-100 border border-amber-300 rounded-xl pl-10 pr-4 py-3 text-amber-900 placeholder-amber-600 focus:outline-none focus:border-amber-500"
                     placeholder="4"
                     value={partyForm.maxCount}
                     onChange={(e) => setPartyForm({ ...partyForm, maxCount: e.target.value })}
@@ -815,9 +821,9 @@ export default function ChatPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm text-zinc-400 mb-2">组队描述</label>
+                <label className="block text-sm text-amber-700 mb-2">组队描述</label>
                 <textarea 
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-zinc-100 h-32 placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 resize-none"
+                  className="w-full bg-amber-100 border border-amber-300 rounded-xl px-4 py-3 text-amber-900 h-32 placeholder-amber-600 focus:outline-none focus:border-amber-500 resize-none"
                   placeholder="描述你的组队需求..."
                   value={partyForm.description}
                   onChange={(e) => setPartyForm({ ...partyForm, description: e.target.value })}
@@ -826,7 +832,7 @@ export default function ChatPage() {
               <div className="flex gap-3">
                 <button 
                   onClick={() => setShowPartyModal(false)}
-                  className="flex-1 px-4 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition-colors"
+                  className="flex-1 px-4 py-3 rounded-xl bg-amber-200 hover:bg-amber-300 text-amber-900 transition-colors"
                 >
                   取消
                 </button>
