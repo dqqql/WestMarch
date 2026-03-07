@@ -12,13 +12,11 @@ import {
 import { BookOpen, Map, MessageSquare, Users, Sword, X, User, LogOut, ArrowRight, MessageCircleMore } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { useApp } from "@/contexts/AppContext";
 import { DateDisplay } from "@/components/DateDisplay";
 import { WeatherDisplay } from "@/components/WeatherDisplay";
 
 export default function Home() {
   const { user, login, logout, isLoading } = useAuth();
-  const { isClient } = useApp();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -49,17 +47,17 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 relative overflow-hidden flex flex-col">
-      {isClient && (
-        <div className="fixed inset-0 z-0 pointer-events-none">
-          <img 
-            src="/images/home-bg.png" 
-            alt="背景" 
-            className="w-full h-full object-cover opacity-55 transition-opacity duration-1000" 
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/60 via-zinc-950/40 to-zinc-950/80" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-500/10 via-transparent to-transparent" />
-        </div>
-      )}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <img
+          src="/images/home-bg.v1.webp"
+          alt="背景"
+          className="w-full h-full object-cover opacity-55 transition-opacity duration-1000"
+          loading="eager"
+          fetchPriority="high"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/60 via-zinc-950/40 to-zinc-950/80" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-500/10 via-transparent to-transparent" />
+      </div>
 
       {showLoginModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-300" onClick={() => setShowLoginModal(false)}>

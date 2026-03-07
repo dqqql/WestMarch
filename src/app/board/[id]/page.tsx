@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Tag, Edit2, Trash2, User, MapPin } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { useApp } from "@/contexts/AppContext";
 import ReactMarkdown from "react-markdown";
 import { CommentList } from "@/components/CommentList";
 
@@ -41,7 +40,6 @@ const getDisplayTag = (tag: string) => {
 
 export default function PostDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { user } = useAuth();
-  const { isClient } = useApp();
   const { id } = use(params);
   const [post, setPost] = useState<Post | null>(null);
   const [strongholds, setStrongholds] = useState<{ id: string; label: string; type: string }[]>([]);
@@ -164,15 +162,13 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
   if (isEditing) {
     return (
       <div className="min-h-screen bg-zinc-950 text-zinc-100">
-        {isClient && (
-          <div className="fixed inset-0 z-0 pointer-events-none">
-            <img
-              src="/images/general-bg.png"
-              alt="公告栏背景"
-              className="w-full h-full object-cover opacity-30 blur-[2px]"
-            />
-          </div>
-        )}
+        <div className="fixed inset-0 z-0 pointer-events-none">
+          <img
+            src="/images/general-bg.v1.webp"
+            alt="公告栏背景"
+            className="w-full h-full object-cover opacity-30 blur-[2px]"
+          />
+        </div>
 
         <header className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm sticky top-0 z-50">
           <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -282,15 +278,13 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      {isClient && (
-        <div className="fixed inset-0 z-0 pointer-events-none">
-          <img
-            src="/images/general-bg.png"
-            alt="公告栏背景"
-            className="w-full h-full object-cover opacity-30 blur-[2px]"
-          />
-        </div>
-      )}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <img
+          src="/images/general-bg.v1.webp"
+          alt="公告栏背景"
+          className="w-full h-full object-cover opacity-30 blur-[2px]"
+        />
+      </div>
 
       <header className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">

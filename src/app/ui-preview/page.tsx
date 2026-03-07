@@ -229,9 +229,9 @@ export default function UIPreview() {
   const [activeBg, setActiveBg] = useState("home");
 
   const backgrounds = [
-    { id: "home", label: "首页背景", src: "/images/home-bg.png" },
-    { id: "map", label: "地图背景", src: "/images/map-bg.png" },
-    { id: "general", label: "通用背景", src: "/images/general-bg.png" },
+    { id: "home", label: "首页背景", src: "/images/home-bg.v1.webp" },
+    { id: "map", label: "地图背景", src: "/images/map-bg.v1.webp" },
+    { id: "general", label: "通用背景", src: "/images/general-bg.v1.webp" },
   ];
 
   const handleLogin = async () => {
