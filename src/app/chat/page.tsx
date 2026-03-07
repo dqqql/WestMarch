@@ -199,24 +199,26 @@ export default function ChatPage() {
   const loadChannelData = useCallback(async () => {
     if (!selectedStronghold) return;
     try {
-      const requests = [
-        fetch(`/api/chat/${selectedStronghold.id}/messages?channelType=${activeChannel}`)
-      ];
+      const baseUrl = `/api/chat/${selectedStronghold.id}`;
 
-      const responses = await Promise.all(requests);
-
-      if (responses[0].ok) {
-        const msgs = await responses[0].json();
-        setMessages(msgs.reverse());
-      }
-
-      const [itemRes, partyRes] = await Promise.all([
-        fetch(`/api/chat/${selectedStronghold.id}/items`),
-        fetch(`/api/chat/${selectedStronghold.id}/parties`)
+      await Promise.allSettled([
+        (async () => {
+          const response = await fetch(`${baseUrl}/messages?channelType=${encodeURIComponent(activeChannel)}`);
+          if (!response.ok) return;
+          const msgs = await response.json();
+          setMessages(msgs.reverse());
+        })(),
+        (async () => {
+          const response = await fetch(`${baseUrl}/items`);
+          if (!response.ok) return;
+          setItemCards(await response.json());
+        })(),
+        (async () => {
+          const response = await fetch(`${baseUrl}/parties`);
+          if (!response.ok) return;
+          setPartyCards(await response.json());
+        })()
       ]);
-
-      if (itemRes.ok) setItemCards(await itemRes.json());
-      if (partyRes.ok) setPartyCards(await partyRes.json());
     } catch (error) {
       console.error("Failed to load channel data:", error);
     }
