@@ -25,7 +25,7 @@ export class ChatRepository {
           select: { id: true, username: true, nickname: true, avatar: true }
         },
         character: {
-          select: { id: true, name: true, race: true, class: true, img: true }
+          select: { id: true, name: true, race: true, class: true }
         },
         replyTo: {
           include: {
