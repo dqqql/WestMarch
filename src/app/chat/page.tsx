@@ -74,7 +74,7 @@ interface PartyCard {
   createdAt: string;
 }
 
-type ChannelType = "日常RP" | "玩家交易" | "寻找队友";
+type ChannelType = "日常RP";
 
 interface CombinedCard {
   id: string;
@@ -108,8 +108,8 @@ export default function ChatPage() {
   const [hasCheckedCharacters, setHasCheckedCharacters] = useState(false);
   const [showSwitchConfirm, setShowSwitchConfirm] = useState(false);
   const [pendingSwitch, setPendingSwitch] = useState<{
-    type: "stronghold" | "channel";
-    target: MapNode | ChannelType;
+    type: "stronghold";
+    target: MapNode;
   } | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -340,19 +340,9 @@ export default function ChatPage() {
     setShowSwitchConfirm(true);
   };
 
-  const handleChannelClick = (channel: ChannelType) => {
-    if (channel === activeChannel) return;
-    setPendingSwitch({ type: "channel", target: channel });
-    setShowSwitchConfirm(true);
-  };
-
   const confirmSwitch = () => {
     if (!pendingSwitch) return;
-    if (pendingSwitch.type === "stronghold") {
-      setSelectedStronghold(pendingSwitch.target as MapNode);
-    } else {
-      setActiveChannel(pendingSwitch.target as ChannelType);
-    }
+    setSelectedStronghold(pendingSwitch.target as MapNode);
     setShowSwitchConfirm(false);
     setPendingSwitch(null);
   };
@@ -386,9 +376,7 @@ export default function ChatPage() {
   ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const ChannelIcon = {
-    "日常RP": MessageCircle,
-    "玩家交易": ShoppingCart,
-    "寻找队友": Users
+    "日常RP": MessageCircle
   };
 
   if (!user || isLoading) {
@@ -475,25 +463,6 @@ export default function ChatPage() {
                 <p className="text-xs text-amber-600">{selectedStronghold.label}</p>
               )}
             </div>
-          </div>
-          <div className="flex gap-2">
-            {(["日常RP", "玩家交易", "寻找队友"] as ChannelType[]).map((channel) => {
-              const Icon = ChannelIcon[channel];
-              return (
-                <button
-                  key={channel}
-                  onClick={() => handleChannelClick(channel)}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                    activeChannel === channel
-                      ? "bg-amber-200 text-amber-900"
-                      : "text-amber-700 hover:bg-amber-150 hover:text-amber-800"
-                  }`}
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                  <span>{channel}</span>
-                </button>
-              );
-            })}
           </div>
         </header>
 
@@ -913,10 +882,7 @@ export default function ChatPage() {
             </div>
             <div className="mb-6">
               <p className="text-amber-800">
-                {pendingSwitch.type === "stronghold" 
-                  ? `确定要切换到据点 "${(pendingSwitch.target as MapNode).label}" 吗？`
-                  : `确定要切换到频道 "${pendingSwitch.target as ChannelType}" 吗？`
-                }
+                确定要切换到据点 "{pendingSwitch.target.label}" 吗？
               </p>
               <p className="text-xs text-amber-600 mt-2">切换后将加载新的消息和活动卡片。</p>
             </div>

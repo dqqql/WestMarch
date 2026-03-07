@@ -20,43 +20,12 @@ export default function Home() {
   const { user, login, logout, isLoading } = useAuth();
   const { isClient } = useApp();
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [showNoCharacterModal, setShowNoCharacterModal] = useState(false);
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [hasCharacters, setHasCharacters] = useState(false);
-  const [isCheckingCharacters, setIsCheckingCharacters] = useState(false);
 
-  useEffect(() => {
-    if (user) {
-      checkUserCharacters();
-    }
-  }, [user]);
 
-  const checkUserCharacters = async () => {
-    if (!user) return;
-    try {
-      setIsCheckingCharacters(true);
-      const response = await fetch(`/api/characters?userId=${user.id}`);
-      if (response.ok) {
-        const characters = await response.json();
-        setHasCharacters(characters.length > 0);
-      }
-    } catch (error) {
-      console.error("Failed to check characters:", error);
-    } finally {
-      setIsCheckingCharacters(false);
-    }
-  };
-
-  const handleChatClick = (e: React.MouseEvent) => {
-    if (!user) return;
-    if (!hasCharacters) {
-      e.preventDefault();
-      setShowNoCharacterModal(true);
-    }
-  };
 
   const handleLogin = async () => {
     if (!loginUsername || !loginPassword) {
@@ -147,53 +116,7 @@ export default function Home() {
         </div>
       )}
 
-      {showNoCharacterModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-300" onClick={() => setShowNoCharacterModal(false)}>
-          <div className="bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-700/50 rounded-3xl p-8 w-full max-w-md shadow-2xl shadow-black/50 animate-in zoom-in-95 duration-300" onClick={(e) => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/30">
-                  <User className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold">需要创建角色</h3>
-                  <p className="text-zinc-500 text-sm">先创建你的冒险者</p>
-                </div>
-              </div>
-              <button onClick={() => setShowNoCharacterModal(false)} className="text-zinc-500 hover:text-zinc-300 transition-colors p-2 hover:bg-zinc-800 rounded-xl">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="space-y-6">
-              <div className="text-center py-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-amber-500/20 to-amber-600/20 rounded-3xl flex items-center justify-center mx-auto mb-4">
-                  <User className="h-8 w-8 text-amber-400" />
-                </div>
-                <p className="text-zinc-300">
-                  在进入"逸闻趣事"之前，你需要先创建一个角色。
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <Button 
-                  variant="ghost"
-                  className="flex-1"
-                  onClick={() => setShowNoCharacterModal(false)}
-                >
-                  稍后再说
-                </Button>
-                <Link href="/characters">
-                  <Button 
-                    className="flex-1 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white"
-                    onClick={() => setShowNoCharacterModal(false)}
-                  >
-                    去创建角色
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+
 
       <header className="border-b border-zinc-800/50 bg-zinc-900/40 backdrop-blur-2xl sticky top-0 z-40">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
@@ -253,14 +176,12 @@ export default function Home() {
               { id: "board", title: "酒馆布告栏", description: "发布任务与战报", icon: MessageSquare, color: "from-purple-500 to-purple-600", shadow: "shadow-purple-500/20", href: "/board" },
               { id: "chat", title: "逸闻趣事", description: "据点聊天、交易与组队", icon: MessageCircleMore, color: "from-amber-500 to-amber-600", shadow: "shadow-amber-500/20", href: "/chat", requireLogin: true },
             ].map((item) => {
-              const isLoginDisabled = item.requireLogin && !user;
-              const isChatDisabled = item.id === "chat" && user && !hasCharacters && !isCheckingCharacters;
-              const isDisabled = isLoginDisabled || isChatDisabled;
+              const isDisabled = item.requireLogin && !user;
               
               const CardContent = isDisabled ? (
                 <Card 
                   key={item.id} 
-                  className={`${isChatDisabled ? 'cursor-not-allowed' : 'opacity-50 cursor-not-allowed'} bg-gradient-to-br from-zinc-900/80 to-zinc-950/80 border-zinc-700/50`}
+                  className="opacity-50 cursor-not-allowed bg-gradient-to-br from-zinc-900/80 to-zinc-950/80 border-zinc-700/50"
                 >
                   <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${item.color}`} />
                   <CardHeader className="p-5">
@@ -270,7 +191,7 @@ export default function Home() {
                           {item.title}
                         </CardTitle>
                         <CardDescription className="text-zinc-400 text-sm leading-relaxed">
-                          {isChatDisabled ? "需要创建角色" : "需要登录"}
+                          需要登录
                         </CardDescription>
                       </div>
                       <div className={`p-3 rounded-xl bg-gradient-to-br ${item.color} ${item.shadow} shadow-lg`}>
@@ -283,7 +204,6 @@ export default function Home() {
                 <Link 
                   key={item.id} 
                   href={item.href}
-                  onClick={item.id === "chat" ? handleChatClick : undefined}
                 >
                   <Card className="relative overflow-hidden bg-gradient-to-br from-zinc-900/80 to-zinc-950/80 border-zinc-700/50 hover:border-zinc-600/50 transition-all duration-500 hover:scale-[1.02] hover:shadow-xl group cursor-pointer">
                     <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${item.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
