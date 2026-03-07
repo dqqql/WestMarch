@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, type MouseEvent as ReactMouseEvent } from "react";
 import { 
   MapPin, 
   MessageCircle, 
@@ -111,6 +111,11 @@ export default function ChatPage() {
     type: "stronghold";
     target: MapNode;
   } | null>(null);
+  const [messageContextMenu, setMessageContextMenu] = useState<{
+    messageId: string;
+    x: number;
+    y: number;
+  } | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -167,6 +172,22 @@ export default function ChatPage() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    if (!messageContextMenu) return;
+
+    const closeContextMenu = () => setMessageContextMenu(null);
+
+    window.addEventListener("click", closeContextMenu);
+    window.addEventListener("resize", closeContextMenu);
+    window.addEventListener("scroll", closeContextMenu, true);
+
+    return () => {
+      window.removeEventListener("click", closeContextMenu);
+      window.removeEventListener("resize", closeContextMenu);
+      window.removeEventListener("scroll", closeContextMenu, true);
+    };
+  }, [messageContextMenu]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -334,6 +355,48 @@ export default function ChatPage() {
     }
   };
 
+  const withdrawMessage = async (messageId: string) => {
+    if (!user || !selectedStronghold) return;
+
+    const shouldWithdraw = window.confirm("确定要撤回这条消息吗？");
+    if (!shouldWithdraw) {
+      setMessageContextMenu(null);
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/chat/${selectedStronghold.id}/messages/${messageId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ authorId: user.id }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        alert(data?.error || "撤回消息失败");
+        return;
+      }
+
+      setMessages(prev => prev.filter(message => message.id !== messageId));
+    } catch (error) {
+      console.error("Failed to withdraw message:", error);
+      alert("撤回消息失败");
+    } finally {
+      setMessageContextMenu(null);
+    }
+  };
+
+  const handleMessageContextMenu = (event: ReactMouseEvent<HTMLDivElement>, message: ChatMessage) => {
+    if (!isOwner(message.authorId)) return;
+
+    event.preventDefault();
+    setMessageContextMenu({
+      messageId: message.id,
+      x: event.clientX,
+      y: event.clientY,
+    });
+  };
+
   const handleStrongholdClick = (node: MapNode) => {
     if (node.id === selectedStronghold?.id) return;
     setPendingSwitch({ type: "stronghold", target: node });
@@ -476,7 +539,11 @@ export default function ChatPage() {
                 </div>
               ) : (
                 messages.map((message) => (
-                  <div key={message.id} className="flex gap-4 hover:bg-amber-100/50 -mx-4 px-4 py-2 rounded-lg">
+                  <div
+                    key={message.id}
+                    onContextMenu={(event) => handleMessageContextMenu(event, message)}
+                    className="flex gap-4 hover:bg-amber-100/50 -mx-4 px-4 py-2 rounded-lg"
+                  >
                     <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
                       {message.character?.img ? (
                         <img src={message.character.img} alt="" className="w-full h-full object-cover" />
@@ -901,6 +968,21 @@ export default function ChatPage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {messageContextMenu && (
+        <div
+          className="fixed z-[60] min-w-[120px] rounded-lg border border-amber-200 bg-amber-50 shadow-lg py-1"
+          style={{ top: messageContextMenu.y, left: messageContextMenu.x }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={() => withdrawMessage(messageContextMenu.messageId)}
+            className="w-full text-left px-3 py-2 text-sm text-red-700 hover:bg-red-50 transition-colors"
+          >
+            撤回消息
+          </button>
         </div>
       )}
     </div>
