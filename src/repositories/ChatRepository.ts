@@ -78,11 +78,6 @@ export class ChatRepository {
     }
 
     const now = new Date();
-    const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
-    
-    if (message.createdAt < fiveMinutesAgo) {
-      throw new Error('消息已超过可撤回时间（5分钟）');
-    }
 
     return prisma.chatMessage.update({
       where: { id },
@@ -372,3 +367,4 @@ export class ChatRepository {
     });
   }
 }
+

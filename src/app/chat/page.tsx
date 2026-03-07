@@ -116,6 +116,9 @@ export default function ChatPage() {
     x: number;
     y: number;
   } | null>(null);
+  const [pendingWithdrawMessageId, setPendingWithdrawMessageId] = useState<string | null>(null);
+  const [isWithdrawingMessage, setIsWithdrawingMessage] = useState(false);
+  const [withdrawError, setWithdrawError] = useState("");
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -355,17 +358,26 @@ export default function ChatPage() {
     }
   };
 
-  const withdrawMessage = async (messageId: string) => {
-    if (!user || !selectedStronghold) return;
+  const openWithdrawModal = (messageId: string) => {
+    setMessageContextMenu(null);
+    setWithdrawError("");
+    setPendingWithdrawMessageId(messageId);
+  };
 
-    const shouldWithdraw = window.confirm("确定要撤回这条消息吗？");
-    if (!shouldWithdraw) {
-      setMessageContextMenu(null);
-      return;
-    }
+  const closeWithdrawModal = () => {
+    if (isWithdrawingMessage) return;
+    setPendingWithdrawMessageId(null);
+    setWithdrawError("");
+  };
+
+  const confirmWithdrawMessage = async () => {
+    if (!user || !selectedStronghold || !pendingWithdrawMessageId) return;
 
     try {
-      const response = await fetch(`/api/chat/${selectedStronghold.id}/messages/${messageId}`, {
+      setIsWithdrawingMessage(true);
+      setWithdrawError("");
+
+      const response = await fetch(`/api/chat/${selectedStronghold.id}/messages/${pendingWithdrawMessageId}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ authorId: user.id }),
@@ -373,16 +385,17 @@ export default function ChatPage() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => null);
-        alert(data?.error || "撤回消息失败");
+        setWithdrawError(data?.error || "撤回消息失败");
         return;
       }
 
-      setMessages(prev => prev.filter(message => message.id !== messageId));
+      setMessages(prev => prev.filter(message => message.id !== pendingWithdrawMessageId));
+      setPendingWithdrawMessageId(null);
     } catch (error) {
       console.error("Failed to withdraw message:", error);
-      alert("撤回消息失败");
+      setWithdrawError("撤回消息失败");
     } finally {
-      setMessageContextMenu(null);
+      setIsWithdrawingMessage(false);
     }
   };
 
@@ -978,11 +991,54 @@ export default function ChatPage() {
           onClick={(e) => e.stopPropagation()}
         >
           <button
-            onClick={() => withdrawMessage(messageContextMenu.messageId)}
+            onClick={() => openWithdrawModal(messageContextMenu.messageId)}
             className="w-full text-left px-3 py-2 text-sm text-red-700 hover:bg-red-50 transition-colors"
           >
             撤回消息
           </button>
+        </div>
+      )}
+
+      {pendingWithdrawMessageId && (
+        <div
+          className="fixed inset-0 z-[70] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={closeWithdrawModal}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="withdraw-message-title"
+            className="w-full max-w-sm rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 id="withdraw-message-title" className="text-base font-semibold text-amber-900">
+              撤回消息
+            </h3>
+            <p className="mt-2 text-sm text-amber-700">
+              确认撤回这条消息吗？撤回后将从聊天记录中移除，且不可恢复。
+            </p>
+            {withdrawError && (
+              <p className="mt-3 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">
+                {withdrawError}
+              </p>
+            )}
+            <div className="mt-5 flex gap-3">
+              <button
+                onClick={closeWithdrawModal}
+                disabled={isWithdrawingMessage}
+                className="flex-1 rounded-xl bg-amber-200 px-4 py-2.5 text-sm font-medium text-amber-900 transition-colors hover:bg-amber-300 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                取消
+              </button>
+              <button
+                onClick={confirmWithdrawMessage}
+                disabled={isWithdrawingMessage}
+                className="flex-1 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-500 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {isWithdrawingMessage ? "撤回中..." : "确认撤回"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
