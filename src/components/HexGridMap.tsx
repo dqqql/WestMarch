@@ -301,31 +301,20 @@ export default function HexGridMap() {
     if (!originalNode) return;
     
     try {
-      const response = await fetch("/api/map/nodes", {
-        method: "POST",
+      const response = await fetch(`/api/map/nodes/${nodeId}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          label: originalNode.label,
-          type: originalNode.type,
           hexQ: newQ,
           hexR: newR,
           hexS: -newQ - newR,
-          description: originalNode.description,
-          planeId: currentPlane.id
         }),
       });
       
       if (response.ok) {
-        const newNode = await response.json();
-        
-        const deleteResponse = await fetch(`/api/map/nodes/${nodeId}`, {
-          method: "DELETE",
-        });
-        
-        if (deleteResponse.ok) {
-          setNodes(prev => [...prev.filter(n => n.id !== nodeId), newNode]);
-          setSelectedNode(newNode);
-        }
+        const updatedNode = await response.json();
+        setNodes(prev => prev.map(n => n.id === nodeId ? updatedNode : n));
+        setSelectedNode(updatedNode);
       }
     } catch (error) {
       console.error("Failed to migrate node:", error);
