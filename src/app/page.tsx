@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,21 +9,21 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { BookOpen, Map, MessageSquare, Users, Sword, X, User, LogOut, ArrowRight } from "lucide-react";
+import { BookOpen, Map, MessageSquare, Users, Sword, X, User, LogOut, ArrowRight, MessageCircleMore } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { useApp } from "@/contexts/AppContext";
 import { DateDisplay } from "@/components/DateDisplay";
 import { WeatherDisplay } from "@/components/WeatherDisplay";
 
 export default function Home() {
   const { user, login, logout, isLoading } = useAuth();
-  const { isClient } = useApp();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+
 
   const handleLogin = async () => {
     if (!loginUsername || !loginPassword) {
@@ -47,17 +47,17 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 relative overflow-hidden flex flex-col">
-      {isClient && (
-        <div className="fixed inset-0 z-0 pointer-events-none">
-          <img 
-            src="/images/home-bg.png" 
-            alt="背景" 
-            className="w-full h-full object-cover opacity-55 transition-opacity duration-1000" 
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/60 via-zinc-950/40 to-zinc-950/80" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-500/10 via-transparent to-transparent" />
-        </div>
-      )}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <img
+          src="/images/home-bg.v1.webp"
+          alt="背景"
+          className="w-full h-full object-cover opacity-55 transition-opacity duration-1000"
+          loading="eager"
+          fetchPriority="high"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/60 via-zinc-950/40 to-zinc-950/80" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-500/10 via-transparent to-transparent" />
+      </div>
 
       {showLoginModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-300" onClick={() => setShowLoginModal(false)}>
@@ -113,6 +113,8 @@ export default function Home() {
           </div>
         </div>
       )}
+
+
 
       <header className="border-b border-zinc-800/50 bg-zinc-900/40 backdrop-blur-2xl sticky top-0 z-40">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
@@ -170,11 +172,15 @@ export default function Home() {
               { id: "docs", title: "公会档案馆", description: "冒险规则与指南，房规，战报等各种文档的集中处", icon: BookOpen, color: "from-blue-500 to-blue-600", shadow: "shadow-blue-500/20", href: "/docs" },
               { id: "map", title: "世界地图", description: "探索边境世界", icon: Map, color: "from-emerald-500 to-emerald-600", shadow: "shadow-emerald-500/20", href: "/map" },
               { id: "board", title: "酒馆布告栏", description: "发布任务与战报", icon: MessageSquare, color: "from-purple-500 to-purple-600", shadow: "shadow-purple-500/20", href: "/board" },
-              { id: "party", title: "组队界面", description: "寻找冒险伙伴", icon: Users, color: "from-rose-500 to-rose-600", shadow: "shadow-rose-500/20", href: "/party", requireLogin: true },
+              { id: "chat", title: "逸闻趣事", description: "据点聊天、交易与组队", icon: MessageCircleMore, color: "from-amber-500 to-amber-600", shadow: "shadow-amber-500/20", href: "/chat", requireLogin: true },
             ].map((item) => {
               const isDisabled = item.requireLogin && !user;
+              
               const CardContent = isDisabled ? (
-                <Card key={item.id} className="opacity-50 cursor-not-allowed bg-gradient-to-br from-zinc-900/80 to-zinc-950/80 border-zinc-700/50">
+                <Card 
+                  key={item.id} 
+                  className="opacity-50 cursor-not-allowed bg-gradient-to-br from-zinc-900/80 to-zinc-950/80 border-zinc-700/50"
+                >
                   <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${item.color}`} />
                   <CardHeader className="p-5">
                     <div className="flex items-start justify-between gap-4">
@@ -193,7 +199,10 @@ export default function Home() {
                   </CardHeader>
                 </Card>
               ) : (
-                <Link key={item.id} href={item.href}>
+                <Link 
+                  key={item.id} 
+                  href={item.href}
+                >
                   <Card className="relative overflow-hidden bg-gradient-to-br from-zinc-900/80 to-zinc-950/80 border-zinc-700/50 hover:border-zinc-600/50 transition-all duration-500 hover:scale-[1.02] hover:shadow-xl group cursor-pointer">
                     <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${item.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
                     <CardHeader className="p-5">

@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Users, User, X, Plus, Edit2, Trash2, Tag, Calendar } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { useApp } from "@/contexts/AppContext";
 
 interface Character {
   id: string;
@@ -33,7 +32,6 @@ interface Party {
 
 export default function PartyPage() {
   const { user } = useAuth();
-  const { isClient } = useApp();
   const [parties, setParties] = useState<Party[]>([]);
   const [characters, setCharacters] = useState<Character[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -253,17 +251,15 @@ export default function PartyPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      {isClient && (
-        <div className="fixed inset-0 z-0 pointer-events-none">
-          <img
-            src="/images/general-bg.png"
-            alt="组队背景"
-            className="w-full h-full object-cover opacity-55 transition-opacity duration-1000"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/60 via-zinc-950/40 to-zinc-950/80" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-rose-500/10 via-transparent to-transparent" />
-        </div>
-      )}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <img
+          src="/images/general-bg.v1.webp"
+          alt="组队背景"
+          className="w-full h-full object-cover opacity-55 transition-opacity duration-1000"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/60 via-zinc-950/40 to-zinc-950/80" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-rose-500/10 via-transparent to-transparent" />
+      </div>
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 overflow-y-auto py-8 animate-in fade-in duration-300" onClick={() => {
           setShowCreateModal(false);

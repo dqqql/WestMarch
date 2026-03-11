@@ -19,12 +19,17 @@ const ResourcesContext = createContext<ResourcesContextType | undefined>(undefin
 export function ResourcesProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [resources, setResources] = useState<ResourceImage[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   const loadResources = async () => {
+    if (hasLoaded || isLoading) return;
+    
     try {
+      setIsLoading(true);
       const data = await resourcesApi.getAll();
       setResources(data);
+      setHasLoaded(true);
     } catch (error) {
       console.error("Failed to load resources:", error);
     } finally {
@@ -33,7 +38,8 @@ export function ResourcesProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    loadResources();
+    // 不再自动加载，只在需要时手动加载
+    // loadResources();
   }, []);
 
   const addResource = async (image: Omit<ResourceImage, "id" | "createdAt" | "updatedAt" | "userId">) => {

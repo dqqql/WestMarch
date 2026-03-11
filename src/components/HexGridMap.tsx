@@ -8,7 +8,6 @@ import { Select } from "@/components/ui/select";
 import { Modal } from "@/components/ui/modal";
 import { Map as MapIcon, ArrowLeft, Edit, ZoomIn, ZoomOut, Plus, Minus, Layers, PlusCircle } from "lucide-react";
 import Link from "next/link";
-import { useApp } from "@/contexts/AppContext";
 import NodeDetailModal from "./NodeDetailModal";
 
 const HEX_SIZE = 50;
@@ -50,7 +49,6 @@ interface PlaneData {
 }
 
 export default function HexGridMap() {
-  const { isClient } = useApp();
   const svgRef = useRef<SVGSVGElement>(null);
   const [viewBox, setViewBox] = useState({ x: -400, y: -400, width: 800, height: 800 });
   const [isDragging, setIsDragging] = useState(false);
@@ -303,31 +301,20 @@ export default function HexGridMap() {
     if (!originalNode) return;
     
     try {
-      const response = await fetch("/api/map/nodes", {
-        method: "POST",
+      const response = await fetch(`/api/map/nodes/${nodeId}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          label: originalNode.label,
-          type: originalNode.type,
           hexQ: newQ,
           hexR: newR,
           hexS: -newQ - newR,
-          description: originalNode.description,
-          planeId: currentPlane.id
         }),
       });
       
       if (response.ok) {
-        const newNode = await response.json();
-        
-        const deleteResponse = await fetch(`/api/map/nodes/${nodeId}`, {
-          method: "DELETE",
-        });
-        
-        if (deleteResponse.ok) {
-          setNodes(prev => [...prev.filter(n => n.id !== nodeId), newNode]);
-          setSelectedNode(newNode);
-        }
+        const updatedNode = await response.json();
+        setNodes(prev => prev.map(n => n.id === nodeId ? updatedNode : n));
+        setSelectedNode(updatedNode);
       }
     } catch (error) {
       console.error("Failed to migrate node:", error);
@@ -636,15 +623,13 @@ export default function HexGridMap() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col">
-      {isClient && (
-        <div className="fixed inset-0 z-0 pointer-events-none">
-          <img
-            src="/images/map-bg.png"
-            alt="地图背景"
-            className="w-full h-full object-cover opacity-30"
-          />
-        </div>
-      )}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <img
+          src="/images/map-bg.v1.webp"
+          alt="地图背景"
+          className="w-full h-full object-cover opacity-30"
+        />
+      </div>
       <header className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-4">

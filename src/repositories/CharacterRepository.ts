@@ -4,11 +4,34 @@ export class CharacterRepository {
   async findAll(userId?: string) {
     return prisma.character.findMany({
       where: userId ? { userId } : undefined,
+      select: {
+        id: true,
+        name: true,
+        race: true,
+        class: true,
+        img: true,
+        str: true,
+        dex: true,
+        con: true,
+        int: true,
+        wis: true,
+        cha: true,
+        bio: true,
+        userId: true,
+        createdAt: true,
+        updatedAt: true
+      },
       orderBy: { createdAt: 'desc' }
     });
   }
 
   async findById(id: string) {
+    return prisma.character.findUnique({
+      where: { id }
+    });
+  }
+
+  async findByIdFull(id: string) {
     return prisma.character.findUnique({
       where: { id }
     });
