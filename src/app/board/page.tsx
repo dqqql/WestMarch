@@ -63,6 +63,7 @@ export default function BoardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
+  const [editStatus, setEditStatus] = useState<Post["status"]>("待接取");
   const [newPost, setNewPost] = useState({ title: "", content: "", tag: "杂谈" as "DM悬赏" | "杂谈" | "跑团战报", honor: 0, gold: 0, reputation: 0, nodeId: "" });
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -146,13 +147,15 @@ export default function BoardPage() {
           nodeId: newPost.nodeId || null,
           honor: newPost.honor,
           gold: newPost.gold,
-          reputation: newPost.reputation
+          reputation: newPost.reputation,
+          status: editStatus
         }),
       });
       if (response.ok) {
         const updatedPost = await response.json();
         setPosts(posts.map(p => p.id === editingPost.id ? updatedPost : p));
         setEditingPost(null);
+        setEditStatus("待接取");
         setNewPost({ title: "", content: "", tag: "杂谈", honor: 0, gold: 0, reputation: 0, nodeId: "" });
       }
     } catch (error) {
@@ -176,26 +179,9 @@ export default function BoardPage() {
     }
   };
 
-  const handleStatusChange = async (post: Post, status: Post["status"]) => {
-    try {
-      const response = await fetch(`/api/posts/${post.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
-      });
-
-      if (response.ok) {
-        const updatedPost = await response.json();
-        setPosts(posts.map((currentPost) => currentPost.id === post.id ? updatedPost : currentPost));
-      }
-    } catch (error) {
-      console.error("Failed to update post status:", error);
-      alert("更新悬赏状态失败");
-    }
-  };
-
   const openEditModal = (post: Post) => {
     setEditingPost(post);
+    setEditStatus(post.status || "待接取");
     const displayTag = getDisplayTag(post.tag);
     setNewPost({ 
       title: post.title, 
@@ -374,6 +360,19 @@ export default function BoardPage() {
                       ))}
                     </select>
                   </div>
+                  <div className="mt-3">
+                    <label className="block text-xs text-zinc-400 mb-2">悬赏状态</label>
+                    <select
+                      className="w-full bg-zinc-800/60 border border-zinc-700/50 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20 backdrop-blur-sm transition-all"
+                      value={editStatus}
+                      onChange={(e) => setEditStatus(e.target.value as Post["status"])}
+                    >
+                      <option value="待接取">待接取</option>
+                      <option value="组队中">组队中</option>
+                      <option value="组队完毕">组队完毕</option>
+                      <option value="已完成">已完成</option>
+                    </select>
+                  </div>
                 </div>
               )}
               <div>
@@ -476,6 +475,19 @@ export default function BoardPage() {
                           {stronghold.label}
                         </option>
                       ))}
+                    </select>
+                  </div>
+                  <div className="mt-3">
+                    <label className="block text-xs text-zinc-400 mb-2">悬赏状态</label>
+                    <select
+                      className="w-full bg-zinc-800/60 border border-zinc-700/50 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20 backdrop-blur-sm transition-all"
+                      value={editStatus}
+                      onChange={(e) => setEditStatus(e.target.value as Post["status"])}
+                    >
+                      <option value="待接取">待接取</option>
+                      <option value="组队中">组队中</option>
+                      <option value="组队完毕">组队完毕</option>
+                      <option value="已完成">已完成</option>
                     </select>
                   </div>
                 </div>
@@ -648,23 +660,6 @@ export default function BoardPage() {
                                     {post.node.label}
                                   </span>
                                 )}
-                                <div className="flex items-center gap-2 ml-auto" onClick={(event) => event.stopPropagation()}>
-                                  <span className={`px-3 py-1 rounded-xl text-xs font-medium border ${statusColors[post.status || "待接取"]}`}>
-                                    {post.status || "待接取"}
-                                  </span>
-                                  {isPostOwner(post) && (
-                                    <select
-                                      className="bg-zinc-800/60 border border-zinc-700/50 rounded-xl px-2 py-1 text-xs text-white focus:outline-none focus:border-red-500/50 focus:ring-2 focus:ring-red-500/20 backdrop-blur-sm transition-all cursor-pointer"
-                                      value={post.status || "待接取"}
-                                      onChange={(event) => handleStatusChange(post, event.target.value as Post["status"])}
-                                    >
-                                      <option value="待接取">待接取</option>
-                                      <option value="组队中">组队中</option>
-                                      <option value="组队完毕">组队完毕</option>
-                                      <option value="已完成">已完成</option>
-                                    </select>
-                                  )}
-                                </div>
                               </>
                             )}
                           </div>
@@ -685,6 +680,14 @@ export default function BoardPage() {
                                 {new Date(post.createdAt).toLocaleDateString("zh-CN")}
                               </span>
                             </div>
+                            {displayTag === "DM悬赏" && (
+                              <div className="mt-4 pt-4 border-t border-zinc-800/60">
+                                <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-xl text-xs font-medium border ${statusColors[post.status || "待接取"]}`}>
+                                  <Clock className="h-3 w-3" />
+                                  状态: {post.status || "待接取"}
+                                </span>
+                              </div>
+                            )}
                           </Link>
                         </div>
                         {isPostOwner(post) && (
