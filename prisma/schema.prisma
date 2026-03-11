@@ -14,6 +14,13 @@ enum PostTag {
   跑团战报
 }
 
+enum PostStatus {
+  待接取
+  组队中
+  组队完毕
+  已完成
+}
+
 enum MapNodeType {
   据点
   地城
@@ -74,6 +81,7 @@ model Post {
   title       String
   content     String
   tag         PostTag
+  status      PostStatus @default(待接取)
   authorId    String
   author      User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
   characterId String?
@@ -84,6 +92,7 @@ model Post {
   gold        Int        @default(0)
   reputation  Int        @default(0)
   comments    Comment[]
+  partyCards  PartyCard[]
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 }
@@ -330,6 +339,8 @@ model PartyCard {
   id          String            @id @default(cuid())
   nodeId      String
   node        MapNode           @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  postId      String?
+  post        Post?             @relation(fields: [postId], references: [id], onDelete: SetNull)
   title       String
   description String
   maxCount    Int               @default(4)

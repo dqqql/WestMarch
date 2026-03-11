@@ -17,6 +17,7 @@ interface Post {
   title: string;
   content: string;
   tag: "DM悬赏" | "杂谈" | "跑团战报" | "寻找队伍";
+  status: "待接取" | "组队中" | "组队完毕" | "已完成";
   authorId: string;
   author: { id: string; username: string; nickname: string | null };
   characterId: string | null;
@@ -37,10 +38,17 @@ interface Stronghold {
 }
 
 const tagColors = {
-  "DM悬赏": "bg-purple-900/40 text-purple-300 border-purple-800/50",
+  "DM悬赏": "bg-red-900/40 text-red-300 border-red-800/50",
   "寻找队伍": "bg-blue-900/40 text-blue-300 border-blue-800/50",
   "杂谈": "bg-purple-900/40 text-purple-300 border-purple-800/50",
   "跑团战报": "bg-amber-900/40 text-amber-300 border-amber-800/50",
+};
+
+const statusColors = {
+  "待接取": "bg-emerald-900/40 text-emerald-300 border-emerald-800/50",
+  "组队中": "bg-sky-900/40 text-sky-300 border-sky-800/50",
+  "组队完毕": "bg-violet-900/40 text-violet-300 border-violet-800/50",
+  "已完成": "bg-zinc-800/60 text-zinc-300 border-zinc-700/50",
 };
 
 const getDisplayTag = (tag: string) => {
@@ -165,6 +173,24 @@ export default function BoardPage() {
     } catch (error) {
       console.error("Failed to delete post:", error);
       alert("删除帖子失败");
+    }
+  };
+
+  const handleStatusChange = async (post: Post, status: Post["status"]) => {
+    try {
+      const response = await fetch(`/api/posts/${post.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+
+      if (response.ok) {
+        const updatedPost = await response.json();
+        setPosts(posts.map((currentPost) => currentPost.id === post.id ? updatedPost : currentPost));
+      }
+    } catch (error) {
+      console.error("Failed to update post status:", error);
+      alert("更新悬赏状态失败");
     }
   };
 
@@ -622,6 +648,23 @@ export default function BoardPage() {
                                     {post.node.label}
                                   </span>
                                 )}
+                                <div className="flex items-center gap-2 ml-auto" onClick={(event) => event.stopPropagation()}>
+                                  <span className={`px-3 py-1 rounded-xl text-xs font-medium border ${statusColors[post.status || "待接取"]}`}>
+                                    {post.status || "待接取"}
+                                  </span>
+                                  {isPostOwner(post) && (
+                                    <select
+                                      className="bg-zinc-800/60 border border-zinc-700/50 rounded-xl px-2 py-1 text-xs text-white focus:outline-none focus:border-red-500/50 focus:ring-2 focus:ring-red-500/20 backdrop-blur-sm transition-all cursor-pointer"
+                                      value={post.status || "待接取"}
+                                      onChange={(event) => handleStatusChange(post, event.target.value as Post["status"])}
+                                    >
+                                      <option value="待接取">待接取</option>
+                                      <option value="组队中">组队中</option>
+                                      <option value="组队完毕">组队完毕</option>
+                                      <option value="已完成">已完成</option>
+                                    </select>
+                                  )}
+                                </div>
                               </>
                             )}
                           </div>

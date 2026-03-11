@@ -37,6 +37,14 @@ interface Character {
   img: string | null;
 }
 
+type PostStatus = "待接取" | "组队中" | "组队完毕" | "已完成";
+
+interface BountyPost {
+  id: string;
+  title: string;
+  status: PostStatus;
+}
+
 interface ChatMessage {
   id: string;
   content: string;
@@ -101,7 +109,8 @@ export default function ChatPage() {
   const [showItemModal, setShowItemModal] = useState(false);
   const [showPartyModal, setShowPartyModal] = useState(false);
   const [itemForm, setItemForm] = useState({ name: "", description: "", price: "" });
-  const [partyForm, setPartyForm] = useState({ title: "", description: "", maxCount: "4", characterId: "" });
+  const [partyForm, setPartyForm] = useState({ title: "", description: "", maxCount: "4", characterId: "", postId: "" });
+  const [bountyPosts, setBountyPosts] = useState<BountyPost[]>([]);
   const [joiningParty, setJoiningParty] = useState<string | null>(null);
   const [selectedJoinCharacter, setSelectedJoinCharacter] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
@@ -130,6 +139,23 @@ export default function ChatPage() {
     initializePage();
   }, [user]);
 
+  const loadBountyPosts = useCallback(async () => {
+    try {
+      const response = await fetch("/api/posts");
+      if (!response.ok) return;
+
+      const posts = await response.json();
+      const availableBounties = posts.filter(
+        (post: { tag: string; status?: PostStatus }) =>
+          post.tag === "DM悬赏" && post.status !== "已完成"
+      );
+
+      setBountyPosts(availableBounties);
+    } catch (error) {
+      console.error("Failed to load bounty posts:", error);
+    }
+  }, []);
+
   const initializePage = async () => {
     try {
       setIsLoading(true);
@@ -157,6 +183,8 @@ export default function ChatPage() {
           setSelectedStronghold(nodes[0]);
         }
       }
+
+      await loadBountyPosts();
 
       setHasCheckedCharacters(true);
     } catch (error) {
@@ -295,7 +323,7 @@ export default function ChatPage() {
   };
 
   const createParty = async () => {
-    if (!partyForm.title || !partyForm.description || !partyForm.maxCount || !partyForm.characterId || !user || !selectedStronghold) return;
+    if (!partyForm.postId || !partyForm.title || !partyForm.description || !partyForm.maxCount || !partyForm.characterId || !user || !selectedStronghold) return;
 
     try {
       const response = await fetch(`/api/chat/${selectedStronghold.id}/parties`, {
@@ -306,7 +334,8 @@ export default function ChatPage() {
           description: partyForm.description,
           maxCount: partyForm.maxCount,
           authorId: user.id,
-          characterId: partyForm.characterId
+          characterId: partyForm.characterId,
+          postId: partyForm.postId
         }),
       });
 
@@ -314,11 +343,18 @@ export default function ChatPage() {
         const newParty = await response.json();
         setPartyCards([newParty, ...partyCards]);
         setShowPartyModal(false);
-        setPartyForm({ title: "", description: "", maxCount: "4", characterId: "" });
+        setPartyForm({ title: "", description: "", maxCount: "4", characterId: "", postId: "" });
+        await loadBountyPosts();
       }
     } catch (error) {
       console.error("Failed to create party:", error);
     }
+  };
+
+  const openPartyModal = async () => {
+    setPartyForm({ title: "", description: "", maxCount: "4", characterId: "", postId: "" });
+    setShowPartyModal(true);
+    await loadBountyPosts();
   };
 
   const joinParty = async (partyId: string) => {
@@ -623,7 +659,7 @@ export default function ChatPage() {
                   <ShoppingCart className="h-4 w-4" />
                 </button>
                 <button
-                  onClick={() => setShowPartyModal(true)}
+                  onClick={openPartyModal}
                   className="p-2 rounded-lg hover:bg-amber-200 text-amber-600 hover:text-amber-800 transition-colors"
                   title="发布组队"
                 >
@@ -901,13 +937,38 @@ export default function ChatPage() {
                 </select>
               </div>
               <div>
+                <label className="block text-sm text-amber-700 mb-2">关联悬赏</label>
+                <select
+                  className="w-full bg-amber-100 border border-amber-300 rounded-xl px-4 py-3 text-amber-900 focus:outline-none focus:border-amber-500"
+                  value={partyForm.postId}
+                  onChange={(e) => {
+                    const selectedId = e.target.value;
+                    const selectedBounty = bountyPosts.find(post => post.id === selectedId);
+
+                    setPartyForm({
+                      ...partyForm,
+                      postId: selectedId,
+                      title: selectedBounty?.title || ""
+                    });
+                  }}
+                >
+                  <option value="">请选择一个悬赏...</option>
+                  {bountyPosts.map(post => (
+                    <option key={post.id} value={post.id}>
+                      {post.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
                 <label className="block text-sm text-amber-700 mb-2">组队标题</label>
                 <input 
                   type="text" 
-                  className="w-full bg-amber-100 border border-amber-300 rounded-xl px-4 py-3 text-amber-900 placeholder-amber-600 focus:outline-none focus:border-amber-500"
-                  placeholder="组队标题"
+                  className="w-full bg-amber-100 border border-amber-300 rounded-xl px-4 py-3 text-amber-900 placeholder-amber-600 focus:outline-none focus:border-amber-500 disabled:cursor-not-allowed disabled:opacity-70"
+                  placeholder="选择悬赏后自动带入标题"
                   value={partyForm.title}
-                  onChange={(e) => setPartyForm({ ...partyForm, title: e.target.value })}
+                  readOnly
+                  disabled={!partyForm.postId}
                 />
               </div>
               <div>

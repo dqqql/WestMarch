@@ -24,7 +24,7 @@ export async function PUT(
 ) {
   try {
     const { id } = await params
-    const { title, content, tag, characterId, nodeId, honor, gold, reputation } = await request.json()
+    const { title, content, tag, characterId, nodeId, honor, gold, reputation, status } = await request.json()
 
     const post = await repositories.post.update(id, {
       title,
@@ -34,7 +34,8 @@ export async function PUT(
       nodeId,
       honor,
       gold,
-      reputation
+      reputation,
+      status
     })
 
     return NextResponse.json(post)

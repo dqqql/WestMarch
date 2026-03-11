@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma';
-import type { PostTag } from '@prisma/client';
+import type { PostStatus, PostTag } from '@prisma/client';
 
 function processPostWithAuthor(post: any) {
   const author = post.author;
@@ -56,7 +56,7 @@ export class PostRepository {
     return post ? processPostWithAuthor(post) : null;
   }
 
-  async create(data: { title: string; content: string; tag: PostTag; authorId: string; characterId?: string | null; nodeId?: string | null; honor?: number; gold?: number; reputation?: number }) {
+  async create(data: { title: string; content: string; tag: PostTag; authorId: string; characterId?: string | null; nodeId?: string | null; honor?: number; gold?: number; reputation?: number; status?: PostStatus }) {
     const { nodeId, ...rest } = data;
     const post = await prisma.post.create({
       data: {
@@ -80,7 +80,7 @@ export class PostRepository {
     return processPostWithAuthor(post);
   }
 
-  async update(id: string, data: { title?: string; content?: string; tag?: PostTag; characterId?: string | null; nodeId?: string | null; honor?: number; gold?: number; reputation?: number }) {
+  async update(id: string, data: { title?: string; content?: string; tag?: PostTag; characterId?: string | null; nodeId?: string | null; honor?: number; gold?: number; reputation?: number; status?: PostStatus }) {
     const { nodeId, ...rest } = data;
     const post = await prisma.post.update({
       where: { id },

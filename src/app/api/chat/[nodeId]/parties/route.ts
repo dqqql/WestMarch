@@ -21,9 +21,9 @@ export async function POST(
 ) {
   const params = await context.params;
   try {
-    const { title, description, maxCount, authorId, characterId } = await request.json()
+    const { title, description, maxCount, authorId, characterId, postId } = await request.json()
 
-    if (!title || !description || !maxCount || !authorId) {
+    if (!title || !description || !maxCount || !authorId || !postId) {
       return NextResponse.json({ error: '缺少必要参数' }, { status: 400 })
     }
 
@@ -33,7 +33,8 @@ export async function POST(
       description,
       maxCount: parseInt(maxCount),
       authorId,
-      characterId
+      characterId,
+      postId
     })
 
     return NextResponse.json(party)

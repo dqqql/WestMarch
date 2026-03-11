@@ -1,6 +1,36 @@
 import prisma from '@/lib/prisma';
 import type { ChatChannelType } from '@prisma/client';
 
+const partyCardSelect = {
+  id: true,
+  nodeId: true,
+  postId: true,
+  title: true,
+  description: true,
+  maxCount: true,
+  authorId: true,
+  author: {
+    select: { id: true, username: true, nickname: true }
+  },
+  characterId: true,
+  character: {
+    select: { id: true, name: true, race: true, class: true }
+  },
+  members: {
+    select: {
+      id: true,
+      characterId: true,
+      character: {
+        select: { id: true, name: true, race: true, class: true }
+      }
+    }
+  },
+  isFull: true,
+  isClosed: true,
+  createdAt: true,
+  updatedAt: true
+} as const;
+
 export class ChatRepository {
   async findStrongholdNodes() {
     return prisma.mapNode.findMany({
@@ -156,34 +186,7 @@ export class ChatRepository {
         nodeId,
         isClosed: false
       },
-      select: {
-        id: true,
-        nodeId: true,
-        title: true,
-        description: true,
-        maxCount: true,
-        authorId: true,
-        author: {
-          select: { id: true, username: true, nickname: true }
-        },
-        characterId: true,
-        character: {
-          select: { id: true, name: true, race: true, class: true }
-        },
-        members: {
-          select: {
-            id: true,
-            characterId: true,
-            character: {
-              select: { id: true, name: true, race: true, class: true }
-            }
-          }
-        },
-        isFull: true,
-        isClosed: true,
-        createdAt: true,
-        updatedAt: true
-      },
+      select: partyCardSelect,
       orderBy: {
         createdAt: 'desc'
       },
@@ -193,42 +196,34 @@ export class ChatRepository {
 
   async createPartyCard(data: {
     nodeId: string;
+    postId: string;
     title: string;
     description: string;
     maxCount: number;
     authorId: string;
     characterId?: string;
   }) {
-    return prisma.partyCard.create({
-      data,
-      select: {
-        id: true,
-        nodeId: true,
-        title: true,
-        description: true,
-        maxCount: true,
-        authorId: true,
-        author: {
-          select: { id: true, username: true, nickname: true }
-        },
-        characterId: true,
-        character: {
-          select: { id: true, name: true, race: true, class: true }
-        },
-        members: {
-          select: {
-            id: true,
-            characterId: true,
-            character: {
-              select: { id: true, name: true, race: true, class: true }
-            }
-          }
-        },
-        isFull: true,
-        isClosed: true,
-        createdAt: true,
-        updatedAt: true
+    return prisma.$transaction(async (tx) => {
+      const post = await tx.post.findUnique({
+        where: { id: data.postId },
+        select: { id: true, tag: true }
+      });
+
+      if (!post || post.tag !== 'DM悬赏') {
+        throw new Error('所选悬赏不存在');
       }
+
+      const partyCard = await tx.partyCard.create({
+        data,
+        select: partyCardSelect
+      });
+
+      await tx.post.update({
+        where: { id: data.postId },
+        data: { status: '组队中' }
+      });
+
+      return partyCard;
     });
   }
 
@@ -273,34 +268,7 @@ export class ChatRepository {
           },
           isFull: true
         },
-        select: {
-          id: true,
-          nodeId: true,
-          title: true,
-          description: true,
-          maxCount: true,
-          authorId: true,
-          author: {
-            select: { id: true, username: true, nickname: true }
-          },
-          characterId: true,
-          character: {
-            select: { id: true, name: true, race: true, class: true }
-          },
-          members: {
-            select: {
-              id: true,
-              characterId: true,
-              character: {
-                select: { id: true, name: true, race: true, class: true }
-              }
-            }
-          },
-          isFull: true,
-          isClosed: true,
-          createdAt: true,
-          updatedAt: true
-        }
+        select: partyCardSelect
       });
     }
 
@@ -313,34 +281,7 @@ export class ChatRepository {
           }
         }
       },
-      select: {
-        id: true,
-        nodeId: true,
-        title: true,
-        description: true,
-        maxCount: true,
-        authorId: true,
-        author: {
-          select: { id: true, username: true, nickname: true }
-        },
-        characterId: true,
-        character: {
-          select: { id: true, name: true, race: true, class: true }
-        },
-        members: {
-          select: {
-            id: true,
-            characterId: true,
-            character: {
-              select: { id: true, name: true, race: true, class: true }
-            }
-          }
-        },
-        isFull: true,
-        isClosed: true,
-        createdAt: true,
-        updatedAt: true
-      }
+      select: partyCardSelect
     });
   }
 
