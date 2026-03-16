@@ -273,7 +273,7 @@ export default function Home() {
             </div>
 
             {[
-              { id: "docs", title: "东辉档案馆", description: "文档和规则的集中处", icon: BookOpen, color: "from-blue-500 to-blue-600", shadow: "shadow-blue-500/20", href: "/docs" },
+              { id: "docs", title: "公会档案馆", description: "文档和规则的集中处", icon: BookOpen, color: "from-blue-500 to-blue-600", shadow: "shadow-blue-500/20", href: "/docs" },
               { id: "map", title: "世界地图", description: "探索边境世界", icon: Map, color: "from-emerald-500 to-emerald-600", shadow: "shadow-emerald-500/20", href: "/map" },
               { id: "board", title: "酒馆布告栏", description: "发布任务与战报", icon: MessageSquare, color: "from-purple-500 to-purple-600", shadow: "shadow-purple-500/20", href: "/board" },
               { id: "chat", title: "逸闻趣事", description: "据点聊天、交易与组队", icon: MessageCircleMore, color: "from-amber-500 to-amber-600", shadow: "shadow-amber-500/20", href: "/chat", requireLogin: true },
