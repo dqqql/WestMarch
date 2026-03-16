@@ -4,7 +4,11 @@ import prisma from '@/lib/prisma'
 export async function GET() {
   try {
     const characters = await prisma.character.findMany({
-      include: {
+      select: {
+        id: true,
+        name: true,
+        race: true,
+        class: true,
         user: {
           select: {
             username: true,
