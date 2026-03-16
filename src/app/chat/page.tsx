@@ -712,7 +712,7 @@ export default function ChatPage() {
                             <span>{Number((card.data as ItemCard).price).toFixed(2)}</span>
                           </div>
                         </div>
-                        <p className="text-xs text-amber-700 mb-3 line-clamp-2">{(card.data as ItemCard).description}</p>
+                        <p className="text-xs text-amber-700 mb-3 whitespace-pre-wrap">{(card.data as ItemCard).description}</p>
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-amber-600">
                             {(card.data as ItemCard).character?.name}
@@ -753,7 +753,7 @@ export default function ChatPage() {
                             </button>
                           )}
                         </div>
-                        <p className="text-xs text-amber-700 mb-3 line-clamp-2">{(card.data as PartyCard).description}</p>
+                        <p className="text-xs text-amber-700 mb-3 whitespace-pre-wrap">{(card.data as PartyCard).description}</p>
                         <div className="mb-3">
                           <p className="text-xs text-amber-600 mb-1">成员:</p>
                           <div className="flex flex-wrap gap-1">
