@@ -76,7 +76,7 @@ interface PartyCard {
   author: { id: string; username: string };
   characterId: string | null;
   character: Character | null;
-  members: { id: string; character: Character }[];
+  members: { id: string; characterId: string; character: Character }[];
   isFull: boolean;
   isClosed: boolean;
   createdAt: string;
@@ -113,6 +113,7 @@ export default function ChatPage() {
   const [bountyPosts, setBountyPosts] = useState<BountyPost[]>([]);
   const [joiningParty, setJoiningParty] = useState<string | null>(null);
   const [selectedJoinCharacter, setSelectedJoinCharacter] = useState<string>("");
+  const [removingMember, setRemovingMember] = useState<{ partyId: string; memberId: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasCheckedCharacters, setHasCheckedCharacters] = useState(false);
   const [showSwitchConfirm, setShowSwitchConfirm] = useState(false);
@@ -375,6 +376,29 @@ export default function ChatPage() {
       }
     } catch (error) {
       console.error("Failed to join party:", error);
+    }
+  };
+
+  const removePartyMember = async (partyId: string, memberId: string) => {
+    if (!user || !selectedStronghold) return;
+    setRemovingMember({ partyId, memberId });
+    try {
+      const response = await fetch(
+        `/api/chat/${selectedStronghold.id}/parties/${partyId}/members/${memberId}`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ requesterId: user.id }),
+        }
+      );
+      if (response.ok) {
+        const updatedParty = await response.json();
+        setPartyCards(partyCards.map(p => p.id === partyId ? updatedParty : p));
+      }
+    } catch (error) {
+      console.error("Failed to remove party member:", error);
+    } finally {
+      setRemovingMember(null);
     }
   };
 
@@ -734,13 +758,24 @@ export default function ChatPage() {
                           <p className="text-xs text-amber-600 mb-1">成员:</p>
                           <div className="flex flex-wrap gap-1">
                             {(card.data as PartyCard).character && (
-                              <span className="px-2 py-0.5 bg-amber-200 text-amber-900 text-xs rounded">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-300 text-amber-900 text-xs rounded font-medium">
+                                <span className="text-[10px] text-amber-700 font-bold">★</span>
                                 {(card.data as PartyCard).character!.name}
                               </span>
                             )}
                             {(card.data as PartyCard).members.map((member) => (
-                              <span key={member.id} className="px-2 py-0.5 bg-amber-200 text-amber-900 text-xs rounded">
+                              <span key={member.id} className="inline-flex items-center gap-0.5 px-2 py-0.5 bg-amber-200 text-amber-900 text-xs rounded">
                                 {member.character.name}
+                                {isOwner((card.data as PartyCard).authorId) && (
+                                  <button
+                                    onClick={() => removePartyMember(card.id, member.id)}
+                                    disabled={removingMember?.memberId === member.id}
+                                    className="ml-0.5 text-amber-500 hover:text-red-600 transition-colors disabled:opacity-50"
+                                    title={`移除 ${member.character.name}`}
+                                  >
+                                    <X className="h-2.5 w-2.5" />
+                                  </button>
+                                )}
                               </span>
                             ))}
                           </div>

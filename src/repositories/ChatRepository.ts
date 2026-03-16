@@ -307,5 +307,46 @@ export class ChatRepository {
       }
     });
   }
+
+  async removePartyMember(partyCardId: string, memberId: string, requesterId: string) {
+    // 校验该组队卡片存在且请求者为队长（authorId）
+    const partyCard = await prisma.partyCard.findUnique({
+      where: { id: partyCardId },
+      select: { id: true, authorId: true, isClosed: true }
+    });
+
+    if (!partyCard) {
+      throw new Error('组队卡片不存在');
+    }
+
+    if (partyCard.authorId !== requesterId) {
+      throw new Error('只有队长才能移除成员');
+    }
+
+    if (partyCard.isClosed) {
+      throw new Error('该组队已关闭');
+    }
+
+    // 确认成员存在
+    const member = await prisma.partyCardMember.findUnique({
+      where: { id: memberId }
+    });
+
+    if (!member || member.partyCardId !== partyCardId) {
+      throw new Error('成员不存在');
+    }
+
+    // 删除成员
+    await prisma.partyCardMember.delete({
+      where: { id: memberId }
+    });
+
+    // 更新 isFull 状态（移除后肯定不满了）
+    return prisma.partyCard.update({
+      where: { id: partyCardId },
+      data: { isFull: false },
+      select: partyCardSelect
+    });
+  }
 }
 
