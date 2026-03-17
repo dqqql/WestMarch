@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { BookOpen, Map, MessageSquare, Users, Sword, X, User, LogOut, ArrowRight, MessageCircleMore, Sparkles } from "lucide-react";
+import { BookOpen, Map, MessageSquare, Users, Sword, X, User, LogOut, ArrowRight, MessageCircleMore, Sparkles, CalendarDays, Sun, Sunset, Moon } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { DateDisplay } from "@/components/DateDisplay";
@@ -26,6 +26,50 @@ export default function Home() {
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [characterUsers, setCharacterUsers] = useState<any[]>([]);
   const [isLoadingInfo, setIsLoadingInfo] = useState(false);
+
+  // Schedule modal state
+  const [scheduleModal, setScheduleModal] = useState<{
+    open: boolean;
+    userId: string;
+    userName: string;
+    isOwn: boolean;
+    slots: boolean[];
+    isLoading: boolean;
+    isSaving: boolean;
+  } | null>(null);
+
+  const DAYS = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
+  const PERIODS = [
+    { label: "上午", icon: Sun },
+    { label: "下午", icon: Sunset },
+    { label: "晚上", icon: Moon },
+  ];
+
+  const openSchedule = async (targetUserId: string, targetUserName: string) => {
+    const isOwn = user?.id === targetUserId;
+    setScheduleModal({ open: true, userId: targetUserId, userName: targetUserName, isOwn, slots: Array(21).fill(false), isLoading: true, isSaving: false });
+    try {
+      const res = await fetch(`/api/schedule/${targetUserId}`);
+      const data = await res.json();
+      setScheduleModal(prev => prev ? { ...prev, slots: data.slots ?? Array(21).fill(false), isLoading: false } : null);
+    } catch {
+      setScheduleModal(prev => prev ? { ...prev, isLoading: false } : null);
+    }
+  };
+
+  const handleToggleSlot = async (index: number) => {
+    if (!scheduleModal?.isOwn) return;
+    const newSlots = [...scheduleModal.slots];
+    newSlots[index] = !newSlots[index];
+    // Optimistic update immediately
+    setScheduleModal(prev => prev ? { ...prev, slots: newSlots } : null);
+    // Fire and forget — data persists even if modal closes before request completes
+    fetch(`/api/schedule/${scheduleModal.userId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slots: newSlots }),
+    }).catch(e => console.error("Schedule save failed:", e));
+  };
 
   const fetchCharacterUsers = async () => {
     setIsLoadingInfo(true);
@@ -103,40 +147,58 @@ export default function Home() {
                   <p className="animate-pulse">正在窥探异次元档案...</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-950/50">
-                  <table className="w-full text-sm text-left">
-                    <thead className="text-xs uppercase bg-zinc-900/80 text-zinc-400 border-b border-zinc-800 sticky top-0 z-10 backdrop-blur-xl">
-                      <tr>
-                        <th className="px-6 py-4 font-semibold tracking-wider">角色名称</th>
-                        <th className="px-6 py-4 font-semibold tracking-wider">种族 / 职业</th>
-                        <th className="px-6 py-4 font-semibold tracking-wider">账号昵称</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-zinc-800/50">
-                      {characterUsers.map((item) => (
-                        <tr key={item.id} className="hover:bg-zinc-800/30 transition-colors group">
-                          <td className="px-6 py-4 font-medium text-amber-100/90 group-hover:text-amber-300 transition-colors">
-                            {item.name}
-                          </td>
-                          <td className="px-6 py-4 text-zinc-400">
-                            {item.race} / {item.class}
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                              {item.user?.nickname || item.user?.username || "未知旅行者"}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                      {characterUsers.length === 0 && (
-                        <tr>
-                          <td colSpan={3} className="px-6 py-12 text-center text-zinc-500">
-                            尚未有冒险者踏入这片大陆...
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
+                <div className="space-y-6 pb-4">
+                  {Object.entries(
+                    characterUsers.reduce((acc: any, char: any) => {
+                      const uid = char.user?.id ?? "unknown";
+                      const displayName = char.user?.nickname || char.user?.username || "未知旅行者";
+                      const key = uid;
+                      if (!acc[key]) acc[key] = { displayName, chars: [] };
+                      acc[key].chars.push(char);
+                      return acc;
+                    }, {})
+                  ).map(([uid, group]: [string, any]) => (
+                    <div key={uid} className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950/40 shadow-sm">
+                      <div className="bg-zinc-900/80 px-5 py-3 border-b border-zinc-800 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-indigo-400" />
+                          <span className="font-bold text-indigo-200">{group.displayName}</span>
+                          <button
+                            onClick={() => openSchedule(uid, group.displayName)}
+                            title="查看时间表"
+                            className="ml-1 p-1 rounded-lg text-zinc-500 hover:text-indigo-300 hover:bg-indigo-500/10 transition-all"
+                          >
+                            <CalendarDays className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                        <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium bg-zinc-800 px-2 py-0.5 rounded-md">
+                          {group.chars.length} 个角色
+                        </span>
+                      </div>
+                      <div className="p-0">
+                        <table className="w-full text-sm text-left">
+                          <tbody className="divide-y divide-zinc-800/30">
+                            {group.chars.map((char: any) => (
+                              <tr key={char.id} className="hover:bg-indigo-500/5 transition-colors group">
+                                <td className="px-5 py-3.5 font-medium text-amber-100/90 group-hover:text-amber-300">
+                                  {char.name}
+                                </td>
+                                <td className="px-5 py-3.5 text-zinc-400 text-right">
+                                  {char.race} / {char.class}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {characterUsers.length === 0 && (
+                    <div className="py-20 text-center border border-dashed border-zinc-800 rounded-2xl">
+                      <p className="text-zinc-500">尚未有冒险者踏入这片大陆...</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -144,6 +206,100 @@ export default function Home() {
             <div className="mt-6 pt-4 border-t border-zinc-800 text-center">
               <Button onClick={() => setShowInfoModal(false)} variant="outline" className="rounded-full border-zinc-700 text-zinc-300 hover:text-white hover:bg-zinc-800">
                 关闭书卷
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Schedule Modal */}
+      {scheduleModal?.open && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[60] animate-in fade-in duration-300 p-4" onClick={() => setScheduleModal(null)}>
+          <div className="bg-zinc-900 border border-indigo-500/20 rounded-3xl p-6 w-full max-w-xl shadow-[0_0_60px_rgba(99,102,241,0.25)] animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
+            {/* Header */}
+            <div className="flex justify-between items-center mb-5 pb-4 border-b border-zinc-800">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-indigo-500/20 rounded-xl flex items-center justify-center">
+                  <CalendarDays className="h-4 w-4 text-indigo-400" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-white">时间表</h3>
+                  <p className="text-xs text-zinc-500">
+                    {scheduleModal.userName}
+                    {scheduleModal.isOwn
+                      ? <span className="ml-2 text-emerald-400">· 点击切换你的空闲</span>
+                      : <span className="ml-2 text-zinc-600">· 仅供查看</span>}
+                  </p>
+                </div>
+              </div>
+              <button onClick={() => setScheduleModal(null)} className="p-2 rounded-xl text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {scheduleModal.isLoading ? (
+              <div className="py-16 flex flex-col items-center gap-3 text-indigo-400/50">
+                <CalendarDays className="h-8 w-8 animate-pulse" />
+                <p className="text-sm animate-pulse">正在翻阅日程卷轴...</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr>
+                      <th className="w-16 pb-3 text-zinc-600 font-normal text-left pl-1">时段</th>
+                      {DAYS.map(d => (
+                        <th key={d} className="pb-3 text-center font-semibold text-zinc-400 px-1">{d}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="space-y-1">
+                    {PERIODS.map((period, pi) => {
+                      const PIcon = period.icon;
+                      return (
+                        <tr key={period.label}>
+                          <td className="py-1.5 pl-1">
+                            <div className="flex items-center gap-1.5 text-zinc-500">
+                              <PIcon className="h-3 w-3" />
+                              <span>{period.label}</span>
+                            </div>
+                          </td>
+                          {DAYS.map((_, di) => {
+                            const idx = di * 3 + pi;
+                            const isAvailable = scheduleModal.slots[idx];
+                            return (
+                              <td key={di} className="px-1 py-1.5 text-center">
+                                <button
+                                  onClick={() => handleToggleSlot(idx)}
+                                  disabled={!scheduleModal.isOwn}
+                                  title={isAvailable ? "有空 (点击取消)" : "暂无空闲 (点击标记)"}
+                                  className={[
+                                    "w-full h-9 rounded-xl border bg-zinc-800/60 border-zinc-700/40 transition-all duration-150 flex items-center justify-center",
+                                    scheduleModal.isOwn ? "cursor-pointer hover:border-zinc-600 hover:bg-zinc-700/60 active:scale-95" : "cursor-default",
+                                  ].join(" ")}
+                                >
+                                  {isAvailable && (
+                                    <span className="w-3.5 h-3.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)] flex-shrink-0" />
+                                  )}
+                                </button>
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <div className="mt-5 pt-4 border-t border-zinc-800 flex items-center justify-between">
+              <div className="flex items-center gap-4 text-xs text-zinc-500">
+                <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-emerald-400 shadow-[0_0_5px_rgba(52,211,153,0.5)] inline-block" />有空</span>
+                <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-xl bg-zinc-800 border border-zinc-700/40 inline-block" />暂无</span>
+              </div>
+              <Button onClick={() => setScheduleModal(null)} variant="outline" size="sm" className="rounded-full border-zinc-700 text-zinc-300 hover:text-white hover:bg-zinc-800">
+                关闭
               </Button>
             </div>
           </div>

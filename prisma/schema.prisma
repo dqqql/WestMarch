@@ -45,6 +45,7 @@ model User {
   chatMessages   ChatMessage[]
   itemCards      ItemCard[]
   partyCards     PartyCard[]
+  schedule       UserSchedule?
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
 }
@@ -377,4 +378,14 @@ model WeatherRecord {
   description String?
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
+}
+
+model UserSchedule {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // JSON array of 21 booleans: 7 days × 3 slots (morning/noon/night)
+  slots     String   @default("[]")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

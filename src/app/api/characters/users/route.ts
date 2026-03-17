@@ -11,6 +11,7 @@ export async function GET() {
         class: true,
         user: {
           select: {
+            id: true,
             username: true,
             nickname: true,
           }
