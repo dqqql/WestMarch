@@ -5,12 +5,15 @@ class ApiClient {
     url: string,
     options: RequestInit = {}
   ): Promise<T> {
+    const headers = new Headers(options.headers);
+
+    if (!headers.has('Content-Type') && !(options.body instanceof FormData)) {
+      headers.set('Content-Type', 'application/json');
+    }
+
     const response = await fetch(`${BASE_URL}${url}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
       ...options,
+      headers,
     });
 
     if (!response.ok) {
@@ -28,6 +31,13 @@ class ApiClient {
     return this.request<T>(url, {
       method: 'POST',
       body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  async postForm<T>(url: string, data: FormData): Promise<T> {
+    return this.request<T>(url, {
+      method: 'POST',
+      body: data,
     });
   }
 

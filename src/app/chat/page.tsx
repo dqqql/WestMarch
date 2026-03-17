@@ -621,7 +621,13 @@ export default function ChatPage() {
                   >
                     <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
                       {message.character?.img ? (
-                        <img src={message.character.img} alt="" className="w-full h-full object-cover" />
+                        <img
+                          src={message.character.img}
+                          alt=""
+                          loading="lazy"
+                          decoding="async"
+                          className="w-full h-full object-cover"
+                        />
                       ) : (
                         <User className="h-5 w-5 text-white" />
                       )}

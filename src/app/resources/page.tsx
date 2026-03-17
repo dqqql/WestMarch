@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FolderOpen, Upload, Trash2, X, Image, User, ArrowLeft } from "lucide-react";
@@ -16,14 +16,27 @@ const categoryIcons: Record<ImageCategory, React.ReactNode> = {
 };
 
 export default function ResourcesPage() {
-  const { resources, addResource, deleteResource, isLoading, loadResources } = useResources();
+  const { resources, uploadResource, deleteResource, isLoading, loadResources } = useResources();
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploadName, setUploadName] = useState("");
-  const [uploadUrl, setUploadUrl] = useState("");
+  const [uploadPreviewUrl, setUploadPreviewUrl] = useState("");
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
   const avatarResources = resources.filter((r) => r.category === "characterAvatar");
+
+  useEffect(() => {
+    loadResources();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (uploadPreviewUrl) {
+        URL.revokeObjectURL(uploadPreviewUrl);
+      }
+    };
+  }, [uploadPreviewUrl]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -38,15 +51,15 @@ export default function ResourcesPage() {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      setUploadUrl(result);
-      if (!uploadName) {
-        setUploadName(file.name.replace(/\.[^/.]+$/, ""));
-      }
-    };
-    reader.readAsDataURL(file);
+    if (uploadPreviewUrl) {
+      URL.revokeObjectURL(uploadPreviewUrl);
+    }
+
+    setUploadFile(file);
+    setUploadPreviewUrl(URL.createObjectURL(file));
+    if (!uploadName) {
+      setUploadName(file.name.replace(/\.[^/.]+$/, ""));
+    }
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -68,22 +81,26 @@ export default function ResourcesPage() {
   };
 
   const handleUpload = async () => {
-    if (!uploadUrl || !uploadName) {
+    if (!uploadFile || !uploadName) {
       alert("请选择图片并填写名称");
       return;
     }
 
     setIsUploading(true);
     try {
-      await addResource({
+      await uploadResource(uploadFile, {
         name: uploadName,
-        url: uploadUrl,
+        url: "",
         category: "characterAvatar",
       });
 
       setShowUploadModal(false);
       setUploadName("");
-      setUploadUrl("");
+      if (uploadPreviewUrl) {
+        URL.revokeObjectURL(uploadPreviewUrl);
+      }
+      setUploadPreviewUrl("");
+      setUploadFile(null);
     } catch (error) {
       console.error("Failed to upload resource:", error);
       alert("上传失败，请重试");
@@ -129,7 +146,7 @@ export default function ResourcesPage() {
               </button>
             </div>
             <div className="space-y-4">
-              {!uploadUrl ? (
+              {!uploadPreviewUrl ? (
                 <div
                   className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
                     isDragging
@@ -155,7 +172,7 @@ export default function ResourcesPage() {
               ) : (
                 <div className="space-y-4">
                   <div className="aspect-video bg-zinc-800 rounded-lg overflow-hidden border border-zinc-700">
-                    <img src={uploadUrl} alt="预览" className="w-full h-full object-cover" />
+                    <img src={uploadPreviewUrl} alt="预览" className="w-full h-full object-cover" />
                   </div>
                   <div>
                     <label className="block text-sm text-zinc-400 mb-1">头像名称</label>
@@ -172,8 +189,12 @@ export default function ResourcesPage() {
                       variant="ghost"
                       className="flex-1"
                       onClick={() => {
-                        setUploadUrl("");
+                        if (uploadPreviewUrl) {
+                          URL.revokeObjectURL(uploadPreviewUrl);
+                        }
+                        setUploadPreviewUrl("");
                         setUploadName("");
+                        setUploadFile(null);
                       }}
                     >
                       重新选择
@@ -188,7 +209,7 @@ export default function ResourcesPage() {
                 <Button
                   className="flex-1 bg-amber-600 hover:bg-amber-700"
                   onClick={handleUpload}
-                  disabled={!uploadUrl || !uploadName || isUploading}
+                  disabled={!uploadPreviewUrl || !uploadName || isUploading}
                 >
                   {isUploading ? "上传中..." : "上传"}
                 </Button>

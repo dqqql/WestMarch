@@ -10,6 +10,7 @@ interface ResourcesContextType {
   resources: ResourceImage[];
   isLoading: boolean;
   addResource: (image: Omit<ResourceImage, "id" | "createdAt" | "updatedAt" | "userId">) => Promise<void>;
+  uploadResource: (file: File, image: Omit<ResourceImage, "id" | "createdAt" | "updatedAt" | "userId">) => Promise<void>;
   deleteResource: (id: string) => Promise<void>;
   loadResources: () => Promise<void>;
 }
@@ -53,6 +54,24 @@ export function ResourcesProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const uploadResource = async (
+    file: File,
+    image: Omit<ResourceImage, "id" | "createdAt" | "updatedAt" | "userId">
+  ) => {
+    if (!user) throw new Error("User not logged in");
+    try {
+      const newResource = await resourcesApi.upload({
+        file,
+        ...image,
+        userId: user.id,
+      });
+      setResources((prev) => [...prev, newResource]);
+    } catch (error) {
+      console.error("Failed to upload resource:", error);
+      throw error;
+    }
+  };
+
   const deleteResource = async (id: string) => {
     try {
       await resourcesApi.delete(id);
@@ -69,6 +88,7 @@ export function ResourcesProvider({ children }: { children: ReactNode }) {
         resources,
         isLoading,
         addResource,
+        uploadResource,
         deleteResource,
         loadResources,
       }}
