@@ -21,10 +21,18 @@ export async function POST(
 ) {
   const params = await context.params;
   try {
-    const { title, description, maxCount, authorId, characterId, postId } = await request.json()
+    const { title, description, maxCount, authorId, characterId, postId, scheduledAt } = await request.json()
 
     if (!title || !description || !maxCount || !authorId || !postId) {
       return NextResponse.json({ error: '缺少必要参数' }, { status: 400 })
+    }
+
+    let parsedScheduledAt: Date | undefined
+    if (scheduledAt) {
+      parsedScheduledAt = new Date(scheduledAt)
+      if (Number.isNaN(parsedScheduledAt.getTime())) {
+        return NextResponse.json({ error: 'Invalid schedule time' }, { status: 400 })
+      }
     }
 
     const party = await repositories.chat.createPartyCard({
@@ -34,7 +42,8 @@ export async function POST(
       maxCount: parseInt(maxCount),
       authorId,
       characterId,
-      postId
+      postId,
+      scheduledAt: parsedScheduledAt
     })
 
     return NextResponse.json(party)

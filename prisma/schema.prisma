@@ -351,6 +351,7 @@ model PartyCard {
   members     PartyCardMember[]
   isFull      Boolean           @default(false)
   isClosed    Boolean           @default(false)
+  scheduledAt DateTime?          @map("nextSessionTime")
   closedAt    DateTime?
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt

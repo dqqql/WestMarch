@@ -8,6 +8,7 @@ const partyCardSelect = {
   title: true,
   description: true,
   maxCount: true,
+  scheduledAt: true,
   authorId: true,
   author: {
     select: { id: true, username: true, nickname: true }
@@ -202,6 +203,7 @@ export class ChatRepository {
     maxCount: number;
     authorId: string;
     characterId?: string;
+    scheduledAt?: Date | null;
   }) {
     return prisma.$transaction(async (tx) => {
       const post = await tx.post.findUnique({
@@ -214,7 +216,10 @@ export class ChatRepository {
       }
 
       const partyCard = await tx.partyCard.create({
-        data,
+        data: {
+          ...data,
+          isFull: data.maxCount <= 1
+        },
         select: partyCardSelect
       });
 
@@ -224,6 +229,31 @@ export class ChatRepository {
       });
 
       return partyCard;
+    });
+  }
+
+  async updatePartyCardSchedule(partyCardId: string, authorId: string, scheduledAt: Date | null) {
+    const partyCard = await prisma.partyCard.findUnique({
+      where: { id: partyCardId },
+      select: { id: true, authorId: true, isClosed: true }
+    });
+
+    if (!partyCard) {
+      throw new Error('Party card not found');
+    }
+
+    if (partyCard.authorId !== authorId) {
+      throw new Error('Only the party leader can edit the schedule');
+    }
+
+    if (partyCard.isClosed) {
+      throw new Error('Party is closed');
+    }
+
+    return prisma.partyCard.update({
+      where: { id: partyCardId },
+      data: { scheduledAt },
+      select: partyCardSelect
     });
   }
 
@@ -257,7 +287,7 @@ export class ChatRepository {
       throw new Error('该角色已加入此组队');
     }
 
-    if (partyCard.members.length >= partyCard.maxCount - 1) {
+    if (partyCard.members.length >= partyCard.maxCount - 2) {
       return prisma.partyCard.update({
         where: { id: partyCardId },
         data: {

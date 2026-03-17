@@ -72,6 +72,7 @@ interface PartyCard {
   title: string;
   description: string;
   maxCount: number;
+  scheduledAt: string | null;
   authorId: string;
   author: { id: string; username: string };
   characterId: string | null;
@@ -91,6 +92,15 @@ interface CombinedCard {
   createdAt: string;
 }
 
+const createEmptyPartyForm = () => ({
+  title: "",
+  description: "",
+  maxCount: "4",
+  characterId: "",
+  postId: "",
+  scheduledAt: "",
+});
+
 export default function ChatPage() {
   const { user } = useAuth();
   const { isClient } = useApp();
@@ -109,11 +119,14 @@ export default function ChatPage() {
   const [showItemModal, setShowItemModal] = useState(false);
   const [showPartyModal, setShowPartyModal] = useState(false);
   const [itemForm, setItemForm] = useState({ name: "", description: "", price: "" });
-  const [partyForm, setPartyForm] = useState({ title: "", description: "", maxCount: "4", characterId: "", postId: "" });
+  const [partyForm, setPartyForm] = useState(createEmptyPartyForm);
   const [bountyPosts, setBountyPosts] = useState<BountyPost[]>([]);
   const [joiningParty, setJoiningParty] = useState<string | null>(null);
   const [selectedJoinCharacter, setSelectedJoinCharacter] = useState<string>("");
   const [removingMember, setRemovingMember] = useState<{ partyId: string; memberId: string } | null>(null);
+  const [editingPartySchedule, setEditingPartySchedule] = useState<string | null>(null);
+  const [editingScheduleValue, setEditingScheduleValue] = useState("");
+  const [savingPartySchedule, setSavingPartySchedule] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasCheckedCharacters, setHasCheckedCharacters] = useState(false);
   const [showSwitchConfirm, setShowSwitchConfirm] = useState(false);
@@ -336,7 +349,8 @@ export default function ChatPage() {
           maxCount: partyForm.maxCount,
           authorId: user.id,
           characterId: partyForm.characterId,
-          postId: partyForm.postId
+          postId: partyForm.postId,
+          scheduledAt: partyForm.scheduledAt || null
         }),
       });
 
@@ -344,7 +358,7 @@ export default function ChatPage() {
         const newParty = await response.json();
         setPartyCards([newParty, ...partyCards]);
         setShowPartyModal(false);
-        setPartyForm({ title: "", description: "", maxCount: "4", characterId: "", postId: "" });
+        setPartyForm(createEmptyPartyForm());
         await loadBountyPosts();
       }
     } catch (error) {
@@ -353,7 +367,7 @@ export default function ChatPage() {
   };
 
   const openPartyModal = async () => {
-    setPartyForm({ title: "", description: "", maxCount: "4", characterId: "", postId: "" });
+    setPartyForm(createEmptyPartyForm());
     setShowPartyModal(true);
     await loadBountyPosts();
   };
@@ -417,6 +431,48 @@ export default function ChatPage() {
       }
     } catch (error) {
       console.error("Failed to close party:", error);
+    }
+  };
+
+  const toDateTimeLocalValue = (dateString: string) => {
+    const date = new Date(dateString);
+    const timezoneOffset = date.getTimezoneOffset() * 60_000;
+    return new Date(date.getTime() - timezoneOffset).toISOString().slice(0, 16);
+  };
+
+  const startEditingPartySchedule = (party: PartyCard) => {
+    setEditingPartySchedule(party.id);
+    setEditingScheduleValue(party.scheduledAt ? toDateTimeLocalValue(party.scheduledAt) : "");
+  };
+
+  const cancelEditingPartySchedule = () => {
+    setEditingPartySchedule(null);
+    setEditingScheduleValue("");
+  };
+
+  const savePartySchedule = async (partyId: string) => {
+    if (!user || !selectedStronghold) return;
+
+    try {
+      setSavingPartySchedule(partyId);
+      const response = await fetch(`/api/chat/${selectedStronghold.id}/parties/${partyId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          authorId: user.id,
+          scheduledAt: editingScheduleValue || null
+        }),
+      });
+
+      if (response.ok) {
+        const updatedParty = await response.json();
+        setPartyCards(partyCards.map(p => p.id === partyId ? updatedParty : p));
+        cancelEditingPartySchedule();
+      }
+    } catch (error) {
+      console.error("Failed to update party schedule:", error);
+    } finally {
+      setSavingPartySchedule(null);
     }
   };
 
@@ -506,6 +562,192 @@ export default function ChatPage() {
       hour: "2-digit",
       minute: "2-digit"
     });
+  };
+
+  const formatPartySchedule = (dateString: string) => {
+    return new Date(dateString).toLocaleString("zh-CN", {
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false
+    });
+  };
+
+  const renderPartyCard = (party: PartyCard, cardId: string) => {
+    const isPartyOwner = isOwner(party.authorId);
+    const isEditingSchedule = editingPartySchedule === party.id;
+
+    return (
+      <div>
+        <div className="flex justify-between items-start mb-2 gap-3">
+          <div className="flex-1 min-w-0">
+            <h4 className="font-semibold text-sm text-amber-900">{party.title}</h4>
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <span className="px-1.5 py-0.5 bg-amber-200 text-amber-800 text-xs rounded">
+                {party.members.length + 1}/{party.maxCount}
+              </span>
+              {party.isFull && (
+                <span className="px-1.5 py-0.5 bg-red-200 text-red-800 text-xs rounded">
+                  已满
+                </span>
+              )}
+              {party.scheduledAt && !party.isFull && (
+                <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 text-xs rounded">
+                  暂定 {formatPartySchedule(party.scheduledAt)}
+                </span>
+              )}
+            </div>
+          </div>
+          {isPartyOwner && (
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => startEditingPartySchedule(party)}
+                className="text-xs text-amber-600 hover:text-amber-800"
+              >
+                {party.scheduledAt ? "改时间" : "设时间"}
+              </button>
+              <button
+                onClick={() => closeParty(cardId)}
+                className="text-xs text-amber-600 hover:text-red-600"
+              >
+                关闭
+              </button>
+            </div>
+          )}
+        </div>
+
+        <p className="text-xs text-amber-700 mb-3 whitespace-pre-wrap">{party.description}</p>
+
+        {isEditingSchedule && isPartyOwner && (
+          <div className="mb-3 rounded-xl border border-amber-300 bg-amber-100 p-3 space-y-2">
+            <label className="block text-xs font-medium text-amber-800">
+              出发时间
+            </label>
+            <input
+              type="datetime-local"
+              className="w-full bg-amber-50 border border-amber-300 rounded-lg px-3 py-2 text-sm text-amber-900 focus:outline-none focus:border-amber-500"
+              value={editingScheduleValue}
+              onChange={(e) => setEditingScheduleValue(e.target.value)}
+            />
+            <p className="text-[11px] text-amber-600">
+              可留空。队伍满员后，这里设置的时间会显示在卡片底部。
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => savePartySchedule(party.id)}
+                disabled={savingPartySchedule === party.id}
+                className="flex-1 rounded-lg bg-amber-600 px-3 py-2 text-xs text-white transition-colors hover:bg-amber-500 disabled:opacity-50"
+              >
+                {savingPartySchedule === party.id ? "保存中..." : "保存时间"}
+              </button>
+              <button
+                onClick={cancelEditingPartySchedule}
+                disabled={savingPartySchedule === party.id}
+                className="px-3 py-2 rounded-lg bg-amber-200 hover:bg-amber-300 text-amber-800 text-xs transition-colors disabled:opacity-50"
+              >
+                取消
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="mb-3">
+          <p className="text-xs text-amber-600 mb-1">成员:</p>
+          <div className="flex flex-wrap gap-1">
+            {party.character && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-300 text-amber-900 text-xs rounded font-medium">
+                <span className="text-[10px] text-amber-700 font-bold">★</span>
+                {party.character.name}
+              </span>
+            )}
+            {party.members.map((member) => (
+              <span key={member.id} className="inline-flex items-center gap-0.5 px-2 py-0.5 bg-amber-200 text-amber-900 text-xs rounded">
+                {member.character.name}
+                {isPartyOwner && (
+                  <button
+                    onClick={() => removePartyMember(cardId, member.id)}
+                    disabled={removingMember?.memberId === member.id}
+                    className="ml-0.5 text-amber-500 hover:text-red-600 transition-colors disabled:opacity-50"
+                    title={`移除 ${member.character.name}`}
+                  >
+                    <X className="h-2.5 w-2.5" />
+                  </button>
+                )}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {party.isFull ? (
+          <div className="rounded-xl border border-amber-300 bg-amber-100 px-3 py-2.5">
+            <p className="text-[11px] uppercase tracking-[0.12em] text-amber-600">出发时间</p>
+            <div className="mt-1 flex items-center justify-between gap-3">
+              <p className="text-sm font-medium text-amber-900">
+                {party.scheduledAt ? formatPartySchedule(party.scheduledAt) : "待小队长确定"}
+              </p>
+              {isPartyOwner && !isEditingSchedule && (
+                <button
+                  onClick={() => startEditingPartySchedule(party)}
+                  className="shrink-0 text-xs text-amber-700 hover:text-amber-900"
+                >
+                  {party.scheduledAt ? "编辑" : "设置"}
+                </button>
+              )}
+            </div>
+          </div>
+        ) : !party.isClosed ? (
+          <div>
+            {joiningParty === cardId ? (
+              <div className="space-y-2">
+                <select
+                  className="w-full bg-amber-100 border border-amber-300 rounded-lg px-2 py-1.5 text-xs text-amber-900"
+                  onChange={(e) => setSelectedJoinCharacter(e.target.value)}
+                  value={selectedJoinCharacter}
+                >
+                  <option value="">选择角色...</option>
+                  {characters.map((char) => (
+                    <option
+                      key={char.id}
+                      value={char.id}
+                      disabled={isCharacterInParty(party, char.id)}
+                      className={isCharacterInParty(party, char.id) ? "text-amber-400" : ""}
+                    >
+                      {char.name} {isCharacterInParty(party, char.id) ? "(已加入)" : ""}
+                    </option>
+                  ))}
+                </select>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => joinParty(cardId)}
+                    disabled={!selectedJoinCharacter || isCharacterInParty(party, selectedJoinCharacter)}
+                    className="flex-1 px-2 py-1 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white text-xs transition-colors"
+                  >
+                    确认加入
+                  </button>
+                  <button
+                    onClick={() => {
+                      setJoiningParty(null);
+                      setSelectedJoinCharacter("");
+                    }}
+                    className="px-2 py-1 rounded-lg bg-amber-200 hover:bg-amber-300 text-amber-800 text-xs transition-colors"
+                  >
+                    取消
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setJoiningParty(cardId)}
+                className="w-full px-2 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs transition-colors"
+              >
+                加入队伍
+              </button>
+            )}
+          </div>
+        ) : null}
+      </div>
+    );
   };
 
   const combinedCards: CombinedCard[] = [
@@ -735,108 +977,7 @@ export default function ChatPage() {
                         </div>
                       </div>
                     ) : (
-                      <div>
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-sm text-amber-900">{(card.data as PartyCard).title}</h4>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className="px-1.5 py-0.5 bg-amber-200 text-amber-800 text-xs rounded">
-                                {(card.data as PartyCard).members.length + 1}/{(card.data as PartyCard).maxCount}
-                              </span>
-                              {(card.data as PartyCard).isFull && (
-                                <span className="px-1.5 py-0.5 bg-red-200 text-red-800 text-xs rounded">
-                                  已满
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          {isOwner((card.data as PartyCard).authorId) && (
-                            <button
-                              onClick={() => closeParty(card.id)}
-                              className="text-xs text-amber-600 hover:text-red-600"
-                            >
-                              关闭
-                            </button>
-                          )}
-                        </div>
-                        <p className="text-xs text-amber-700 mb-3 whitespace-pre-wrap">{(card.data as PartyCard).description}</p>
-                        <div className="mb-3">
-                          <p className="text-xs text-amber-600 mb-1">成员:</p>
-                          <div className="flex flex-wrap gap-1">
-                            {(card.data as PartyCard).character && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-300 text-amber-900 text-xs rounded font-medium">
-                                <span className="text-[10px] text-amber-700 font-bold">★</span>
-                                {(card.data as PartyCard).character!.name}
-                              </span>
-                            )}
-                            {(card.data as PartyCard).members.map((member) => (
-                              <span key={member.id} className="inline-flex items-center gap-0.5 px-2 py-0.5 bg-amber-200 text-amber-900 text-xs rounded">
-                                {member.character.name}
-                                {isOwner((card.data as PartyCard).authorId) && (
-                                  <button
-                                    onClick={() => removePartyMember(card.id, member.id)}
-                                    disabled={removingMember?.memberId === member.id}
-                                    className="ml-0.5 text-amber-500 hover:text-red-600 transition-colors disabled:opacity-50"
-                                    title={`移除 ${member.character.name}`}
-                                  >
-                                    <X className="h-2.5 w-2.5" />
-                                  </button>
-                                )}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                        {!(card.data as PartyCard).isFull && !(card.data as PartyCard).isClosed && (
-                          <div>
-                            {joiningParty === card.id ? (
-                              <div className="space-y-2">
-                                <select
-                                  className="w-full bg-amber-100 border border-amber-300 rounded-lg px-2 py-1.5 text-xs text-amber-900"
-                                  onChange={(e) => setSelectedJoinCharacter(e.target.value)}
-                                  value={selectedJoinCharacter}
-                                >
-                                  <option value="">选择角色...</option>
-                                  {characters.map(char => (
-                                    <option 
-                                      key={char.id} 
-                                      value={char.id}
-                                      disabled={isCharacterInParty(card.data as PartyCard, char.id)}
-                                      className={isCharacterInParty(card.data as PartyCard, char.id) ? "text-amber-400" : ""}
-                                    >
-                                      {char.name} {isCharacterInParty(card.data as PartyCard, char.id) ? "(已加入)" : ""}
-                                    </option>
-                                  ))}
-                                </select>
-                                <div className="flex gap-2">
-                                  <button
-                                    onClick={() => joinParty(card.id)}
-                                    disabled={!selectedJoinCharacter || isCharacterInParty(card.data as PartyCard, selectedJoinCharacter)}
-                                    className="flex-1 px-2 py-1 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white text-xs transition-colors"
-                                  >
-                                    确认加入
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      setJoiningParty(null);
-                                      setSelectedJoinCharacter("");
-                                    }}
-                                    className="px-2 py-1 rounded-lg bg-amber-200 hover:bg-amber-300 text-amber-800 text-xs transition-colors"
-                                  >
-                                    取消
-                                  </button>
-                                </div>
-                              </div>
-                            ) : (
-                              <button
-                                onClick={() => setJoiningParty(card.id)}
-                                className="w-full px-2 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs transition-colors"
-                              >
-                                加入队伍
-                              </button>
-                            )}
-                          </div>
-                        )}
-                      </div>
+                      renderPartyCard(card.data as PartyCard, card.id)
                     )}
                   </div>
                 ))
@@ -1026,6 +1167,18 @@ export default function ChatPage() {
                     onChange={(e) => setPartyForm({ ...partyForm, maxCount: e.target.value })}
                   />
                 </div>
+              </div>
+              <div>
+                <label className="block text-sm text-amber-700 mb-2">出发时间（选填）</label>
+                <input
+                  type="datetime-local"
+                  className="w-full bg-amber-100 border border-amber-300 rounded-xl px-4 py-3 text-amber-900 focus:outline-none focus:border-amber-500"
+                  value={partyForm.scheduledAt}
+                  onChange={(e) => setPartyForm({ ...partyForm, scheduledAt: e.target.value })}
+                />
+                <p className="mt-2 text-xs text-amber-600">
+                  不用额外勾选，留空也可以。队伍满员后会在卡片底部显示时间。
+                </p>
               </div>
               <div>
                 <label className="block text-sm text-amber-700 mb-2">组队描述</label>
