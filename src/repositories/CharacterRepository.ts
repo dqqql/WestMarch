@@ -17,6 +17,7 @@ export class CharacterRepository {
         wis: true,
         cha: true,
         bio: true,
+        fullBio: true,
         userId: true,
         createdAt: true,
         updatedAt: true

@@ -5,9 +5,15 @@ export interface Character {
   name: string;
   race: string;
   class: string;
-  level: number;
-  background: string;
-  backstory: string;
+  img: string | null;
+  str: number | null;
+  dex: number | null;
+  con: number | null;
+  int: number | null;
+  wis: number | null;
+  cha: number | null;
+  bio: string | null;
+  fullBio: string | null;
   userId: string;
   createdAt: string;
   updatedAt: string;
@@ -17,9 +23,15 @@ export interface CreateCharacterInput {
   name: string;
   race: string;
   class: string;
-  level: number;
-  background: string;
-  backstory: string;
+  img?: string | null;
+  str?: number | null;
+  dex?: number | null;
+  con?: number | null;
+  int?: number | null;
+  wis?: number | null;
+  cha?: number | null;
+  bio?: string | null;
+  fullBio?: string | null;
   userId: string;
 }
 
@@ -27,9 +39,15 @@ export interface UpdateCharacterInput {
   name?: string;
   race?: string;
   class?: string;
-  level?: number;
-  background?: string;
-  backstory?: string;
+  img?: string | null;
+  str?: number | null;
+  dex?: number | null;
+  con?: number | null;
+  int?: number | null;
+  wis?: number | null;
+  cha?: number | null;
+  bio?: string | null;
+  fullBio?: string | null;
 }
 
 export const charactersApi = {
