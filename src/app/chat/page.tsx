@@ -350,7 +350,7 @@ export default function ChatPage() {
           authorId: user.id,
           characterId: partyForm.characterId,
           postId: partyForm.postId,
-          scheduledAt: partyForm.scheduledAt || null
+          scheduledAt: partyForm.scheduledAt ? new Date(partyForm.scheduledAt).toISOString() : null
         }),
       });
 
@@ -460,7 +460,7 @@ export default function ChatPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           authorId: user.id,
-          scheduledAt: editingScheduleValue || null
+          scheduledAt: editingScheduleValue ? new Date(editingScheduleValue).toISOString() : null
         }),
       });
 
@@ -602,10 +602,10 @@ export default function ChatPage() {
           {isPartyOwner && (
             <div className="flex items-center gap-2 shrink-0">
               <button
-                onClick={() => startEditingPartySchedule(party)}
+                onClick={() => isEditingSchedule ? cancelEditingPartySchedule() : startEditingPartySchedule(party)}
                 className="text-xs text-amber-600 hover:text-amber-800"
               >
-                {party.scheduledAt ? "改时间" : "设时间"}
+                {isEditingSchedule ? "取消" : (party.scheduledAt ? "改时间" : "设时间")}
               </button>
               <button
                 onClick={() => closeParty(cardId)}
@@ -627,6 +627,7 @@ export default function ChatPage() {
             <input
               type="datetime-local"
               className="w-full bg-amber-50 border border-amber-300 rounded-lg px-3 py-2 text-sm text-amber-900 focus:outline-none focus:border-amber-500"
+              style={{ colorScheme: 'light' }}
               value={editingScheduleValue}
               onChange={(e) => setEditingScheduleValue(e.target.value)}
             />
@@ -1173,6 +1174,7 @@ export default function ChatPage() {
                 <input
                   type="datetime-local"
                   className="w-full bg-amber-100 border border-amber-300 rounded-xl px-4 py-3 text-amber-900 focus:outline-none focus:border-amber-500"
+                  style={{ colorScheme: 'light' }}
                   value={partyForm.scheduledAt}
                   onChange={(e) => setPartyForm({ ...partyForm, scheduledAt: e.target.value })}
                 />

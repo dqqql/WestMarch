@@ -26,6 +26,7 @@ export default function Home() {
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [characterUsers, setCharacterUsers] = useState<any[]>([]);
   const [isLoadingInfo, setIsLoadingInfo] = useState(false);
+  const [bioModal, setBioModal] = useState<{name: string, bio: string} | null>(null);
 
   // Schedule modal state
   const [scheduleModal, setScheduleModal] = useState<{
@@ -181,7 +182,18 @@ export default function Home() {
                             {group.chars.map((char: any) => (
                               <tr key={char.id} className="hover:bg-indigo-500/5 transition-colors group">
                                 <td className="px-5 py-3.5 font-medium text-amber-100/90 group-hover:text-amber-300">
-                                  {char.name}
+                                  <div className="flex items-center gap-2">
+                                    <span>{char.name}</span>
+                                    {char.bio && (
+                                      <button 
+                                        onClick={(e) => { e.stopPropagation(); setBioModal({ name: char.name, bio: char.bio }); }}
+                                        className="text-indigo-500/50 hover:text-indigo-300 transition-colors"
+                                        title="查看简易背景"
+                                      >
+                                        <BookOpen className="h-4 w-4 drop-shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
+                                      </button>
+                                    )}
+                                  </div>
                                 </td>
                                 <td className="px-5 py-3.5 text-zinc-400 text-right">
                                   {char.race} / {char.class}
@@ -207,6 +219,31 @@ export default function Home() {
               <Button onClick={() => setShowInfoModal(false)} variant="outline" className="rounded-full border-zinc-700 text-zinc-300 hover:text-white hover:bg-zinc-800">
                 关闭书卷
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bio Modal */}
+      {bioModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[70] animate-in fade-in duration-200 p-4" onClick={() => setBioModal(null)}>
+          <div className="bg-zinc-900 border border-indigo-500/30 rounded-2xl p-6 w-full max-w-sm shadow-[0_0_30px_rgba(99,102,241,0.15)] animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-start mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-indigo-500/20 rounded-xl flex items-center justify-center">
+                  <BookOpen className="h-4 w-4 text-indigo-400" />
+                </div>
+                <div>
+                  <h4 className="text-base font-bold text-amber-100/90">{bioModal.name}</h4>
+                  <p className="text-[10px] text-indigo-400/80">简易背景</p>
+                </div>
+              </div>
+              <button onClick={() => setBioModal(null)} className="text-zinc-500 hover:text-zinc-300 bg-zinc-800/50 hover:bg-zinc-800 p-1.5 rounded-lg transition-colors">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap max-h-60 overflow-y-auto custom-scrollbar bg-zinc-950/50 p-4 rounded-xl border border-zinc-800/50">
+              {bioModal.bio}
             </div>
           </div>
         </div>

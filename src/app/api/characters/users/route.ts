@@ -9,6 +9,7 @@ export async function GET() {
         name: true,
         race: true,
         class: true,
+        bio: true,
         user: {
           select: {
             id: true,
